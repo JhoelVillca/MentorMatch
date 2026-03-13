@@ -1,12 +1,12 @@
 { pkgs, ... }: {
-  # 1. El canal de paquetes
-  channel = "stable-23.11";
+  # 1. Actualizamos el canal a uno más reciente (2024)
+  channel = "stable-25.05";
 
-  # 2. Los paquetes del sistema (Nivel Raíz)
+  # 2. Subimos la versión de Node
   packages = [
     pkgs.python311
     pkgs.python311Packages.pip
-    pkgs.nodejs_20
+    pkgs.nodejs_22 # <--- EL CAMBIO MÁGICO
     pkgs.postgresql_15
   ];
 
