@@ -88,3 +88,41 @@ def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get
         "full_name": user.full_name,
         "role": user.role  # <-- Aquí está la magia. 'mentee', 'mentor' o 'admin'
     }
+
+
+@app.post("/users/me/mentor-profile", response_model=schemas.MentorProfile)
+def create_mentor_profile(
+    profile: schemas.MentorProfileCreate, 
+    token: str = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db)
+):
+    # 1. Decodificar el token para saber quién es el usuario
+    try:
+        payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
+        email: str = payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 2. Buscar si ya existe el perfil
+    db_profile = db.query(models.MentorProfile).filter(models.MentorProfile.user_id == user.id).first()
+
+    if db_profile:
+        # Actualizar
+        db_profile.bio = profile.bio
+        db_profile.skills = profile.skills
+        db_profile.price_per_hour = profile.price_per_hour
+    else:
+        # Crear nuevo
+        db_profile = models.MentorProfile(
+            **profile.model_dump(), 
+            user_id=user.id
+        )
+        db.add(db_profile)
+    
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile

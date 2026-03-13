@@ -1,23 +1,26 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text, Float
+from sqlalchemy.orm import relationship
 from database import Base
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    role = Column(String(20), default="mentee") # Roles: admin, mentor, mentee
-    full_name = Column(String(150), nullable=False)
-    email = Column(String(150), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-    
-    # Datos de Contacto
-    phone = Column(String(50), nullable=True)
-    skype_id = Column(String(100), nullable=True)
-    
-    # Preferencias de Sistema
-    timezone = Column(String(50), default="UTC")
-    language = Column(String(10), default="es")
-    currency = Column(String(10), default="USD")
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    full_name = Column(String)
+    role = Column(String, default="mentee")
+
+    # Esta línea es nueva, para que el usuario sepa si es mentor
+    mentor_profile = relationship("MentorProfile", back_populates="user", uselist=False)
+
+class MentorProfile(Base):
+    __tablename__ = "mentor_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    bio = Column(Text)
+    skills = Column(String)
+    price_per_hour = Column(Float, default=0.0)
+
+    user = relationship("User", back_populates="mentor_profile")
