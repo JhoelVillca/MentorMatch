@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Para cambiar de página
-import { useAuth } from '../AuthContext'; // <--- Ojo a los dos puntos '../'
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,21 +8,20 @@ export default function Login() {
   const [error, setError] = useState('');
   
   const { login } = useAuth();
-  const navigate = useNavigate(); // El conductor del autobús
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      // 1. El túnel secreto hacia FastAPI
       const response = await fetch('/api/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          username: email, // FastAPI manda: siempre se llama 'username' aquí
+          username: email,
           password: password,
         }),
       });
@@ -30,14 +29,10 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Credenciales incorrectas. La Matrix te rechaza.');
+        throw new Error(data.detail || 'Credenciales incorrectas. Por favor, inténtalo de nuevo.');
       }
 
-      // 2. Guardamos el token en el cerebro global
       login(data.access_token);
-      
-      // 3. Lo mandamos a la página principal o dashboard
-      // (El AuthContext se encargará de descargar su perfil y saber su rol)
       navigate('/dashboard'); 
 
     } catch (err) {
@@ -46,30 +41,42 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container">
-      <h2>Entrar a la Matrix</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
+    <>
+      <div className="login-background">
+          <div className="shape"></div>
+          <div className="shape"></div>
+      </div>
+      <form className="glass-form" onSubmit={handleSubmit}>
+          <h3>MentorMatch</h3>
+
+          <label htmlFor="username">Correo Electrónico</label>
           <input 
             type="email" 
+            placeholder="Email" 
+            id="username"
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
             required 
           />
-        </div>
-        <div>
-          <label>Contraseña:</label>
+
+          <label htmlFor="password">Contraseña</label>
           <input 
             type="password" 
+            placeholder="Password" 
+            id="password"
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
             required 
           />
-        </div>
-        <button type="submit">Conectar</button>
+
+          <button type="submit">Iniciar Sesión</button>
+          
+          {error && (
+            <div style={{ marginTop: '20px', color: '#ff512f', textAlign: 'center', fontSize: '14px' }}>
+              {error}
+            </div>
+          )}
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
+    </>
   );
 }

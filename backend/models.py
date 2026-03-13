@@ -24,3 +24,5 @@ class MentorProfile(Base):
     price_per_hour = Column(Float, default=0.0)
 
     user = relationship("User", back_populates="mentor_profile")
+
+    
