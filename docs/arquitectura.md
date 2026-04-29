@@ -1,69 +1,72 @@
-# Arquitectura del Proyecto MentorMatch
+# Arquitectura del Proyecto MentorMatch 🚀
 
-## Estructura del Proyecto
+## Estructura del Proyecto (Monorepo)
 
-```
+```text
 MentorMatch/
 │
-├── README.md                          # Guía general del proyecto
-├── docker-compose.yml                 # Configuración de contenedores Docker
+├── README.md                          # Guía de supervivencia e instalación
+├── docker-compose.yml                 # Orquestación de infraestructura (Postgres)
+├── .gitignore                         # Muro de fuego contra basura y binarios
 │
 ├── docs/                              # Documentación del proyecto
-│   ├── arquitectura.md               # Este archivo - Estructura y propósito de directorios
-│   ├── documentoVision.md            # Visión y objetivos del proyecto
-│   └── spec.md                       # Especificaciones técnicas, y fuente de verdad (sdd)
+│   ├── arquitectura.md               # Este archivo - Mapa exacto de nodos
+│   ├── documentoVision.md            # Visión, alcance y objetivos de negocio
+│   └── spec.md                       # SDD (Software Design Document) y diagramas
 │
-├── backend/                           # API REST y lógica del servidor
-│   ├── requirements.txt              # Dependencias de Python
-│   ├── .env.example                  # Variables de entorno (ejemplo)
-│   ├── .env                          # Variables de entorno (local)
-│   └── venv/                         # Entorno virtual de Python
+├── backend/                           # Servidor API (FastAPI + Python)
+│   ├── app/
+│   │   ├── api/                      # Controladores y Endpoints REST
+│   │   │   ├── admin.py              # CRUD de administración de usuarios
+│   │   │   ├── auth.py               # Lógica de Login/Signup y despacho de JWT
+│   │   │   └── profiles.py           # Vistas de Mentees y Mentores
+│   │   ├── core/                     # Núcleo de configuraciones
+│   │   │   └── security.py           # Algoritmos criptográficos y firma de tokens
+│   │   ├── db/                       # Capa de persistencia
+│   │   │   └── database.py           # Motor de SQLAlchemy y lectura del .env
+│   │   ├── models/                   # ORM: Tablas SQL mapeadas a clases Python
+│   │   │   ├── associations.py       # Tablas intermedias (roles, habilidades)
+│   │   │   ├── main_models.py        # Tablas de negocio (perfiles, paquetes, pagos)
+│   │   │   └── usuarios.py           # Núcleo de identidades
+│   │   ├── schemas/                  # DTOs: Validación de datos de entrada/salida (Pydantic)
+│   │   │   └── user.py               # Esquemas de serialización de usuarios
+│   │   └── services/                 # Lógica de negocio dura (desacoplada de las rutas)
+│   ├── main.py                       # Orquestador principal y configuración ASGI
+│   ├── requirements.txt              # Registro de dependencias de Python
+│   ├── .env.example                  # Plantilla de variables de entorno públicas
+│   └── .env                          # Variables de entorno reales (IGNORADO EN GIT)
 │
-├── frontend/                          # Aplicación web (Vue/React/etc)
-│   ├── package.json                  # Dependencias de Node.js
-│   ├── package-lock.json             # Lock de dependencias
-│   ├── index.html                    # HTML principal
-│   ├── vite.config.js                # Configuración de Vite (builder)
-│   ├── eslint.config.js              # Reglas de linting
-│   ├── README.md                     # Documentación del frontend
-│   ├── src/                          # Código fuente
-│   │   ├── main.jsx                  # Punto de entrada
-│   │   ├── App.jsx                   # Componente raíz
-│   │   ├── App.css                   # Estilos globales
-│   │   ├── index.css                 # Estilos base
-│   │   └── assets/                   # Imágenes y recursos estáticos
-│   └── public/                       # Archivos públicos estáticos
+├── frontend/                          # Interfaz de Usuario (React 19 + Vite)
+│   ├── package.json                  # Dependencias de Node.js y scripts
+│   ├── vite.config.js                # Builder y proxy de red
+│   ├── tailwind.config.js            # Motor de estilos CSS utilitarios
+│   ├── src/                          # Código fuente React
+│   │   ├── main.jsx                  # Montaje del DOM
+│   │   ├── App.jsx                   # Enrutador principal (React Router)
+│   │   ├── AuthContext.jsx           # Estado global de sesión JWT
+│   │   ├── ProtectedRoute.jsx        # Guardia de navegación por roles
+│   │   ├── pages/                    # Vistas completas
+│   │   │   ├── Login.jsx             # Formulario de acceso
+│   │   │   ├── AdminDashboard.jsx    # Panel de control de administradores
+│   │   │   ├── MenteeDashboard.jsx   # Área de alumnos
+│   │   │   └── MentorDashboard.jsx   # Área de profesores
+│   │   └── index.css                 # Variables globales y tailwind directives
+│   └── public/                       # Assets estáticos (SVGs, favicons)
 │
-├── database/                          # Configuración de base de datos
-│   └── schema_init.sql               # Script SQL para inicializar BD
-│
-└── .git/                             # Repositorio Git (historial de cambios)
+└── database/                          # Inicialización de Base de Datos
+    └── schema_init.sql               # Script DDL inyectado al contenedor Postgres
 ```
 
-## Propósito de Cada Directorio
+## Propósito de Cada Capa
 
-### 📚 `/docs`
-Documentación central del proyecto:
-- **arquitectura.md** - Estructura y organización del código
-- **documentoVision.md** - Visión, objetivos y requerimientos del negocio
-- **spec.md** - Especificaciones técnicas detalladas, documento de verdad absoluta
+### 🔧 Capa Backend (El Cerebro)
+* **API (`/api`)**: Su único trabajo es recibir la petición HTTP, verificar permisos y delegar la tarea. No debe contener lógica matemática ni consultas a la base de datos complejas.
+* **Services (`/services`)**: La sala de máquinas. Si un Mentee reserva una hora y hay que descontar crédito, la matemática ocurre aquí.
+* **Schemas (`/schemas`)**: El filtro de aduana. Garantiza que nadie envíe un texto donde debería ir un número de tarjeta de crédito, o que no filtremos el hash de una contraseña al cliente.
 
-### 🔧 `/backend`
-Servidor API y lógica de negocio:
-- Implementación en Python
-- API REST para el frontend
-- Gestión de datos y autenticación
+### 🎨 Capa Frontend (La Piel)
+* Arquitectura SPA (Single Page Application) montada sobre Vite para tiempos de compilación HMR en milisegundos.
+* Manejo de estado de sesión basado puramente en tokens JWT inyectados en los *headers* de las peticiones HTTP subsiguientes.
 
-### 🎨 `/frontend`
-Interfaz de usuario web:
-- Aplicación construida con Vite
-- Componentes de React/Vue
-- Estilos y assets
-
-### 🗄️ `/database`
-Esquemas y migraciones de base de datos:
-- Scripts SQL para inicialización
-- Definición de tablas y relaciones
-
-### 🐳 `docker-compose.yml`
-Orquestación de contenedores para desarrollo y producción
+### 🗄️ Capa de Datos (La Memoria)
+* Topología relacional estricta usando UUIDv4 nativos generados por el kernel de Postgres (`pgcrypto`) para mitigar vectores de ataque IDOR (Insecure Direct Object Reference).
