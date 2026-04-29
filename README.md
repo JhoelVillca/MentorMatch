@@ -3,7 +3,7 @@
 ## Descripción
 Plataforma de e-learning que se enfoca en dar mentoria a alguien que desea aprender alguna habilidad o aprender sobre un tema a los que denominamos **mentee** y aquellos que dan **mentor** que recibiran pagos de mentee a cambio de su mentoria.
 
-## Stack Tecnológico 🛠️
+## Stack Tecnológico 
 * **Frontend:** React 19, Vite, Tailwind CSS, React Router.
 * **Backend:** Python 3, FastAPI, SQLAlchemy, JWT.
 * **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
