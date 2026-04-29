@@ -9,7 +9,15 @@ Plataforma de e-learning que se enfoca en dar mentoria a alguien que desea apren
 * **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
 * **Infraestructura:** Docker & Docker Compose.
 
-## Guía de Instalación Rápida (Para Mortales)
+## 📁 Estructura del Proyecto
+Para conocer la estructura completa de directorios y el propósito de cada archivo importante, consulta [docs/arquitectura.md](docs/arquitectura.md).
+
+## 📚 Documentación
+- [Arquitectura y Estructura](docs/arquitectura.md) - Organización de directorios y archivos
+- [Documento de Visión](docs/documentoVision.md) - Objetivos y requerimientos del proyecto
+- [Especificaciones Técnicas](docs/spec.md) - Detalles técnicos y requerimientos, fuente de verdad (spec drive dev)
+
+## Guia de instalacion
 
 ### 1. Levantar la Base de Datos
 Se debe tener instalado Docker desktop y corriendo. y en la terminal dentro de la carpeta principal (donde se encuentra docker-compose.yml) ejecutas:

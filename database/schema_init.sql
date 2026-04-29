@@ -176,3 +176,6 @@ CREATE TABLE Mensajes_Chat (
 );
 
 CREATE INDEX idx_mensajes_historial ON Mensajes_Chat(id_sala, fecha_envio DESC);
+
+ALTER TABLE Transacciones_Pago 
+ADD COLUMN url_recibo_externo VARCHAR(500);
