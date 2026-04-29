@@ -1,0 +1,35 @@
+# GESTOR DE DEPENDENCIAS
+frontend/node_modules/
+backend/venv/
+backend/env/
+
+# VARIABLES DE ENTORNO Y SECRETOS (CRÍTICO)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# CACHÉ Y COMPILACIÓN DE PYTHON
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+
+# BUILDS DEL FRONTEND
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# LOGS Y BASURERO DEL SISTEMA
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# CONFIGURACIÓN DE EDITORES / IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/

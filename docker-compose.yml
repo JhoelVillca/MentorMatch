@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mentormatch_db
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - mentormatch_data:/var/lib/postgresql/data
+      - ./database/schema_init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mentormatch_data:
