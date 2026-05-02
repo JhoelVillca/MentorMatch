@@ -26,6 +26,9 @@ class PerfilMentor(Base):
     biografia_profesional = Column(Text)
     estado_verificacion = Column(String(20), server_default="pendiente") # pendiente, verificado, rechazado
     url_linkedin = Column(String(500))
+    
+    # Relaciones
+    habilidades = relationship("MentorHabilidad", back_populates="mentor", cascade="all, delete-orphan")
 
 class PaqueteMentor(Base):
     __tablename__ = "paquetes_mentor"
@@ -58,12 +61,31 @@ class CategoriaHabilidad(Base):
     nombre_categoria = Column(String(100), unique=True, nullable=False)
     descripcion = Column(Text)
 
+    # Relaciones
+    habilidades = relationship("Habilidad", back_populates="categoria", cascade="all, delete-orphan")
+
 class Habilidad(Base):
     __tablename__ = "habilidades"
     id_habilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     id_categoria = Column(UUID(as_uuid=True), ForeignKey("categorias_habilidad.id_categoria", ondelete="RESTRICT"))
     nombre_habilidad = Column(String(100), unique=True, nullable=False)
     validada_por_admin = Column(Boolean, server_default="false")
+
+    # Relaciones
+    categoria = relationship("CategoriaHabilidad", back_populates="habilidades")
+    mentores = relationship("MentorHabilidad", back_populates="habilidad", cascade="all, delete-orphan")
+
+class MentorHabilidad(Base):
+    __tablename__ = "mentor_habilidades"
+    id_mentor_habilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"), nullable=False)
+    id_habilidad = Column(UUID(as_uuid=True), ForeignKey("habilidades.id_habilidad", ondelete="CASCADE"), nullable=False)
+    anios_experiencia = Column(Integer, nullable=False)
+    nivel = Column(String(50), nullable=False) # ej. Basico, Intermedio, Avanzado
+    
+    # Relaciones
+    mentor = relationship("PerfilMentor", back_populates="habilidades")
+    habilidad = relationship("Habilidad", back_populates="mentores")
 
 class Administrador(Base):
     __tablename__ = "administradores"

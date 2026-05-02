@@ -2,9 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext'; 
 import ProtectedRoute from './ProtectedRoute'; // Tu nueva arma
 import Login from './pages/Login/Login';
+import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
+import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
 
 const AdminDashboard = () => <h1 className="text-white text-center mt-10">Admin Dashboard</h1>;
-const MentorDashboard = () => <h1 className="text-white text-center mt-10">Mentor Dashboard</h1>;
 const MenteeDashboard = () => <h1 className="text-white text-center mt-10">Mentee Dashboard</h1>;
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           {/* Mentor */}
           <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
             <Route path="/mentor" element={<MentorDashboard />} />
+            <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
           </Route>
 
           {/* Mentee */}
