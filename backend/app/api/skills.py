@@ -5,7 +5,8 @@ from typing import List
 import jwt
 
 from app.db.database import SessionLocal
-from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor, Usuario
+from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor
+from app.models.usuarios import Usuario
 from app.schemas.skills import CategoriaResponse, MentorSkillCreate
 from app.core.security import SECRET_KEY, ALGORITHM
 
@@ -48,7 +49,6 @@ def add_mentor_skill(
 ):
     """
     Permite a un mentor logueado añadir una habilidad a su perfil.
-    Si el usuario no tiene PerfilMentor, se crea automáticamente.
     """
     # 1. Buscar si el usuario existe
     user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
@@ -59,14 +59,7 @@ def add_mentor_skill(
     perfil_mentor = db.query(PerfilMentor).filter(PerfilMentor.id_usuario == user_id).first()
     
     if not perfil_mentor:
-        # Crear un PerfilMentor básico si no existe (con el email como nombre o "Mentor Nuevo")
-        perfil_mentor = PerfilMentor(
-            id_usuario=user.id_usuario,
-            nombre_completo=user.email.split("@")[0] # Nombre por defecto
-        )
-        db.add(perfil_mentor)
-        db.commit()
-        db.refresh(perfil_mentor)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debe completar su perfil de mentor primero")
     
     # 3. Verificar si el mentor ya tiene esta habilidad declarada
     existing_skill = db.query(MentorHabilidad).filter(

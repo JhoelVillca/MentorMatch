@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function MentorSkillForm() {
   const [categories, setCategories] = useState([]);
@@ -9,6 +10,8 @@ export default function MentorSkillForm() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
   
+  const navigate = useNavigate();
+  
   const { token } = useAuth();
   
   // Si no hay token en el estado, intentamos recuperarlo de localStorage
@@ -16,7 +19,7 @@ export default function MentorSkillForm() {
 
   useEffect(() => {
     // Obtener las categorías y habilidades del backend
-    fetch('http://localhost:8000/skills/categories')
+    fetch('/api/skills/categories')
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error("Error fetching categories:", err));
@@ -40,7 +43,7 @@ export default function MentorSkillForm() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/skills/mentor', {
+      const response = await fetch('/api/skills/mentor', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,6 +65,10 @@ export default function MentorSkillForm() {
         setYearsOfExperience('');
         setLevel('Básico');
       } else {
+        if (response.status === 400 && data.detail === "Debe completar su perfil de mentor primero") {
+          navigate('/mentor/completar-perfil');
+          return;
+        }
         setMessage({ text: data.detail || 'Error al guardar la habilidad.', type: 'error' });
       }
     } catch (error) {
