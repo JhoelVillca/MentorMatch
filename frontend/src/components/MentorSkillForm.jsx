@@ -69,9 +69,14 @@ export default function MentorSkillForm() {
           navigate('/mentor/completar-perfil');
           return;
         }
+        // Parche de mitigación: Pydantic envía un Array en el 422, no un String.
+        if (response.status === 422) {
+          setMessage({ text: 'Datos corruptos. Revisa que los números y selecciones sean válidos.', type: 'error' });
+          return;
+        }
         setMessage({ text: data.detail || 'Error al guardar la habilidad.', type: 'error' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ text: 'Error de conexión con el servidor.', type: 'error' });
     } finally {
       setIsLoading(false);

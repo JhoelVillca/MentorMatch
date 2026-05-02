@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Text, Boolean, ForeignKey, Integer, Numeric, Time, text
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import TIMESTAMP
 from app.db.database import Base
 
 class Rol(Base):
@@ -77,6 +76,7 @@ class Habilidad(Base):
 
 class MentorHabilidad(Base):
     __tablename__ = "mentor_habilidades"
+    __table_args__ = (UniqueConstraint('id_mentor', 'id_habilidad', name='_mentor_habilidad_uc'),)
     id_mentor_habilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"), nullable=False)
     id_habilidad = Column(UUID(as_uuid=True), ForeignKey("habilidades.id_habilidad", ondelete="CASCADE"), nullable=False)
