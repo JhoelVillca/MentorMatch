@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 import jwt
+from sqlalchemy.orm import joinedload
 
 from app.db.database import SessionLocal
 from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor
@@ -37,8 +38,8 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
 
 @router.get("/categories", response_model=List[CategoriaResponse])
 def get_categories(db: Session = Depends(get_db)):
-    """Obtiene todas las categorías junto con sus habilidades."""
-    categories = db.query(CategoriaHabilidad).all()
+    
+    categories = db.query(CategoriaHabilidad).options(joinedload(CategoriaHabilidad.habilidades)).all()
     return categories
 
 @router.post("/mentor", status_code=status.HTTP_201_CREATED)
