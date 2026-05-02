@@ -1,4 +1,4 @@
-# MentorMatch 
+<img width="812" height="804" alt="image" src="https://github.com/user-attachments/assets/33a7d5cc-1dda-4892-9f5a-a4dc2682b136" /># MentorMatch 
 
 ## Descripción
 Plataforma de e-learning que se enfoca en dar mentoria a alguien que desea aprender alguna habilidad o aprender sobre un tema a los que denominamos **mentee** y aquellos que dan **mentor** que recibiran pagos de mentee a cambio de su mentoria.
@@ -41,6 +41,8 @@ source venv/Scripts/activate
 ```bash
 cp .env.example .env
 ```
+rejusten .env de acuerdo a sus credenciales...
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -158,6 +160,7 @@ Abrir el proyecto en Visual Studio Code.
 ```bash
 code .
 ```
+
 
 y te pones a hacer tu parte.
 
