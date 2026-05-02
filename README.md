@@ -159,6 +159,8 @@ Abrir el proyecto en Visual Studio Code.
 code .
 ```
 
+y te pones a hacer tu parte.
+
 ### 5. Ejecución del Entorno de Desarrollo
 
 **Ojo:** Necesitas dos terminales abiertas al mismo tiempo para correr tanto como el backend como el frontend.
