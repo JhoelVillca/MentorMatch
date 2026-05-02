@@ -6,13 +6,13 @@
 MentorMatch/
 │
 ├── README.md                          # Guía de instalación
-├── docker-compose.yml                 # Orquestación en docker para  Postgres
-├── .gitignore                         # el gitignore
+├── docker-compose.yml                 # Orquestación en docker para Postgres
+├── .gitignore                         # Muro de fuego contra basura y binarios
 │
 ├── docs/                              # Documentación del proyecto
 │   ├── arquitectura.md               # Este archivo
-│   ├── documentoVision.md            # donde definimos que queremos
-│   └── spec.md                       # SDD (Spec Driven Development) para seguir la metodologia
+│   ├── documentoVision.md            # Visión y alcance
+│   └── spec.md                       # SDD (Software Design Document)
 │
 ├── backend/                           # Servidor API (FastAPI + Python)
 │   ├── app/
@@ -21,7 +21,8 @@ MentorMatch/
 │   │   │   ├── __init__.py
 │   │   │   ├── admin.py              # CRUD de administración de usuarios
 │   │   │   ├── auth.py               # Lógica de Login/Signup, roles y JWT
-│   │   │   └── profiles.py           # Vistas de Mentees y Mentores
+│   │   │   ├── profiles.py           # Vistas de Mentees y Mentores
+│   │   │   └── skills.py             # Lógica de taxonomía de habilidades (N+1 parchado)
 │   │   ├── core/                     # Núcleo de configuraciones
 │   │   │   ├── __init__.py
 │   │   │   └── security.py           # Algoritmos criptográficos y firma de tokens
@@ -30,40 +31,47 @@ MentorMatch/
 │   │   │   └── database.py           # Motor de SQLAlchemy y lectura del .env
 │   │   ├── models/                   # ORM: Tablas SQL mapeadas a clases Python
 │   │   │   ├── __init__.py
-│   │   │   ├── associations.py       # Tablas intermedias (roles, habilidades)
-│   │   │   ├── main_models.py        # Tablas de negocio (perfiles, paquetes, sesiones)
+│   │   │   ├── associations.py       # Tablas intermedias puras
+│   │   │   ├── main_models.py        # Tablas de negocio (perfiles, paquetes, sesiones, habilidades)
 │   │   │   └── usuarios.py           # Núcleo de identidades
 │   │   ├── schemas/                  # DTOs: Validación de datos de entrada/salida
 │   │   │   ├── __init__.py
-│   │   │   └── user.py               # Esquemas de serialización (Pydantic)
-│   │   └── services/                 # Lógica de negocio dura (desacoplada de las rutas)
+│   │   │   ├── skills.py             # Esquemas de serialización de habilidades
+│   │   │   └── user.py               # Esquemas de serialización de usuarios (Pydantic)
+│   │   └── services/                 # Lógica de negocio dura
 │   │       └── __init__.py
-│   ├── main.py                       # Orquestador principal y configuración ASGI
-│   ├── requirements.txt              # Registro de dependencias de Python
-│   ├── .env.example                  # Plantilla de variables de entorno públicas
-│   └── .env                          # Variables de entorno reales (IGNORADO EN GIT)
+│   ├── main.py                       # Orquestador principal y enrutador global
+│   ├── requirements.txt              # Registro de dependencias
+│   ├── .env.example                  # Plantilla de variables públicas (El mapa del tesoro)
+│   └── .env                          # Variables reales (IGNORADO EN GIT)
 │
 ├── frontend/                          # Interfaz de Usuario (React 19 + Vite)
 │   ├── eslint.config.js              # Reglas de linting estático
 │   ├── index.html                    # Entrypoint del DOM
 │   ├── package.json                  # Dependencias de Node.js y scripts
-│   ├── package-lock.json             # Árbol de dependencias determinista (bloqueado)
+│   ├── package-lock.json             # Árbol de dependencias determinista
 │   ├── README.md                     # Documentación específica del frontend
-│   ├── vite.config.js                # Builder y proxy de red (CORS bypass)
+│   ├── vite.config.js                # Builder y proxy de red
 │   ├── src/                          # Código fuente React
 │   │   ├── App.jsx                   # Enrutador principal (React Router)
 │   │   ├── AuthContext.jsx           # Estado global de sesión y persistencia JWT
 │   │   ├── index.css                 # Variables globales
-│   │   ├── main.jsx                  # Montaje del DOM (inyección en root)
+│   │   ├── main.jsx                  # Montaje del DOM
 │   │   ├── ProtectedRoute.jsx        # Guardia de navegación por roles (RBAC)
 │   │   ├── assets/                   # Recursos multimedia compilables por Vite
 │   │   │   ├── hero.png
 │   │   │   ├── react.svg
 │   │   │   └── vite.svg
-│   │   └── pages/                    # Vistas completas encapsuladas
-│   │       └── Login/
-│   │           ├── Login.jsx         # Formulario de acceso y redirección dinámica
-│   │           └── Login.module.css  # Estilos aislados (Modules)
+│   │   ├── components/               # Bloques de UI reutilizables (Legos)
+│   │   │   └── MentorSkillForm.jsx   # Formulario de inyección de habilidades
+│   │   └── pages/                    # Vistas completas encapsuladas (Las naves)
+│   │       ├── Login/
+│   │       │   ├── Login.jsx         
+│   │       │   └── Login.module.css  
+│   │       ├── MentorDashboard/
+│   │       │   └── MentorDashboard.jsx 
+│   │       └── CompleteProfile/
+│   │           └── CompleteProfile.jsx 
 │   └── public/                       # Assets estáticos servidos directamente
 │       ├── favicon.svg
 │       └── icons.svg
