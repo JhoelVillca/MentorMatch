@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Text, Boolean, ForeignKey, Integer, Numeric, Time, text
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import TIMESTAMP
 from app.db.database import Base
 
 class Rol(Base):
@@ -26,6 +25,9 @@ class PerfilMentor(Base):
     biografia_profesional = Column(Text)
     estado_verificacion = Column(String(20), server_default="pendiente") # pendiente, verificado, rechazado
     url_linkedin = Column(String(500))
+    
+    # Relaciones
+    habilidades = relationship("MentorHabilidad", back_populates="mentor", cascade="all, delete-orphan")
 
 class PaqueteMentor(Base):
     __tablename__ = "paquetes_mentor"
@@ -52,3 +54,94 @@ class TransaccionPago(Base):
     estado_pago = Column(String(20), server_default="procesando")
     url_recibo_externo = Column(String(500))
 
+class CategoriaHabilidad(Base):
+    __tablename__ = "categorias_habilidad"
+    id_categoria = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    nombre_categoria = Column(String(100), unique=True, nullable=False)
+    descripcion = Column(Text)
+
+    # Relaciones
+    habilidades = relationship("Habilidad", back_populates="categoria", cascade="all, delete-orphan")
+
+class Habilidad(Base):
+    __tablename__ = "habilidades"
+    id_habilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_categoria = Column(UUID(as_uuid=True), ForeignKey("categorias_habilidad.id_categoria", ondelete="RESTRICT"))
+    nombre_habilidad = Column(String(100), unique=True, nullable=False)
+    validada_por_admin = Column(Boolean, server_default="false")
+
+    # Relaciones
+    categoria = relationship("CategoriaHabilidad", back_populates="habilidades")
+    mentores = relationship("MentorHabilidad", back_populates="habilidad", cascade="all, delete-orphan")
+
+class MentorHabilidad(Base):
+    __tablename__ = "mentor_habilidades"
+    __table_args__ = (UniqueConstraint('id_mentor', 'id_habilidad', name='_mentor_habilidad_uc'),)
+    id_mentor_habilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"), nullable=False)
+    id_habilidad = Column(UUID(as_uuid=True), ForeignKey("habilidades.id_habilidad", ondelete="CASCADE"), nullable=False)
+    anios_experiencia = Column(Integer, nullable=False)
+    nivel = Column(String(50), nullable=False) # ej. Basico, Intermedio, Avanzado
+    
+    # Relaciones
+    mentor = relationship("PerfilMentor", back_populates="habilidades")
+    habilidad = relationship("Habilidad", back_populates="mentores")
+
+class Administrador(Base):
+    __tablename__ = "administradores"
+    id_admin = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), unique=True)
+    nivel_privilegio = Column(Integer, server_default=text("1"), nullable=False)
+    departamento_asignado = Column(String(100))
+
+class DisponibilidadMentor(Base):
+    __tablename__ = "disponibilidad_mentor"
+    id_disponibilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"))
+    dia_semana = Column(Integer, nullable=False) # 1=Lunes, 7=Domingo
+    hora_inicio_utc = Column(Time, nullable=False)
+    hora_fin_utc = Column(Time, nullable=False)
+
+class Sesion(Base):
+    __tablename__ = "sesiones"
+    id_sesion = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_contrato = Column(UUID(as_uuid=True), ForeignKey("contratos_mentoria.id_contrato", ondelete="CASCADE"))
+    fecha_hora_inicio_utc = Column(TIMESTAMP(timezone=True), nullable=False)
+    fecha_hora_fin_utc = Column(TIMESTAMP(timezone=True), nullable=False)
+    estado_sesion = Column(String(20), server_default="programada")
+    url_videollamada = Column(String(500))
+    notas_internas = Column(Text)
+
+class ResenaMentor(Base):
+    __tablename__ = "resenas_mentor"
+    id_resena = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_contrato = Column(UUID(as_uuid=True), ForeignKey("contratos_mentoria.id_contrato", ondelete="CASCADE"), unique=True)
+    calificacion_estrellas = Column(Integer, nullable=False)
+    comentario_texto = Column(Text)
+    fecha_publicacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    reportada = Column(Boolean, server_default=text("false"))
+
+class AuditoriaAdministrativa(Base):
+    __tablename__ = "auditoria_administrativa"
+    id_auditoria = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_admin = Column(UUID(as_uuid=True), ForeignKey("administradores.id_admin", ondelete="SET NULL"))
+    accion_realizada = Column(String(255), nullable=False)
+    tabla_afectada = Column(String(100), nullable=False)
+    id_registro_afectado = Column(UUID(as_uuid=True))
+    fecha_accion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+
+class SalaChat(Base):
+    __tablename__ = "salas_chat"
+    id_sala = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_mentee = Column(UUID(as_uuid=True), ForeignKey("perfil_mentee.id_mentee", ondelete="CASCADE"))
+    id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"))
+    fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+
+class MensajeChat(Base):
+    __tablename__ = "mensajes_chat"
+    id_mensaje = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_sala = Column(UUID(as_uuid=True), ForeignKey("salas_chat.id_sala", ondelete="CASCADE"))
+    id_remitente = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"))
+    contenido_texto = Column(Text, nullable=False)
+    leido = Column(Boolean, server_default=text("false"))
+    fecha_envio = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
