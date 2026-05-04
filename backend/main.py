@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
-from app.api import auth, admin, profiles # Importaremos estos a continuación
-from app.models import usuarios, main_models # Carga los modelos para SQLAlchemy
+# 1. Agregamos "paquetes" a la importación de la API
+from app.api import auth, admin, profiles, paquetes 
+from app.models import usuarios, main_models 
 
-# Creamos las tablas en la DB (Docker ya lo hace, pero esto es un seguro de vida)
+# Creamos las tablas en la DB
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -26,6 +27,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(profiles.router)
+# 2. Registramos el nuevo módulo de paquetes para la Tarea B
+app.include_router(paquetes.router, prefix="/api/paquetes", tags=["Paquetes"])
 
 @app.get("/", tags=["Root"])
 def read_root():
