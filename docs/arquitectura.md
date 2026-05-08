@@ -12,7 +12,7 @@ MentorMatch/
 ├── docs/                              # Documentación del proyecto
 │   ├── arquitectura.md               # Este archivo
 │   ├── documentoVision.md            # Visión y alcance
-│   └── spec.md                       # SDD (Software Design Document)
+│   └── spec.md                       # SDD (Software Design Document) archivo de verdad absoluta
 │
 ├── backend/                           # Servidor API (FastAPI + Python)
 │   ├── app/

@@ -1,234 +1,309 @@
 ## Descripción
-Plataforma de e-learning que se enfoca en dar mentoria a alguien que desea aprender alguna habilidad o aprender sobre un tema a los que denominamos **mentee** y aquellos que dan **mentor** que recibiran pagos de mentee a cambio de su mentoria.
 
-## Stack Tecnológico 
+Plataforma de e-learning enfocada en conectar a estudiantes (**mentees**) que desean aprender una habilidad con expertos (**mentores**) que ofrecen enseñanza personalizada a cambio de una tarifa.
+
+## Stack Tecnológico
+
 * **Frontend:** React 19, Vite, Tailwind CSS, React Router.
 * **Backend:** Python 3, FastAPI, SQLAlchemy, JWT.
 * **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
 * **Infraestructura:** Docker & Docker Compose.
 
-## Estructura del Proyecto
-Para conocer la estructura completa de directorios y el propósito de cada archivo importante, consulta [docs/arquitectura.md](docs/arquitectura.md).
-
 ## Documentación
-- [Arquitectura y Estructura](docs/arquitectura.md) - Organización de directorios y archivos
-- [Documento de Visión](docs/documentoVision.md) - Objetivos y requerimientos del proyecto
-- [Especificaciones Técnicas](docs/spec.md) - Detalles técnicos y requerimientos, fuente de verdad (spec drive dev)
 
-## Guia de instalacion
+* [Arquitectura y Estructura](./docs/arquitectura.md) - Organización de directorios y archivos.
+* [Documento de Visión](./docs/documentoVision.md) - Objetivos y requerimientos del proyecto.
+* [Especificaciones Técnicas](./docs/spec.md) - Detalles técnicos y reglas de negocio.
 
-### 1. Levantar la Base de Datos
-Se debe tener instalado Docker desktop y corriendo. y en la terminal dentro de la carpeta principal (donde se encuentra docker-compose.yml) ejecutas:
+---
 
-```bash
-docker compose up -d
-```
+## FASE 1: Guía de Instalación y Despliegue Local
 
-*Esto descargará Postgres y ejecutará automáticamente el script `database/schema_init.sql`.*
+Ejecuta esta secuencia estrictamente en este orden **la primera vez** que configures el proyecto en tu máquina.
 
-### 2. Configurar el Backend (API)
-```bash
-cd backend
-```
-```bash
-python -m venv venv
-```
-```bash
-source venv/Scripts/activate
-```
-```bash
-cp .env.example .env
-```
-rejusten .env de acuerdo a sus credenciales...
+### 1. Clonación del Repositorio
 
-```bash
-pip install -r requirements.txt
-```
-```bash
-uvicorn main:app --reload
-```
-*La API corriendo en: http://localhost:8000*
+Descarga el código fuente a tu máquina.
 
-### 3. Configurar el Frontend (React)
-Abre otra terminal:
-```bash
-cd frontend
-```
-```bash
-npm install
-```
-```bash
-npm run dev
-```
-*La interfaz va a estar corriendo en: http://localhost:5173*
-
-
---- 
-## Guía Estándar de Colaboración en el Repositorio
-
-### 1. Clonación e Inicio
-
-Clonar el repositorio en tu máquina local.
 ```bash
 git clone https://github.com/JhoelVillca/MentorMatch.git
 ```
 
-Ingresar al directorio raíz del proyecto.
+Ingresa al directorio raíz del proyecto.
+
 ```bash
 cd MentorMatch
 ```
 
-**Ojo:** Asegúrate de tener la aplicación de Docker (Docker Desktop) abierta y corriendo en tu sistema antes del siguiente paso.
+### 2. Definición del Entorno (Crítico)
 
-Levantar la infraestructura de contenedores en segundo plano.
+**Ojo:** El sistema no funcionará sin credenciales, y si usas claves por defecto, funciona, pero es mejor usar esto.
+
+Copia la plantilla para crear tu archivo local:
+
 ```bash
-docker compose up -d
+cp backend/.env.example backend/.env
 ```
 
-### 2. Configuración del Backend
+Genera una clave criptográfica segura para las sesiones de usuario ejecutando esto en tu terminal (si tienes huevos):
 
-Ingresar al directorio del backend.
+```bash
+openssl rand -hex 32
+```
+
+*(Copia la cadena de 64 caracteres que te devolverá la terminal).*
+
+Abre tu editor de código y edita el archivo `backend/.env`.
+
+1. Busca la línea `SECRET_KEY=una_clave_secreta_muy_larga_y_segura`.
+2. Reemplaza ese valor por la cadena que acabas de copiar.
+3. Si ya tienes PostgreSQL instalado en tu máquina, cambia `POSTGRES_PORT=5432` a `POSTGRES_PORT=5433` y ajusta el puerto en la `DATABASE_URL` para evitar colisiones y agrega las configuraciones al que desees. y guardalos
+
+* **Nota:** Para desarrollo local, las credenciales falsas (`tu_usuario_aqui`) funcionan perfectamente. pero mejor si lo cambias.
+
+### 3. Aprovisionamiento de la Base de Datos
+
+Asegúrate de tener la aplicación **Docker Desktop** abierta. Luego, levanta la base de datos inyectando el archivo que acabamos de crear.
+
+```bash
+docker compose --env-file backend/.env up -d
+```
+
+*Espera a que la terminal diga `Started`. Esto significa que el contenedor está corriendo en segundo plano.*
+
+### 4. Configuración del Backend (API)
+
+Ingresa a la carpeta del servidor.
+
 ```bash
 cd backend
 ```
 
-Crear el entorno virtual para aislar las dependencias de Python del resto de tu sistema.
+Crea un "entorno virtual". Esto es una burbuja aislada para que las librerías de este proyecto no rompan el Python de tu computadora.
+
 ```bash
 python -m venv venv
 ```
 
-Activar el entorno virtual (Usuarios de **Windows** usando Git Bash).
+Activa la burbuja (Entorno Virtual) en **Windows** usando Git Bash:
+
 ```bash
 source venv/Scripts/activate
 ```
-**Ojo:** Si usas **Linux o macOS**, el comando de activación es diferente: `source venv/bin/activate`.
 
-Instalar los requerimientos del proyecto.
+*(Si usas **Linux/macOS**, el comando es: `source venv/bin/activate`)*
+
+Instala las librerías necesarias.
+
 ```bash
 pip install -r requirements.txt
 ```
 
-Retornar al directorio principal.
-```bash
-cd ..
-```
+Enciende el motor del backend.
 
-### 3. Configuración del Frontend
-
-Ingresar al directorio del frontend.
-```bash
-cd frontend
-```
-
-Instalar las dependencias de Node.js.
-```bash
-npm install
-```
-
-Retornar al directorio principal.
-```bash
-cd ..
-```
-
-### 4. Estándares de Ramas y Control de Versiones
-Asegurense de estar en el main, El main es Sagrado, nunca toquen codigo aqui.
-```bash
-git checkout main
-```
-
-Descargar la última versión del código desde el servidor.
-```bash
-git pull origin main
-```
-
-Crear una nueva rama para tu tarea y cambiar a ella automáticamente.
-```bash
-git checkout -b <tipo>/<nombre-descriptivo>
-```
-
-**Ojo:** No uses nombres aleatorios para las ramas. Debes seguir esta convención:
-
-| Prefijo de Rama | Cuándo usarlo | Ejemplo |
-| :--- | :--- | :--- |
-| `feature/` | Para agregar nuevas características o pantallas. | `feature/login-ui` |
-| `fix/` | Para solucionar errores o bugs en el código. | `fix/error-conexion-bd` |
-| `docs/` | Para actualizar documentación o README. | `docs/guia-instalacion` |
-
-Abrir el proyecto en Visual Studio Code.
-```bash
-code .
-```
-
-
-y te pones a hacer tu parte.
-
-### 5. Ejecución del Entorno de Desarrollo
-
-**Ojo:** Necesitas dos terminales abiertas al mismo tiempo para correr tanto como el backend como el frontend.
-
-En la Terminal 1 (Ubicada en `MentorMatch/backend` con el entorno virtual activado), iniciar el servidor:
 ```bash
 uvicorn main:app --reload
 ```
 
-En la Terminal 2 (Ubicada en `MentorMatch/frontend`), iniciar la interfaz:
+*Tu terminal quedará bloqueada mostrando logs. La API ahora vive en: [http://127.0.0.1:8000*](http://127.0.0.1:8000)
+
+### 5. Configuración del Frontend (React)
+
+Abre una **nueva pestaña o ventana en tu terminal** (deja el backend corriendo en la primera).
+Asegúrate de estar en la raíz de `MentorMatch/` y entra al frontend.
+
+```bash
+cd frontend
+
+```
+
+Instala los paquetes de la interfaz. *Este paso puede tardar un minuto.*
+
+```bash
+npm install
+
+```
+
+Enciende la interfaz.
+
 ```bash
 npm run dev
+
 ```
 
-### 6. Guardar y Subir Cambios (Commits)
+*Abre tu navegador en: http://localhost:5173*
 
-en `MentorMatch/` revisen el estado para ver todo lo que modificaron con
-```bash
-git status
-``` 
+---
 
-En la terminal en `MentorMatch/`, preparar todos los archivos modificados.
-```bash
-git add .
-```
+## FASE 2: Rutina Diaria de Colaboración
 
-Empaquetar los cambios en el historial local usando **Conventional Commits**.
-```bash
-git commit -m "<tipo>: <descripción breve en minúsculas>"
-```
+Una vez que tienes el proyecto instalado, esta es la rutina obligatoria para escribir código nuevo.
 
-**Ojo:** El mensaje del commit debe seguir estrictamente este estándar:
+### 1. Sincronización Base
 
-| Tipo de Commit | Significado | Ejemplo de Comando |
-| :--- | :--- | :--- |
-| `feat:` | Nueva funcionalidad. | `git commit -m "feat: implementado CRUD de productos"` |
-| `fix:` | Corrección de un bug. | `git commit -m "fix: corregido cálculo de descuentos"` |
-| `style:` | Formateo de código (espacios, comas), no afecta la lógica. | `git commit -m "style: formateo de código en la vista perfil"` |
-| `refactor:` | Reestructuración de código sin agregar funciones ni arreglar bugs. | `git commit -m "refactor: optimización de la consulta SQL"` |
+La rama `main` es el código de producción. **Nunca** escribas código directamente aquí.
 
-Subir tu rama local al repositorio remoto en GitHub.
-```bash
-git push -u origin <nombre-de-tu-rama>
-```
+Asegúrate de estar en la rama principal:
 
-despues del comando, la terminal mostrará un enlace. haz click y te mandara a GitHub para abrir un **Pull Request**. pongan una descripción técnica y detallada de lo que modificaste o hiziste y haz clic en "Create Pull Request". 
-
-### 7. Limpieza post-aprobación
-
-Una vez que tu código haya sido revisado y fusionado yo le dare el boton de merge en GitHub, haces esto en tu terminal local:
-
-Cambiar de vuelta a la rama principal.
 ```bash
 git checkout main
+
 ```
 
-Actualizar tu repositorio local con los cambios ya fusionados.
+Descarga las últimas actualizaciones que hayan subido tus compañeros:
+
 ```bash
 git pull origin main
+
 ```
 
-Eliminar tu rama de trabajo localmente (ya no la necesitas).
+### 2. Creación de tu Rama de Trabajo
+
+Crea una copia paralela (rama) exclusiva para lo que vas a programar.
+
+```bash
+git checkout -b <tipo>/<nombre-descriptivo>
+
+```
+
+**Ojo:** Usa esta convención estricta para el `<tipo>`:
+
+| Prefijo | Cuándo usarlo | Ejemplo |
+| --- | --- | --- |
+| `feature/` | Para agregar nuevas pantallas o funcionalidades. | `feature/login-ui` |
+| `fix/` | Para arreglar un error que rompe el sistema. | `fix/error-conexion` |
+| `docs/` | Para modificar texto, manuales o el README. | `docs/guia-instalacion` |
+
+### 3. Desarrollo
+
+Abre tu editor, programa, guarda tus archivos y prueba que todo funcione localmente.
+
+```bash
+code .
+
+```
+
+### 4. Guardar Cambios (Commits)
+
+Revisa qué archivos modificaste:
+
+```bash
+git status
+
+```
+
+Prepara todos los archivos modificados para ser guardados:
+
+```bash
+git add .
+
+```
+
+Empaqueta tus cambios con un mensaje claro siguiendo el estándar **Conventional Commits**:
+
+```bash
+git commit -m "<tipo>: <descripción breve en minúsculas>"
+
+```
+
+*Ejemplo: `git commit -m "feat: agregada validacion de email en login"*`
+
+### 5. Subir al Servidor (Pull Request)
+
+Sube tu rama a GitHub:
+
+```bash
+git push -u origin <nombre-de-tu-rama>
+
+```
+
+La terminal te dará un enlace HTTP. Haz clic (o cópialo en tu navegador). Te llevará a GitHub para crear un **Pull Request (PR)**. Llena la descripción explicando qué hiciste y envíalo.
+
+### 6. Revisión y Aprobación
+
+**Espera.** El administrador revisará tu código.
+
+* Si hay errores, te dejará comentarios en GitHub. Deberás volver a tu código, arreglarlo, hacer `git add .`, `git commit` y `git push` de nuevo.
+* Si todo está perfecto, el administrador hará el **Merge** (fusión) a la rama `main`.
+
+### 7. Limpieza Local (Post-Merge)
+
+Una vez que el administrador fusionó tu código en GitHub, debes limpiar tu máquina.
+
+Regresa a la rama principal:
+
+```bash
+git checkout main
+
+```
+
+Descarga el código fusionado (que ahora incluye tu trabajo y el de otros):
+
+```bash
+git pull origin main
+
+```
+
+Borra tu rama local (ya cumplió su propósito):
+
 ```bash
 git branch -d <nombre-de-tu-rama>
+
 ```
 
-Purgar tu árbol de referencias local para eliminar el rastro de la rama remota borrada.
+Limpia la caché de ramas viejas:
+
 ```bash
 git fetch -p
+
 ```
+
+---
+
+## FASE 3: Protocolo de Colisiones (Conflictos de Merge)
+
+**¿Qué es un conflicto?** Ocurre cuando tú y otro compañero modifican exactamente la misma línea del mismo archivo en ramas distintas. El sistema operativo no puede adivinar qué versión es la correcta, así que pausa el proceso y te pide intervención manual.
+
+Si al intentar actualizar tu código recibes un mensaje de **"Merge conflict"**, haz lo siguiente:
+
+**1. Trae los cambios conflictivos a tu rama:**
+Asegúrate de estar en tu rama de trabajo (ej. `feature/login`) e intenta traer lo que hay en main:
+
+```bash
+git pull origin main
+
+```
+
+*La terminal te dirá en rojo qué archivos tienen conflictos (CONFLICT: Merge conflict in...).*
+
+**2. Abre Visual Studio Code:**
+Abre los archivos marcados con conflicto. Verás bloques de código rodeados por `<<<<<<< HEAD` y `>>>>>>> main`.
+
+**3. Resuelve la colisión:**
+VS Code te dará botones encima del conflicto:
+
+* *Accept Current Change* (Mantener lo tuyo)
+* *Accept Incoming Change* (Mantener lo de tu compañero)
+* *Accept Both Changes* (Mantener ambos)
+
+Haz clic en la opción correcta (o borra los símbolos y ajusta el código manualmente). Guarda el archivo.
+
+**4. Sella la resolución:**
+Una vez resueltos todos los archivos, dile a Git que el conflicto terminó:
+
+```bash
+git add .
+
+```
+
+```bash
+git commit -m "fix: resuelto conflicto de fusion en main"
+
+```
+
+```bash
+git push
+
+```
+
+*Listo. Tu Pull Request en GitHub ahora estará libre de conflictos y listo para ser aprobado.*
