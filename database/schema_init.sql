@@ -179,3 +179,38 @@ CREATE INDEX idx_mensajes_historial ON Mensajes_Chat(id_sala, fecha_envio DESC);
 
 ALTER TABLE Transacciones_Pago 
 ADD COLUMN url_recibo_externo VARCHAR(500);
+
+-- para agregar usuarios de prueba
+
+INSERT INTO Roles (id_rol, nombre_rol, descripcion_rol) VALUES
+('11111111-1111-1111-1111-111111111111', 'admin', 'Privilegios de superusuario'),
+('22222222-2222-2222-2222-222222222222', 'mentor', 'Maestro del marketplace'),
+('33333333-3333-3333-3333-333333333333', 'mentee', 'Aprendiz base')
+ON CONFLICT (nombre_rol) DO NOTHING;
+
+
+INSERT INTO Usuarios (id_usuario, email, password, estado_cuenta) VALUES
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@test.com', crypt('123456', gen_salt('bf')), 'activo'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'mentor@test.com', crypt('123456', gen_salt('bf')), 'activo'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', 'mentee@test.com', crypt('123456', gen_salt('bf')), 'activo')
+ON CONFLICT (email) DO NOTHING;
+
+-- 3. Acoplando Usuarios con sus Roles
+INSERT INTO Usuario_Roles (id_usuario, id_rol) VALUES
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', '33333333-3333-3333-3333-333333333333')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO Administradores (id_admin, id_usuario, nivel_privilegio, departamento_asignado) VALUES
+(gen_random_uuid(), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5, 'Root Operations')
+ON CONFLICT (id_usuario) DO NOTHING;
+
+INSERT INTO Perfil_Mentor (id_mentor, id_usuario, nombre_completo, biografia_profesional, estado_verificacion) VALUES
+(gen_random_uuid(), 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'John Doe (Mentor)', 'Experto inyectado por SQL', 'verificado')
+ON CONFLICT (id_usuario) DO NOTHING;
+
+
+INSERT INTO Perfil_Mentee (id_mentee, id_usuario, nombre_completo, biografia_corta) VALUES
+(gen_random_uuid(), 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Jane Doe (Mentee)', 'Aprendiz inyectado por SQL')
+ON CONFLICT (id_usuario) DO NOTHING;
