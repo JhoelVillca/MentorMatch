@@ -5,11 +5,11 @@
 ```text
 MentorMatch/
 │
-├── README.md                          # Guía de instalación
+├── README.md                          # Guía de supervivencia e instalación
 ├── docker-compose.yml                 # Orquestación en docker para Postgres
 ├── .gitignore                         # Muro de fuego contra basura y binarios
 │
-├── docs/                              # Documentación del proyecto
+├── docs/                              #  Documentación del proyecto
 │   ├── arquitectura.md               # Este archivo
 │   ├── documentoVision.md            # Visión y alcance
 │   └── spec.md                       # SDD (Software Design Document) archivo de verdad absoluta
@@ -21,6 +21,8 @@ MentorMatch/
 │   │   │   ├── __init__.py
 │   │   │   ├── admin.py              # CRUD de administración de usuarios
 │   │   │   ├── auth.py               # Enrutador de Login/Signup 
+│   │   │   ├── deps.py               # Inyección de dependencias centrales (Seguridad/JWT)
+│   │   │   ├── paquetes.py           # Endpoints de paquetes de mentoría (CRUD)
 │   │   │   ├── profiles.py           # Vistas de Mentees y Mentores
 │   │   │   └── skills.py             # Lógica de taxonomía de habilidades (N+1 parchado)
 │   │   ├── core/                     # Núcleo de configuraciones
@@ -39,6 +41,7 @@ MentorMatch/
 │   │   │   └── user_repository.py    # Consultas I/O directas a Postgres para usuarios
 │   │   ├── schemas/                  # DTOs: Validación de datos de entrada/salida
 │   │   │   ├── __init__.py
+│   │   │   ├── paquete_schema.py     # Esquemas de serialización de paquetes
 │   │   │   ├── skills.py             # Esquemas de serialización de habilidades
 │   │   │   └── user.py               # Esquemas de serialización de usuarios (Pydantic)
 │   │   └── services/                 # Lógica de negocio dura (El Cerebro)
@@ -69,13 +72,15 @@ MentorMatch/
 │   │   ├── components/               # Bloques de UI reutilizables (Legos)
 │   │   │   └── MentorSkillForm.jsx   # Formulario de inyección de habilidades
 │   │   ├── pages/                    # Vistas completas encapsuladas (Las naves)
+│   │   │   ├── CompleteProfile/
+│   │   │   │   └── CompleteProfile.jsx 
 │   │   │   ├── Login/
-│   │   │   │   ├── Login.jsx         # Vista Tonta (Dumb Component, sin lógica de red)
+│   │   │   │   ├── Login.jsx         # Vista sin lógica de red
 │   │   │   │   └── Login.module.css  
 │   │   │   ├── MentorDashboard/
 │   │   │   │   └── MentorDashboard.jsx 
-│   │   │   └── CompleteProfile/
-│   │   │       └── CompleteProfile.jsx 
+│   │   │   └── Paquetes/             # Panel de gestión de paquetes del mentor
+│   │   │       └── PaquetesPage.jsx
 │   │   └── services/                 # Capa de Red (Comportamiento)
 │   │       └── authService.js        # Abstracción de Web APIs (Fetch) y serialización HTTP
 │   └── public/                       # Assets estáticos servidos directamente
