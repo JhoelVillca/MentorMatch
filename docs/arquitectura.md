@@ -12,34 +12,38 @@ MentorMatch/
 ├── docs/                              # Documentación del proyecto
 │   ├── arquitectura.md               # Este archivo
 │   ├── documentoVision.md            # Visión y alcance
-│   └── spec.md                       # SDD (Software Design Document)
+│   └── spec.md                       # SDD (Software Design Document) archivo de verdad absoluta
 │
 ├── backend/                           # Servidor API (FastAPI + Python)
 │   ├── app/
 │   │   ├── __init__.py               # Marcador de paquete Python
-│   │   ├── api/                      # Controladores y Endpoints REST
+│   │   ├── api/                      # Controladores y Endpoints REST (Capa Interfaz/Mesero)
 │   │   │   ├── __init__.py
 │   │   │   ├── admin.py              # CRUD de administración de usuarios
-│   │   │   ├── auth.py               # Lógica de Login/Signup, roles y JWT
+│   │   │   ├── auth.py               # Enrutador de Login/Signup 
 │   │   │   ├── profiles.py           # Vistas de Mentees y Mentores
 │   │   │   └── skills.py             # Lógica de taxonomía de habilidades (N+1 parchado)
 │   │   ├── core/                     # Núcleo de configuraciones
 │   │   │   ├── __init__.py
 │   │   │   └── security.py           # Algoritmos criptográficos y firma de tokens
-│   │   ├── db/                       # Capa de persistencia
+│   │   ├── db/                       # Capa de persistencia y Conexión
 │   │   │   ├── __init__.py
-│   │   │   └── database.py           # Motor de SQLAlchemy y lectura del .env
+│   │   │   └── database.py           # Motor SQLAlchemy y generador de descriptores get_db()
 │   │   ├── models/                   # ORM: Tablas SQL mapeadas a clases Python
 │   │   │   ├── __init__.py
 │   │   │   ├── associations.py       # Tablas intermedias puras
 │   │   │   ├── main_models.py        # Tablas de negocio (perfiles, paquetes, sesiones, habilidades)
 │   │   │   └── usuarios.py           # Núcleo de identidades
+│   │   ├── repositories/             # Capa de Acceso a Datos (El Músculo)
+│   │   │   ├── __init__.py
+│   │   │   └── user_repository.py    # Consultas I/O directas a Postgres para usuarios
 │   │   ├── schemas/                  # DTOs: Validación de datos de entrada/salida
 │   │   │   ├── __init__.py
 │   │   │   ├── skills.py             # Esquemas de serialización de habilidades
 │   │   │   └── user.py               # Esquemas de serialización de usuarios (Pydantic)
-│   │   └── services/                 # Lógica de negocio dura
-│   │       └── __init__.py
+│   │   └── services/                 # Lógica de negocio dura (El Cerebro)
+│   │       ├── __init__.py
+│   │       └── auth_service.py       # Orquestación de criptografía, JWT y reglas de negocio
 │   ├── main.py                       # Orquestador principal y enrutador global
 │   ├── requirements.txt              # Registro de dependencias
 │   ├── .env.example                  # Plantilla de variables públicas (El mapa del tesoro)
@@ -64,14 +68,16 @@ MentorMatch/
 │   │   │   └── vite.svg
 │   │   ├── components/               # Bloques de UI reutilizables (Legos)
 │   │   │   └── MentorSkillForm.jsx   # Formulario de inyección de habilidades
-│   │   └── pages/                    # Vistas completas encapsuladas (Las naves)
-│   │       ├── Login/
-│   │       │   ├── Login.jsx         
-│   │       │   └── Login.module.css  
-│   │       ├── MentorDashboard/
-│   │       │   └── MentorDashboard.jsx 
-│   │       └── CompleteProfile/
-│   │           └── CompleteProfile.jsx 
+│   │   ├── pages/                    # Vistas completas encapsuladas (Las naves)
+│   │   │   ├── Login/
+│   │   │   │   ├── Login.jsx         # Vista Tonta (Dumb Component, sin lógica de red)
+│   │   │   │   └── Login.module.css  
+│   │   │   ├── MentorDashboard/
+│   │   │   │   └── MentorDashboard.jsx 
+│   │   │   └── CompleteProfile/
+│   │   │       └── CompleteProfile.jsx 
+│   │   └── services/                 # Capa de Red (Comportamiento)
+│   │       └── authService.js        # Abstracción de Web APIs (Fetch) y serialización HTTP
 │   └── public/                       # Assets estáticos servidos directamente
 │       ├── favicon.svg
 │       └── icons.svg
@@ -79,4 +85,3 @@ MentorMatch/
 └── database/                          # Inicialización de Base de Datos
     └── schema_init.sql               # Script DDL inyectado al contenedor Postgres
 ```
-

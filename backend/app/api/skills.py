@@ -5,7 +5,7 @@ from typing import List
 import jwt
 from sqlalchemy.orm import joinedload
 
-from app.db.database import SessionLocal
+from app.db.database import get_db
 from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor
 from app.models.usuarios import Usuario
 from app.schemas.skills import CategoriaResponse, MentorSkillCreate
@@ -15,12 +15,6 @@ router = APIRouter(prefix="/skills", tags=["Habilidades"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     try:
