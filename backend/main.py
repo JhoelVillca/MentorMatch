@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.api import paquetes
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.api import auth, admin, profiles, skills # Importaremos estos a continuación
@@ -27,6 +28,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(profiles.router)
 app.include_router(skills.router)
+app.include_router(paquetes.router)
 
 @app.get("/", tags=["Root"])
 def read_root():
