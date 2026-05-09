@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext'; 
-import styles from './Login.module.css'; // Importación mágica
+import { loginAPI } from '../../services/authService'; // <-- Inyectamos el Músculo de red
+import styles from './Login.module.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,27 +17,11 @@ export default function Login() {
     setError('');
 
     try {
-      // Endpoint corregido hacia la arquitectura modular de FastAPI
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          username: email,
-          password: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Credenciales malas. Intenta de nuevo.');
-      }
+      //le mandamos al servicio
+      const data = await loginAPI(email, password);
 
       login(data.access_token);
       
-      // El semáforo de redirección
       switch(data.role) {
         case 'admin':
           navigate('/admin');
@@ -49,7 +34,6 @@ export default function Login() {
           navigate('/mentee');
           break;
       }
-
     } catch (err) {
       setError(err.message);
     }
