@@ -3,7 +3,7 @@ import { createContext, useContext, useState } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('mentor_token'));
 
   // Esta función es la que llama tu Login.jsx cuando FastAPI responde con 200 OK
   const login = (newToken) => {

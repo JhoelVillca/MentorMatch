@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext'; 
-import PaquetesMentor from './components/Paquetes/PaquetesMentor';
 import ProtectedRoute from './ProtectedRoute'; 
 import Login from './pages/Login/Login';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
 
-// Componentes temporales (puedes moverlos a sus propios archivos luego)
+// SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
+import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
+
+// Componentes temporales
 const AdminDashboard = () => <h1 className="text-white text-center mt-10">Admin Dashboard</h1>;
 const MenteeDashboard = () => <h1 className="text-white text-center mt-10">Mentee Dashboard</h1>;
 
@@ -27,8 +29,9 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
             <Route path="/mentor" element={<MentorDashboard />} />
             <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
-            {/* NUEVA RUTA INTEGRADA */}
-            <Route path="/mentor/paquetes" element={<PaquetesMentor />} />
+            
+            {/* RUTA ACTUALIZADA PARA USAR LA PÁGINA OFICIAL */}
+            <Route path="/mentor/paquetes" element={<PaquetesPage />} />
           </Route>
 
           {/* Rutas de Mentee (Alumno) */}

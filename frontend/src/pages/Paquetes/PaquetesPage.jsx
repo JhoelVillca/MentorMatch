@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../AuthContext'; // Importación vital para el estado global del JWT
 
 const PaquetesPage = () => {
     const [paquetes, setPaquetes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Extraemos el token del estado global reactivo
+    const { token } = useAuth(); 
     
     const [nuevoPaquete, setNuevoPaquete] = useState({
         titulo_paquete: '',
@@ -12,23 +16,20 @@ const PaquetesPage = () => {
 
     const API_URL = '/api/paquetes';
 
-    // Función crucial: Genera las cabeceras que Jhoel solicitó
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
-        };
-    };
+    // Ahora usamos el token que viene del context
+    const getAuthHeaders = () => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+    });
 
-    // 1. GET con Autorización (Resuelve la observación de la imagen)
     const fetchPaquetes = async () => {
+        if (!token) return; // Si no hay token, no intentamos peticiones muertas
         try {
             const response = await fetch(`${API_URL}/me`, {
                 method: 'GET',
-                headers: getAuthHeaders() // Se incluye el token aquí
+                headers: getAuthHeaders()
             });
-            if (!response.ok) throw new Error('No autorizado o error de servidor');
+            if (!response.ok) throw new Error('No autorizado');
             const data = await response.json();
             setPaquetes(data);
         } catch (error) {
@@ -38,16 +39,24 @@ const PaquetesPage = () => {
 
     useEffect(() => {
         fetchPaquetes();
-    }, []);
+    }, [token]); // El efecto se dispara si el token cambia (ej. cierre de sesión)
 
-    // 2. POST con Autorización
     const handleCrear = async (e) => {
         e.preventDefault();
+        
+        // Aplicando la corrección de tipos de Jhoel: 
+        // Los inputs son strings, hay que convertirlos antes de enviarlos en el JSON.
+        const payload = {
+            titulo_paquete: nuevoPaquete.titulo_paquete,
+            cantidad_horas_totales: parseInt(nuevoPaquete.cantidad_horas_totales, 10),
+            precio_total: parseFloat(nuevoPaquete.precio_total)
+        };
+
         try {
             const response = await fetch(`${API_URL}/`, {
                 method: 'POST',
-                headers: getAuthHeaders(), // También requerido para crear
-                body: JSON.stringify(nuevoPaquete) 
+                headers: getAuthHeaders(),
+                body: JSON.stringify(payload) 
             });
             
             if (response.ok) {
@@ -60,12 +69,11 @@ const PaquetesPage = () => {
         }
     };
 
-    // 3. PATCH con Autorización
     const handleToggleStatus = async (id, estadoActual) => {
         try {
             await fetch(`${API_URL}/${id}/status`, {
                 method: 'PATCH',
-                headers: getAuthHeaders(), // Requerido para modificar
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ estado_activo: !estadoActual })
             });
             fetchPaquetes();
@@ -106,7 +114,6 @@ const PaquetesPage = () => {
                 ))}
             </div>
 
-            {/* Modal de Creación simplificado */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 max-w-md w-full">
@@ -120,13 +127,13 @@ const PaquetesPage = () => {
                             />
                             <div className="grid grid-cols-2 gap-4">
                                 <input 
-                                    type="number" placeholder="Horas" required 
+                                    type="number" placeholder="Horas (Int)" required 
                                     value={nuevoPaquete.cantidad_horas_totales}
                                     className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white outline-none focus:border-indigo-500"
                                     onChange={(e) => setNuevoPaquete({...nuevoPaquete, cantidad_horas_totales: e.target.value})}
                                 />
                                 <input 
-                                    type="number" step="0.01" placeholder="Precio" required 
+                                    type="number" step="0.01" placeholder="Precio (Float)" required 
                                     value={nuevoPaquete.precio_total}
                                     className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white outline-none focus:border-indigo-500"
                                     onChange={(e) => setNuevoPaquete({...nuevoPaquete, precio_total: e.target.value})}
