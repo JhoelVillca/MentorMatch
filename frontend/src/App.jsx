@@ -9,9 +9,8 @@ import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
 
 // SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
-import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
-
-const AdminDashboard = () => <h1 className="text-white text-center mt-10">Admin Dashboard</h1>;
+import PaquetesPage from './pages/Paquetes/PaquetesPage';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (

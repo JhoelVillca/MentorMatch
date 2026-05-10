@@ -1,4 +1,4 @@
-from sqlalchemy import insert
+from sqlalchemy import func, insert, literal
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -13,6 +13,31 @@ def get_user_by_email(db: Session, email: str):
 
 def get_rol_by_nombre(db: Session, nombre_rol: str) -> Optional[Rol]:
     return db.query(Rol).filter(Rol.nombre_rol == nombre_rol).first()
+
+
+def list_users_for_admin(db: Session):
+    """SELECT usuarios: email, fecha de creación, estado y roles agregados."""
+    return (
+        db.query(
+            Usuario.email,
+            Usuario.fecha_creacion,
+            Usuario.estado_cuenta,
+            func.coalesce(
+                func.string_agg(Rol.nombre_rol, literal(", ")),
+                literal(""),
+            ).label("roles"),
+        )
+        .outerjoin(usuario_roles, Usuario.id_usuario == usuario_roles.c.id_usuario)
+        .outerjoin(Rol, usuario_roles.c.id_rol == Rol.id_rol)
+        .group_by(
+            Usuario.id_usuario,
+            Usuario.email,
+            Usuario.fecha_creacion,
+            Usuario.estado_cuenta,
+        )
+        .order_by(Usuario.fecha_creacion.desc())
+        .all()
+    )
 
 
 def get_user_role_name(db: Session, id_usuario: str) -> str:
