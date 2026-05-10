@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext'; 
 import ProtectedRoute from './ProtectedRoute'; 
 import Login from './pages/Login/Login';
+import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
 
@@ -19,6 +20,7 @@ export default function App() {
         <Routes>
           {/* Rutas Públicas */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           {/* Rutas de Administrador */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
