@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../AuthContext';
 
-const API_URL = 'http://localhost:8000/disponibilidad/';
+const API_URL = '/api/disponibilidad/';
 
 const DAYS_OF_WEEK = [
   'Lunes',
@@ -20,7 +21,7 @@ const MentorAvailabilityPanel = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem('token'); // Asumiendo que el token se guarda aquí
+  const { token } = useAuth();
 
   useEffect(() => {
     fetchAvailabilities();

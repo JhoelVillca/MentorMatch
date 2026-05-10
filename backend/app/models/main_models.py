@@ -94,13 +94,13 @@ class Administrador(Base):
     nivel_privilegio = Column(Integer, server_default=text("1"), nullable=False)
     departamento_asignado = Column(String(100))
 
-class MentorAvailability(Base):
-    __tablename__ = "mentor_availability"
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    mentor_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"))
-    dia_semana = Column(String(20), nullable=False) # ej. Lunes, Martes...
-    hora_inicio = Column(Time, nullable=False)
-    hora_fin = Column(Time, nullable=False)
+class DisponibilidadMentor(Base):
+    __tablename__ = "disponibilidad_mentor"
+    id_disponibilidad = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"))
+    dia_semana = Column(Integer, nullable=False) # 1=Lunes, 7=Domingo
+    hora_inicio_utc = Column(Time, nullable=False)
+    hora_fin_utc = Column(Time, nullable=False)
 
 
 class Sesion(Base):
