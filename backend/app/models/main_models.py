@@ -25,6 +25,7 @@ class PerfilMentor(Base):
     biografia_profesional = Column(Text)
     estado_verificacion = Column(String(20), server_default="pendiente") # pendiente, verificado, rechazado
     url_linkedin = Column(String(500))
+    url_video_presentacion = Column(String(500))
     
     # Relaciones
     habilidades = relationship("MentorHabilidad", back_populates="mentor", cascade="all, delete-orphan")
