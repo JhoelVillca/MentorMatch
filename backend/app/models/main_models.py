@@ -102,6 +102,7 @@ class DisponibilidadMentor(Base):
     hora_inicio_utc = Column(Time, nullable=False)
     hora_fin_utc = Column(Time, nullable=False)
 
+
 class Sesion(Base):
     __tablename__ = "sesiones"
     id_sesion = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
