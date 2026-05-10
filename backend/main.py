@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.api import paquetes
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
-from app.api import auth, admin, profiles, skills, disponibilidad # Importaremos estos a continuación
+from app.api import auth, admin, profiles, skills, disponibilidad, perfil # Importaremos estos a continuación
 from app.models import usuarios, main_models # Carga los modelos para SQLAlchemy
 
 
@@ -31,6 +31,7 @@ app.include_router(profiles.router)
 app.include_router(skills.router)
 app.include_router(paquetes.router)
 app.include_router(disponibilidad.router)
+app.include_router(perfil.router)
 
 @app.get("/", tags=["Root"])
 def read_root():
