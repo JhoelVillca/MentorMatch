@@ -24,10 +24,13 @@ def authenticate_user(db: Session, email: str, password: str) -> dict:
         "role": rol_name
     }
 
-def register_user(db: Session, user_data: UserCreate):
-    existing_user = user_repository.get_user_by_email(db, user_data.email)
-    if existing_user:
+def register_new_user(db: Session, user_data: UserCreate):
+    if user_repository.get_user_by_email(db, user_data.email):
         raise ValueError("Ese correo ya esta registrado.")
-        
+
+    rol_mentee = user_repository.get_rol_by_nombre(db, "mentee")
+    if not rol_mentee:
+        raise RuntimeError("Rol base 'mentee' no configurado en la base de datos.")
+
     hashed_pwd = security.get_password_hash(user_data.password)
-    return user_repository.create_user(db, user_data.email, hashed_pwd)
+    return user_repository.create_user(db, user_data.email, hashed_pwd, rol_mentee.id_rol)
