@@ -18,3 +18,19 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
             detail="No se pudo validar las credenciales",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def get_db():
+    from app.db.database import SessionLocal
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get_db)):
+    from app.models.usuarios import Usuario
+    user_id = get_current_user_id(token)
+    user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    return user
