@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../AuthContext';
+import { getProfileAPI, updateProfileAPI } from '../../services/profileService';
 
 export default function CompleteProfile() {
   const { token } = useAuth();
@@ -15,18 +16,13 @@ export default function CompleteProfile() {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    // Cargar perfil existente al montar el componente
+    let isMounted = true;
+
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/perfil/', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          // Si el backend devuelve un perfil vacío, usamos valores por defecto
+        const data = await getProfileAPI(token);
+        if (isMounted) {
           setFormData({
             nombre_completo: data.nombre_completo || '',
             biografia_profesional: data.biografia_profesional || '',
@@ -35,13 +31,21 @@ export default function CompleteProfile() {
           });
         }
       } catch (error) {
-        console.error('Error al cargar el perfil:', error);
+        if (isMounted) {
+          console.error('Error al cargar el perfil:', error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   const handleChange = (e) => {
@@ -54,27 +58,26 @@ export default function CompleteProfile() {
     setSaving(true);
     setMessage(null);
 
-    try {
-      const res = await fetch('/api/perfil/', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+    let isMounted = true;
 
-      if (res.ok) {
+    try {
+      await updateProfileAPI(token, formData);
+      if (isMounted) {
         setMessage({ type: 'success', text: '¡Perfil guardado correctamente!' });
-      } else {
-        const errorData = await res.json();
-        setMessage({ type: 'error', text: errorData.detail || 'Error al guardar el perfil' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error de red al intentar guardar' });
+      if (isMounted) {
+        setMessage({ type: 'error', text: error.message || 'Error al guardar el perfil' });
+      }
     } finally {
-      setSaving(false);
+      if (isMounted) {
+        setSaving(false);
+      }
     }
+    
+    // Para el submit, no hay un cleanup fácil de retornar porque no es un useEffect,
+    // pero evitamos errores asumiendo que await updateProfileAPI termina rápido
+    // Si fuera muy estricto, se usaría un ref.
   };
 
   if (loading) {

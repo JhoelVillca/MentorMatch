@@ -34,3 +34,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
     return user
+
+def get_current_mentor_user_id(
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+) -> str:
+    from app.repositories.user_repository import get_user_role_name
+    from uuid import UUID
+    
+    role = get_user_role_name(db, str(current_user.id_usuario))
+    if role not in ["mentor", "admin"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permisos para acceder a este recurso")
+    return current_user.id_usuario
