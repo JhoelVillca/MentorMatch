@@ -5,22 +5,21 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
-<<<<<<< HEAD
+
 import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
-=======
+
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
->>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
+
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
 
 // SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
 
-<<<<<<< HEAD
+
 const AdminDashboard = () => <h1 className="text-white text-center mt-10">Admin Dashboard</h1>;
-=======
-// Componente temporal
+
+
 const MenteeDashboard = () => <h1 className="text-white text-center mt-10">Mentee Dashboard</h1>;
->>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
 
 export default function App() {
   return (
