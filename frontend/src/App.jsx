@@ -6,6 +6,7 @@ import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
+import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
 
 // SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
@@ -39,6 +40,7 @@ export default function App() {
           {/* Rutas de Mentee (Alumno) */}
           <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
             <Route path="/mentee" element={<MenteeDashboard />} />
+            <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
           </Route>
           
           {/* Redirección por defecto */}
