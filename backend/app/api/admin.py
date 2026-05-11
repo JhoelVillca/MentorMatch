@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
     user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Sujeto no encontrado en la base de datos")
-=======
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -109,7 +109,7 @@ def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuario no encontrado en la base de datos"
         )
->>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
+
     db.delete(user)
     db.commit()
     return {"message": f"Usuario {user_id} eliminado del sistema."}
