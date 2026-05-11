@@ -110,10 +110,10 @@ export default function MenteeCompleteProfile() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-8">
+      <div className="bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-red-900/30">
+        <div className="bg-gradient-to-r from-red-900 to-black px-6 py-8 border-b border-red-900/50">
           <h1 className="text-3xl font-bold text-white mb-2">Completar perfil</h1>
-          <p className="text-emerald-100">
+          <p className="text-red-200">
             Indica tu nombre, zona horaria y una breve biografía para organizar las sesiones.
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function MenteeCompleteProfile() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="nombre_completo" className="block text-sm font-semibold text-gray-700 mb-1">
+              <label htmlFor="nombre_completo" className="block text-sm font-semibold text-red-200 mb-1">
                 Nombre completo
               </label>
               <input
@@ -143,13 +143,13 @@ export default function MenteeCompleteProfile() {
                 required
                 value={formData.nombre_completo}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-gray-50 focus:bg-white"
+                className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
                 placeholder="Ej. María García"
               />
             </div>
 
             <div>
-              <label htmlFor="zona_horaria_preferida" className="block text-sm font-semibold text-gray-700 mb-1">
+              <label htmlFor="zona_horaria_preferida" className="block text-sm font-semibold text-red-200 mb-1">
                 Zona horaria
               </label>
               <select
@@ -157,7 +157,7 @@ export default function MenteeCompleteProfile() {
                 name="zona_horaria_preferida"
                 value={formData.zona_horaria_preferida}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 focus:bg-white"
+                className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
               >
                 {timezoneOptions.map((tz) => (
                   <option key={tz} value={tz}>
@@ -168,7 +168,7 @@ export default function MenteeCompleteProfile() {
             </div>
 
             <div>
-              <label htmlFor="biografia_corta" className="block text-sm font-semibold text-gray-700 mb-1">
+              <label htmlFor="biografia_corta" className="block text-sm font-semibold text-red-200 mb-1">
                 Biografía corta
               </label>
               <textarea
@@ -177,7 +177,7 @@ export default function MenteeCompleteProfile() {
                 rows={5}
                 value={formData.biografia_corta}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-gray-50 focus:bg-white resize-none"
+                className="w-full px-4 py-3 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white resize-none"
                 placeholder="Cuéntanos en pocas líneas qué te interesa aprender o en qué contexto buscas mentoría..."
               />
             </div>
@@ -188,8 +188,8 @@ export default function MenteeCompleteProfile() {
                 disabled={saving}
                 className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all ${
                   saving
-                    ? 'bg-emerald-400 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 hover:shadow-lg'
+                    ? 'bg-red-700 cursor-not-allowed'
+                    : 'bg-red-700 hover:bg-red-800 active:scale-95 hover:shadow-lg'
                 }`}
               >
                 {saving ? 'Guardando...' : 'Guardar'}

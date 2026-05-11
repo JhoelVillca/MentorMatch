@@ -16,13 +16,13 @@
 }
 
 .shape1 {
-    background: linear-gradient(#1845ad, #23a2f6);
+    background: linear-gradient(#450a0a, #991b1b);
     left: -80px;
     top: -80px;
 }
 
 .shape2 {
-    background: linear-gradient(to right, #ff512f, #f09819);
+    background: linear-gradient(to right, #7f1d1d, #000000);
     right: -30px;
     bottom: -80px;
 }
