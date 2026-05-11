@@ -29,6 +29,18 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
         )
 
 
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    user_id = get_current_user_id(token)
+    try:
+        uid = UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
+    user = db.query(Usuario).filter(Usuario.id_usuario == uid).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    return user
+
+
 def get_current_mentor_user_id(
     current_user = Depends(get_current_user),
     db = Depends(get_db)
@@ -50,15 +62,3 @@ def get_current_mentee_user_id(
             detail="No tienes permisos para acceder a este recurso",
         )
     return current_user.id_usuario
-
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    user_id = get_current_user_id(token)
-    try:
-        uid = UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
-    user = db.query(Usuario).filter(Usuario.id_usuario == uid).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
-    return user

@@ -1,6 +1,7 @@
 # Arquitectura de MentorMatch 
 
 ## Estructura del Proyecto (Monorepo)
+
 ```text
 MentorMatch/
 │
@@ -9,7 +10,7 @@ MentorMatch/
 ├── .gitignore                         # Exclusiones de Git (node_modules, venv, .env)
 │
 ├── docs/                              # Especificaciones de diseño y visión
-│   ├── arquitectura.md                # Diseño de sistemas
+│   ├── arquitectura.md                # Diseño de sistemas (Actualizado)
 │   ├── documentoVision.md             # Requerimientos de negocio
 │   └── spec.md                        # SDD: Fuente única de verdad técnica
 │
@@ -53,10 +54,12 @@ MentorMatch/
 ├── frontend/                          # Capa Cliente (React 19 + Vite 8)
 │   ├── vite.config.js                 # Configuración de compilación y Proxy API
 │   ├── src/
-│   │   ├── App.jsx                    # Enrutador principal (React Router)
-│   │   ├── AuthContext.jsx            # State management global para sesión y token
+│   │   ├── App.jsx                    # Enrutador principal (Definición de Layouts y Rutas)
+│   │   ├── AuthContext.jsx            # State management global (Sesión, Token y Rol decodificado)
 │   │   ├── ProtectedRoute.jsx         # Middleware de protección de rutas (RBAC visual)
-│   │   ├── components/                # Bloques de UI reutilizables
+│   │   ├── components/                # Bloques de UI reutilizables (Legos)
+│   │   │   ├── MainLayout.jsx         # Wrapper base con Navbar persistente y Outlet de rutas
+│   │   │   ├── Navbar.jsx             # Barra de navegación inteligente con RBAC (Capa Interfaz)
 │   │   │   ├── MentorAvailabilityPanel.jsx # Gestión visual de horarios
 │   │   │   └── MentorSkillForm.jsx    # Registro visual de habilidades
 │   │   ├── pages/                     # Vistas completas e independientes
@@ -75,4 +78,5 @@ MentorMatch/
 │
 └── database/                          # Scripts de inicialización y migración SQL
     └── schema_init.sql                # DDL: Definición de tablas, índices y FKs
+    
 ```
