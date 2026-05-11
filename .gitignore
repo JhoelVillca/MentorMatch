@@ -1,35 +1,53 @@
-# GESTOR DE DEPENDENCIAS
-frontend/node_modules/
+
+# SISTEMA OPERATIVO
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# BACKEND (Python / FastAPI)
+# Entornos virtuales
+venv/
+env/
 backend/venv/
 backend/env/
+.env_backend/
 
-# VARIABLES DE ENTORNO Y SECRETOS (CRÍTICO)
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-
-# CACHÉ Y COMPILACIÓN DE PYTHON
+# Archivos compilados y cache
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
 .coverage
 
-# BUILDS DEL FRONTEND
+# Variables de entorno reales
+backend/.env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# FRONTEND (React / Vite)
+# Dependencias gigantes
+frontend/node_modules/
+
+# Builds de producción
 frontend/dist/
 frontend/dist-ssr/
+frontend/build/
 frontend/*.local
 
-# LOGS Y BASURERO DEL SISTEMA
+# Logs de errores
 *.log
 npm-debug.log*
-.DS_Store
-Thumbs.db
+yarn-debug.log*
+yarn-error.log*
 
-# CONFIGURACIÓN DE EDITORES / IDE
-.vscode/*
-!.vscode/extensions.json
-.idea/
+# Variables de entorno reales del front
+frontend/.env
+frontend/.env.local

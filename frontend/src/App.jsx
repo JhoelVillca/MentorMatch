@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext'; 
 import ProtectedRoute from './ProtectedRoute'; 
+import MainLayout from './components/MainLayout'; 
+
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
@@ -15,31 +17,33 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Rutas Públicas */}
+          {/* Rutas sin Navbar (Aisladas) */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Rutas de Administrador */}
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-          </Route>
-
-          {/* Rutas de Mentor */}
-          <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
-            <Route path="/mentor" element={<MentorDashboard />} />
-            <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
+          {/* Rutas con Navbar (Envueltas en MainLayout) */}
+          <Route element={<MainLayout />}>
             
-            {/* RUTA ACTUALIZADA PARA USAR LA PÁGINA OFICIAL */}
-            <Route path="/mentor/paquetes" element={<PaquetesPage />} />
-          </Route>
+            {/* Rutas de Administrador */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
 
-          {/* Rutas de Mentee (Alumno) */}
-          <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
-            <Route path="/mentee" element={<MenteeDashboard />} />
-            <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
+            {/* Rutas de Mentor */}
+            <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
+              <Route path="/mentor" element={<MentorDashboard />} />
+              <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
+              <Route path="/mentor/paquetes" element={<PaquetesPage />} />
+            </Route>
+
+            {/* Rutas de Mentee */}
+            <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
+              <Route path="/mentee" element={<MenteeDashboard />} />
+              <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
+            </Route>
+
           </Route>
           
-          {/* Redirección por defecto */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
