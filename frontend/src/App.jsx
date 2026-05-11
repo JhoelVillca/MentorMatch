@@ -5,12 +5,12 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 
 // SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
 
-// Componentes temporales
-const AdminDashboard = () => <h1 className="text-white text-center mt-10">Admin Dashboard</h1>;
+// Componente temporal
 const MenteeDashboard = () => <h1 className="text-white text-center mt-10">Mentee Dashboard</h1>;
 
 export default function App() {
