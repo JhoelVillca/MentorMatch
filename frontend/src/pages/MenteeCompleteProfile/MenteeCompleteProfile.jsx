@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { getMenteeProfileAPI, updateMenteeProfileAPI } from '../../services/profileService';
 
@@ -197,6 +198,12 @@ export default function MenteeCompleteProfile() {
           </form>
         </div>
       </div>
+
+      <p className="mt-6 text-center">
+        <Link to="/mentee" className="text-emerald-400 hover:text-emerald-300 text-sm underline-offset-2 hover:underline">
+          Volver al panel
+        </Link>
+      </p>
     </div>
   );
 }

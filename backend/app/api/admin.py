@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 
 from app.db.database import get_db
-from app.api.deps import get_current_user_id, get_current_user
+from app.api.deps import get_current_user
 from app.repositories.user_repository import get_all_users_with_roles, get_user_role_name
 from app.schemas.user import UserResponse
 
@@ -88,6 +88,7 @@ def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuario no encontrado en la base de datos"
         )
+
     db.delete(user)
     db.commit()
     return {"message": f"Usuario {user_id} eliminado del sistema."}

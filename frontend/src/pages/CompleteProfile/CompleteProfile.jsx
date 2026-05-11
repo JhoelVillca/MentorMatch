@@ -74,10 +74,6 @@ export default function CompleteProfile() {
         setSaving(false);
       }
     }
-    
-    // Para el submit, no hay un cleanup fácil de retornar porque no es un useEffect,
-    // pero evitamos errores asumiendo que await updateProfileAPI termina rápido
-    // Si fuera muy estricto, se usaría un ref.
   };
 
   if (loading) {

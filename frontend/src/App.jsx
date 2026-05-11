@@ -5,14 +5,10 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
 import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
+import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
-
-// SE REEMPLAZA EL COMPONENTE POR LA PÁGINA SEGÚN EL FEEDBACK
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
-
-// Componente temporal
-const MenteeDashboard = () => <h1 className="text-white text-center mt-10">Mentee Dashboard</h1>;
 
 export default function App() {
   return (

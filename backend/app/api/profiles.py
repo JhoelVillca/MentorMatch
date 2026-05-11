@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.db.database import get_db
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
 from app.api.deps import get_current_mentor_user_id, get_current_mentee_user_id
+from app.db.database import get_db
 from app.schemas.mentor_profile import ProfileUpdateOrCreate, ProfileResponse
-from app.schemas.mentee_profile import MenteeProfileUpsert, MenteeProfileResponse
+from app.schemas.mentee_profile import MenteeProfileUpsert, MenteeProfileResponse, MenteeProfileOut
 from app.services import profile_service
 
 router = APIRouter(prefix="/profiles", tags=["Perfiles"])
