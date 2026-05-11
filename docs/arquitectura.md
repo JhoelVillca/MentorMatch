@@ -5,88 +5,74 @@
 ```text
 MentorMatch/
 │
-├── README.md                          # Guía de supervivencia e instalación
-├── docker-compose.yml                 # Orquestación en docker para Postgres
-├── .gitignore                         # Muro de fuego contra basura y binarios
+├── README.md                          # Documentación raíz y guía de despliegue
+├── docker-compose.yml                 # Orquestación de contenedores (PostgreSQL 16)
+├── .gitignore                         # Exclusión de venv, node_modules y secretos (.env)
 │
-├── docs/                              #  Documentación del proyecto
-│   ├── arquitectura.md               # Este archivo
-│   ├── documentoVision.md            # Visión y alcance
-│   └── spec.md                       # SDD (Software Design Document) archivo de verdad absoluta
+├── docs/                              # Documentación técnica y de negocio
+│   ├── arquitectura.md                # Diseño de sistemas (Este archivo)
+│   ├── documentoVision.md             # Requerimientos de alto nivel
+│   └── spec.md                        # Fuente única de verdad (SDD)
 │
-├── backend/                           # Servidor API (FastAPI + Python)
+├── backend/                           # Servidor API (FastAPI)
+│   ├── main.py                        # Punto de entrada y registro de routers
+│   ├── requirements.txt               # Dependencias de Python (FastAPI, SQLAlchemy, PyJWT)
+│   ├── .env.example                   # Plantilla de variables de entorno
 │   ├── app/
-│   │   ├── __init__.py               # Marcador de paquete Python
-│   │   ├── api/                      # Controladores y Endpoints REST (Capa Interfaz/Mesero)
-│   │   │   ├── __init__.py
-│   │   │   ├── admin.py              # CRUD de administración de usuarios
-│   │   │   ├── auth.py               # Enrutador de Login/Signup 
-│   │   │   ├── deps.py               # Inyección de dependencias centrales (Seguridad/JWT)
-│   │   │   ├── paquetes.py           # Endpoints de paquetes de mentoría (CRUD)
-│   │   │   ├── profiles.py           # Vistas de Mentees y Mentores
-│   │   │   └── skills.py             # Lógica de taxonomía de habilidades (N+1 parchado)
-│   │   ├── core/                     # Núcleo de configuraciones
-│   │   │   ├── __init__.py
-│   │   │   └── security.py           # Algoritmos criptográficos y firma de tokens
-│   │   ├── db/                       # Capa de persistencia y Conexión
-│   │   │   ├── __init__.py
-│   │   │   └── database.py           # Motor SQLAlchemy y generador de descriptores get_db()
-│   │   ├── models/                   # ORM: Tablas SQL mapeadas a clases Python
-│   │   │   ├── __init__.py
-│   │   │   ├── associations.py       # Tablas intermedias puras
-│   │   │   ├── main_models.py        # Tablas de negocio (perfiles, paquetes, sesiones, habilidades)
-│   │   │   └── usuarios.py           # Núcleo de identidades
-│   │   ├── repositories/             # Capa de Acceso a Datos (El Músculo)
-│   │   │   ├── __init__.py
-│   │   │   └── user_repository.py    # Consultas I/O directas a Postgres para usuarios
-│   │   ├── schemas/                  # DTOs: Validación de datos de entrada/salida
-│   │   │   ├── __init__.py
-│   │   │   ├── paquete_schema.py     # Esquemas de serialización de paquetes
-│   │   │   ├── skills.py             # Esquemas de serialización de habilidades
-│   │   │   └── user.py               # Esquemas de serialización de usuarios (Pydantic)
-│   │   └── services/                 # Lógica de negocio dura (El Cerebro)
-│   │       ├── __init__.py
-│   │       └── auth_service.py       # Orquestación de criptografía, JWT y reglas de negocio
-│   ├── main.py                       # Orquestador principal y enrutador global
-│   ├── requirements.txt              # Registro de dependencias
-│   ├── .env.example                  # Plantilla de variables públicas (El mapa del tesoro)
-│   └── .env                          # Variables reales (IGNORADO EN GIT)
+│   │   ├── api/                       # Controladores (Interfaz de Red)
+│   │   │   ├── admin.py               # Gestión administrativa de usuarios
+│   │   │   ├── auth.py                # Endpoints de Login y Registro
+│   │   │   ├── deps.py                # Inyección de dependencias (Auth JWT y RBAC)
+│   │   │   ├── disponibilidad.py      # CRUD de horarios de mentores
+│   │   │   ├── paquetes.py            # Gestión de oferta comercial
+│   │   │   ├── profiles.py            # Endpoints de perfiles Mentee/Mentor
+│   │   │   └── skills.py              # Catálogo de habilidades
+│   │   ├── core/                      # Lógica central del sistema
+│   │   │   └── security.py            # Hashing (bcrypt) y firma de tokens JWT
+│   │   ├── db/                        # Capa de datos
+│   │   │   └── database.py            # Conexión al motor y sesión SQLAlchemy
+│   │   ├── models/                    # Definición de tablas (SQLAlchemy ORM)
+│   │   │   ├── associations.py        # Tablas intermedias (usuario_roles)
+│   │   │   ├── main_models.py         # Entidades de negocio (Perfil, Contratos, Habilidades)
+│   │   │   └── usuarios.py            # Entidad núcleo de identidad
+│   │   ├── repositories/              # Abstracción de consultas (I/O Directo)
+│   │   │   ├── mentee_repository.py   # Operaciones CRUD Mentee
+│   │   │   ├── mentor_repository.py   # Operaciones CRUD Mentor
+│   │   │   └── user_repository.py     # Lógica de persistencia de usuarios y roles
+│   │   ├── schemas/                   # DTOs (Validación con Pydantic)
+│   │   │   ├── admin.py               # Esquemas para el panel de administración
+│   │   │   ├── mentee_profile.py      
+│   │   │   ├── mentor_profile.py      
+│   │   │   ├── paquete_schema.py      
+│   │   │   ├── skills.py              
+│   │   │   └── user.py                
+│   │   └── services/                  # Lógica de Negocio (El Cerebro)
+│   │       ├── admin_service.py       # Lógica de listado y formateo para administradores
+│   │       ├── auth_service.py        # Procesos de autenticación y registro
+│   │       └── profile_service.py     # Gestión de perfiles y zonas horarias
 │
 ├── frontend/                          # Interfaz de Usuario (React 19 + Vite)
-│   ├── eslint.config.js              # Reglas de linting estático
-│   ├── index.html                    # Entrypoint del DOM
-│   ├── package.json                  # Dependencias de Node.js y scripts
-│   ├── package-lock.json             # Árbol de dependencias determinista
-│   ├── README.md                     # Documentación específica del frontend
-│   ├── vite.config.js                # Builder y proxy de red
-│   ├── src/                          # Código fuente React
-│   │   ├── App.jsx                   # Enrutador principal (React Router)
-│   │   ├── AuthContext.jsx           # Estado global de sesión y persistencia JWT
-│   │   ├── index.css                 # Variables globales
-│   │   ├── main.jsx                  # Montaje del DOM
-│   │   ├── ProtectedRoute.jsx        # Guardia de navegación por roles (RBAC)
-│   │   ├── assets/                   # Recursos multimedia compilables por Vite
-│   │   │   ├── hero.png
-│   │   │   ├── react.svg
-│   │   │   └── vite.svg
-│   │   ├── components/               # Bloques de UI reutilizables (Legos)
-│   │   │   └── MentorSkillForm.jsx   # Formulario de inyección de habilidades
-│   │   ├── pages/                    # Vistas completas encapsuladas (Las naves)
-│   │   │   ├── CompleteProfile/
-│   │   │   │   └── CompleteProfile.jsx 
-│   │   │   ├── Login/
-│   │   │   │   ├── Login.jsx         # Vista sin lógica de red
-│   │   │   │   └── Login.module.css  
-│   │   │   ├── MentorDashboard/
-│   │   │   │   └── MentorDashboard.jsx 
-│   │   │   └── Paquetes/             # Panel de gestión de paquetes del mentor
-│   │   │       └── PaquetesPage.jsx
-│   │   └── services/                 # Capa de Red (Comportamiento)
-│   │       └── authService.js        # Abstracción de Web APIs (Fetch) y serialización HTTP
-│   └── public/                       # Assets estáticos servidos directamente
-│       ├── favicon.svg
-│       └── icons.svg
+│   ├── src/
+│   │   ├── App.jsx                    # Definición de rutas (React Router)
+│   │   ├── AuthContext.jsx            # Estado global de autenticación
+│   │   ├── ProtectedRoute.jsx         # RBAC: Guardia de rutas por rol
+│   │   ├── components/                # UI Reutilizable
+│   │   │   ├── MentorAvailabilityPanel.jsx # Gestión de horarios
+│   │   │   └── MentorSkillForm.jsx         # Registro de habilidades
+│   │   ├── pages/                     # Vistas de la aplicación
+│   │   │   ├── AdminDashboard/        
+│   │   │   ├── CompleteProfile/       
+│   │   │   ├── Login/                 
+│   │   │   ├── MenteeCompleteProfile/ 
+│   │   │   ├── MenteeDashboard/       
+│   │   │   ├── MentorDashboard/       
+│   │   │   ├── Paquetes/              
+│   │   │   └── Register/              
+│   │   ├── services/                  # Capa de red (Fetch API abstraída)
+│   │   │   ├── adminService.js        
+│   │   │   ├── authService.js         
+│   │   │   └── profileService.js      
 │
-└── database/                          # Inicialización de Base de Datos
-    └── schema_init.sql               # Script DDL inyectado al contenedor Postgres
+└── database/
+    └── schema_init.sql                # DDL de inicialización (Postgres)
 ```
