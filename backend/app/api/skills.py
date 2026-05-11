@@ -11,6 +11,7 @@ from app.models.usuarios import Usuario
 from app.schemas.skills import CategoriaResponse, MentorSkillCreate
 from app.core.security import SECRET_KEY, ALGORITHM
 
+
 router = APIRouter(prefix="/skills", tags=["Habilidades"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
