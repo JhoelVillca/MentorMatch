@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0a] text-gray-200 font-['Poppins'] antialiased min-h-screen;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #7f1d1d;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}

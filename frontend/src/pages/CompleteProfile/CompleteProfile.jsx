@@ -86,10 +86,10 @@ export default function CompleteProfile() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
+      <div className="bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-red-900/30">
+        <div className="bg-gradient-to-r from-red-900 to-black px-6 py-8 border-b border-red-900/50">
           <h1 className="text-3xl font-bold text-white mb-2">Perfil Profesional</h1>
-          <p className="text-blue-100">Completa tus datos para que los Mentees puedan conocerte mejor.</p>
+          <p className="text-red-200">Completa tus datos para que los Mentees puedan conocerte mejor.</p>
         </div>
         
         <div className="p-6 sm:p-8">
@@ -115,7 +115,7 @@ export default function CompleteProfile() {
           <form onSubmit={handleSubmit} className="space-y-6">
             
             <div>
-              <label htmlFor="nombre_completo" className="block text-sm font-semibold text-gray-700 mb-1">
+              <label htmlFor="nombre_completo" className="block text-sm font-semibold text-red-200 mb-1">
                 Nombre Completo
               </label>
               <input
@@ -125,13 +125,13 @@ export default function CompleteProfile() {
                 required
                 value={formData.nombre_completo}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
+                className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
                 placeholder="Ej. Juan Pérez"
               />
             </div>
 
             <div>
-              <label htmlFor="biografia_profesional" className="block text-sm font-semibold text-gray-700 mb-1">
+              <label htmlFor="biografia_profesional" className="block text-sm font-semibold text-red-200 mb-1">
                 Biografía Profesional
               </label>
               <textarea
@@ -141,14 +141,14 @@ export default function CompleteProfile() {
                 rows="5"
                 value={formData.biografia_profesional}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white resize-none"
+                className="w-full px-4 py-3 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white resize-none"
                 placeholder="Cuéntanos sobre tu experiencia, tu trayectoria y en qué te especializas..."
               ></textarea>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="url_linkedin" className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="url_linkedin" className="block text-sm font-semibold text-red-200 mb-1">
                   URL de LinkedIn
                 </label>
                 <input
@@ -157,13 +157,13 @@ export default function CompleteProfile() {
                   name="url_linkedin"
                   value={formData.url_linkedin}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
                   placeholder="https://linkedin.com/in/tu-perfil"
                 />
               </div>
 
               <div>
-                <label htmlFor="url_video_presentacion" className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="url_video_presentacion" className="block text-sm font-semibold text-red-200 mb-1">
                   Video de Presentación (Link)
                 </label>
                 <input
@@ -172,7 +172,7 @@ export default function CompleteProfile() {
                   name="url_video_presentacion"
                   value={formData.url_video_presentacion}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
                   placeholder="https://youtube.com/watch?v=..."
                 />
               </div>
@@ -184,8 +184,8 @@ export default function CompleteProfile() {
                 disabled={saving}
                 className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all ${
                   saving 
-                    ? 'bg-blue-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 active:scale-95 hover:shadow-lg'
+                    ? 'bg-red-700 cursor-not-allowed' 
+                    : 'bg-red-700 hover:bg-red-800 active:scale-95 hover:shadow-lg'
                 }`}
               >
                 {saving ? (
