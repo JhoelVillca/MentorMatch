@@ -1,31 +1,10 @@
-
-
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.models.usuarios import Usuario
-from app.schemas.user import UserResponse
-
-router = APIRouter(prefix="/admin", tags=["Administración"])
-
-@router.get("/users", response_model=list[UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
-    # Aquí luego agregaremos un verificador de rol Admin real
-    return db.query(Usuario).all()
-
-@router.delete("/users/{user_id}")
-def delete_user(user_id: str, db: Session = Depends(get_db)):
-    user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Sujeto no encontrado en la base de datos")
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 
 from app.db.database import get_db
-from app.api.deps import get_current_user_id, get_current_user
+from app.api.deps import get_current_user
 from app.repositories.user_repository import get_all_users_with_roles, get_user_role_name
 from app.schemas.user import UserResponse
 

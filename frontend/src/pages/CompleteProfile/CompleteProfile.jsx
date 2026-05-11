@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-export default function CompleteProfile() {
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-white text-center mt-10 text-3xl font-bold mb-8">Completar Perfil de Mentor</h1>
-      <p className="text-white text-center">Página en construcción...</p>
-=======
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../AuthContext';
 import { getProfileAPI, updateProfileAPI } from '../../services/profileService';
@@ -81,10 +74,6 @@ export default function CompleteProfile() {
         setSaving(false);
       }
     }
-    
-    // Para el submit, no hay un cleanup fácil de retornar porque no es un useEffect,
-    // pero evitamos errores asumiendo que await updateProfileAPI termina rápido
-    // Si fuera muy estricto, se usaría un ref.
   };
 
   if (loading) {
@@ -215,7 +204,6 @@ export default function CompleteProfile() {
           </form>
         </div>
       </div>
->>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
     </div>
   );
 }

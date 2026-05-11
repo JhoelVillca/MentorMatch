@@ -21,7 +21,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return token_data
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-<<<<<<< HEAD
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     try:
         return auth_service.register_new_user(db, user)
@@ -29,15 +28,4 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-=======
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    try:
-        new_user = auth_service.register_user(db, user)
-        return new_user
-    except ValueError as e:
-        # ValueError (Dominio) -> 400 (HTTP)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
->>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
         )
