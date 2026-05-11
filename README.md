@@ -183,25 +183,26 @@ Reglas de Negocio: Se guarda qué administrador realizó la acción, qué tabla 
 
 
 #### CRUD de usuario
-Para registrar un usuario para la regla de CREATE
+Para registrar un usuario para la regla de CREATE   
 <img src="images/register.png" alt="register">
 
 
-Para eliminar a un usuario, que cumple con la regla de DELETE tambien el de READ.
+Para eliminar a un usuario, que cumple con la regla de DELETE tambien el de READ.   
 
 <img src="images/panelAdmin.png" alt="PanelAdmin">
 
 Para la regla de UPDATE:
-para MENTEE
+para MENTEE   
 
 <img src="images/editarperfilmentee.png" alt="perfil mente">
-para MENTOR
-<img src="images/editarperfilmentor
-.png" alt="perfil mentor">
+
+para MENTOR   
+
+<img src="images/editarperfilmentor.png" alt="perfil mentor">
 
 #### login de una cuenta de usuario
 En este proyecto tenemos 3 tipos de usuario, que son:
-ADMINISTRADOR, MENTEE, MENTOR
+ADMINISTRADOR, MENTEE, MENTOR   
 
 <img src="images/loging.png" alt="loging">
 
