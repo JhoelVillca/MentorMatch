@@ -24,9 +24,17 @@ def authenticate_user(db: Session, email: str, password: str) -> dict:
         "role": rol_name
     }
 
+<<<<<<< HEAD
 def register_new_user(db: Session, user_data: UserCreate):
     if user_repository.get_user_by_email(db, user_data.email):
         raise ValueError("Ese correo ya esta registrado.")
 
+=======
+def register_user(db: Session, user_data: UserCreate):
+    existing_user = user_repository.get_user_by_email(db, user_data.email)
+    if existing_user:
+        raise ValueError("Ese correo ya esta registrado.")
+        
+>>>>>>> 055f31dc62f2c10193fe28d8a7aa7072e6553723
     hashed_pwd = security.get_password_hash(user_data.password)
     return user_repository.create_user(db, user_data.email, hashed_pwd)
