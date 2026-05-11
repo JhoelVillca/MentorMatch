@@ -1,8 +1,8 @@
 # Proyecto MentorMatch
 ## Integrantes
-> Villca Villca Jhoel
-> Herrera David Jesus
-> Condori Carmona Fernando Favian
+> Villca Villca Jhoel Mauricio   
+> Herrera David Jesus   
+> Condori Carmona Fernando Favian  
 
 ## Entregas: 
 ### Realizar el prototipo inicial para el caso de Uso Gestion de Usuarios
