@@ -1,309 +1,288 @@
-## Descripción
+# Proyecto MentorMatch
+## Integrantes
+> Villca Villca Jhoel
+> Herrera David Jesus
+> Condori Carmona Fernando Favian
 
-Plataforma de e-learning enfocada en conectar a estudiantes (**mentees**) que desean aprender una habilidad con expertos (**mentores**) que ofrecen enseñanza personalizada a cambio de una tarifa.
+## Entregas: 
+### Realizar el prototipo inicial para el caso de Uso Gestion de Usuarios
+#### Casos de uso
 
-## Stack Tecnológico
+Etapa 1: Registro, Autenticación y Perfiles
+Caso de Uso 1: Registro de cuenta base
 
-* **Frontend:** React 19, Vite, Tailwind CSS, React Router.
-* **Backend:** Python 3, FastAPI, SQLAlchemy, JWT.
-* **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
-* **Infraestructura:** Docker & Docker Compose.
+Actor Principal: Usuario (Anónimo)
 
-## Documentación
+Descripción: Un usuario se registra en la plataforma creando una identidad digital.
 
-* [Arquitectura y Estructura](./docs/arquitectura.md) - Organización de directorios y archivos.
-* [Documento de Visión](./docs/documentoVision.md) - Objetivos y requerimientos del proyecto.
-* [Especificaciones Técnicas](./docs/spec.md) - Detalles técnicos y reglas de negocio.
+Reglas de Negocio: Requiere email y contraseña. El sistema asigna un UUID (id_usuario). El email debe ser único y la contraseña debe ser encriptada mediante hashing (Argon2id/bcrypt) antes de guardarse. El estado inicial de la cuenta es activo.
 
----
+Caso de Uso 2: Asignación de Roles
 
-## FASE 1: Guía de Instalación y Despliegue Local
+Actor Principal: Sistema
 
-Ejecuta esta secuencia estrictamente en este orden **la primera vez** que configures el proyecto en tu máquina.
+Descripción: El sistema asigna roles específicos (Mentee, Mentor, Administrador) al usuario registrado para gestionar el Control de Acceso Basado en Roles (RBAC).
 
-### 1. Clonación del Repositorio
+Reglas de Negocio: Un usuario puede tener múltiples roles de manera simultánea.
 
-Descarga el código fuente a tu máquina.
+Caso de Uso 3: Configuración de Perfil Mentee
 
-```bash
-git clone https://github.com/JhoelVillca/MentorMatch.git
+Actor Principal: Mentee (Aprendiz)
+
+Descripción: El usuario aprendiz completa su perfil para poder interactuar en la plataforma.
+
+Reglas de Negocio: Debe ingresar su nombre completo, biografía corta y zona horaria preferida. Si no especifica zona horaria, el sistema asigna UTC por defecto.
+
+Caso de Uso 4: Creación y Verificación de Perfil Mentor
+
+Actor Principal: Mentor / Administrador
+
+Descripción: Un experto crea su perfil profesional para ofrecer sus servicios. Un administrador debe aprobarlo para que sea visible.
+
+Reglas de Negocio: El mentor provee biografía, URL de video de presentación y URL de LinkedIn. El estado inicial es pendiente. No aparece en el catálogo ni puede vender paquetes hasta que un Administrador cambie su estado a verificado.
+
+Caso de Uso 5: Acceso de Administrador
+
+Actor Principal: Administrador
+
+Descripción: Un usuario con rol de administrador ingresa a su panel de control para gestionar la plataforma.
+
+Reglas de Negocio: Requiere un nivel de privilegio (entero ≥ 1) y un departamento asignado.
+
+Etapa 2: Catálogo, Taxonomía y Búsqueda
+Caso de Uso 6: Gestión de Categorías y Habilidades
+
+Actor Principal: Administrador
+
+Descripción: El administrador crea y estructura el árbol de categorías y habilidades disponibles en la plataforma.
+
+Reglas de Negocio: Los nombres de categorías y habilidades deben ser únicos.
+
+Caso de Uso 7: Autoevaluación de Habilidades del Mentor
+
+Actor Principal: Mentor
+
+Descripción: El mentor selecciona y registra las habilidades que domina para que aparezcan en su perfil.
+
+Reglas de Negocio: Debe especificar los años de experiencia (≥ 0) y su nivel de dominio (basico, intermedio, avanzado o experto).
+
+Caso de Uso 8: Publicación de Paquetes Comerciales
+
+Actor Principal: Mentor
+
+Descripción: El mentor crea ofertas o paquetes de horas con un precio fijo para ser contratado.
+
+Reglas de Negocio: La cantidad de horas debe ser > 0 y el precio ≥ 0 (usando DECIMAL(10,2)). Se crean con estado activo por defecto.
+
+Caso de Uso 9: Búsqueda y Descubrimiento de Mentores
+
+Actor Principal: Mentee
+
+Descripción: El aprendiz busca mentores en el catálogo utilizando filtros como habilidad, precio, zona horaria y disponibilidad.
+
+Reglas de Negocio: El sistema solo muestra mentores con estado verificado y cuyos paquetes tengan el estado activo.
+
+Etapa 3: Contratación y Pagos
+Caso de Uso 10: Adquisición de Paquete (Generación de Contrato)
+
+Actor Principal: Mentee
+
+Descripción: El mentee selecciona un paquete de un mentor y procede a comprarlo.
+
+Reglas de Negocio: Se genera un contrato en estado pendiente_pago. El sistema bloquea contratos duplicados idénticos en el mismo instante para el mismo usuario.
+
+Caso de Uso 11: Procesamiento de Pago Externo
+
+Actor Principal: Sistema / Pasarela de Pagos Externa (ej. Stripe)
+
+Descripción: El sistema delega el cobro a una pasarela externa y escucha el resultado (webhook).
+
+Reglas de Negocio: El backend NO retiene fondos. Solo guarda el monto, la moneda, el id_pasarela_externa (único, para evitar procesar el mismo pago dos veces) y actualiza el estado de la transacción.
+
+Caso de Uso 12: Activación Automática de Contrato
+
+Actor Principal: Sistema
+
+Descripción: El sistema habilita el contrato de mentoría tras confirmar el pago.
+
+Reglas de Negocio: Cuando el pago pasa a completado, el contrato cambia a estado activo atómicamente, permitiendo al mentee agendar horas.
+
+Caso de Uso 13: Visualización de Recibo de Pago
+
+Actor Principal: Mentee
+
+Descripción: El mentee descarga o visualiza el recibo fiscal de su compra.
+
+Reglas de Negocio: El backend no genera el recibo, simplemente expone en el frontend la URL pública del recibo (url_recibo_externo) generada por la pasarela de pagos.
+
+Etapa 4: Agendamiento, Comunicación y Ejecución
+Caso de Uso 14: Configuración de Disponibilidad
+
+Actor Principal: Mentor
+
+Descripción: El mentor define sus bloques de horarios recurrentes en los que está disponible para dar sesiones.
+
+Reglas de Negocio: Se guardan los días de la semana y horas en estricto formato UTC. La hora de inicio debe ser obligatoriamente menor a la hora de fin.
+
+Caso de Uso 15: Reserva de Sesión (Anti Double-Booking)
+
+Actor Principal: Mentee
+
+Descripción: El mentee escoge un horario disponible y agenda una sesión dentro de su contrato activo.
+
+Reglas de Negocio: El sistema aplica bloqueo pesimista en la base de datos (SELECT FOR UPDATE) para garantizar que dos mentees no puedan reservar el mismo horario del mentor de forma simultánea.
+
+Caso de Uso 16: Comunicación por Chat 1 a 1
+
+Actor Principal: Mentee / Mentor
+
+Descripción: Los usuarios utilizan una sala de chat privada para coordinar la sesión.
+
+Reglas de Negocio: Solo puede existir una sala de chat única por cada par específico de Mentee-Mentor.
+
+Caso de Uso 17: Ejecución de Videollamada
+
+Actor Principal: Mentee / Mentor
+
+Descripción: En la fecha y hora agendada, las partes ingresan a una sala de videollamada para llevar a cabo la mentoría.
+
+Reglas de Negocio: El backend llama a una API de terceros (Zoom, Google Meet, Daily.co) para generar el enlace. La sesión pasa de estado programada a en_curso.
+
+Caso de Uso 18: Seguimiento de Horas Consumidas
+
+Actor Principal: Sistema
+
+Descripción: El sistema descuenta las horas utilizadas del total del paquete contratado.
+
+Reglas de Negocio: Tras finalizar una sesión, se incrementan las horas consumidas del contrato de forma atómica. Nunca pueden haber valores negativos.
+
+Etapa 5: Calidad, Reseñas y Auditoría
+Caso de Uso 19: Emisión de Reseña y Calificación
+
+Actor Principal: Mentee
+
+Descripción: El mentee evalúa el servicio brindado por el mentor al finalizar el contrato.
+
+Reglas de Negocio: Solo se permite una única reseña por contrato (1 a 1). La calificación debe estar entre 1 y 5 estrellas.
+
+Caso de Uso 20: Moderación y Reporte de Reseñas
+
+Actor Principal: Administrador
+
+Descripción: El administrador revisa y marca reseñas problemáticas o falsas.
+
+Reglas de Negocio: La reseña cambia su flag a reportada = TRUE y puede ser ocultada de la vista pública.
+
+Caso de Uso 21: Auditoría Administrativa Inmutable
+
+Actor Principal: Sistema / Administrador
+
+Descripción: El sistema registra un historial inmutable de acciones críticas ejecutadas por los administradores (como banear usuarios o verificar mentores).
+
+Reglas de Negocio: Se guarda qué administrador realizó la acción, qué tabla fue afectada y en qué momento exacto (TIMESTAMP UTC). No se puede borrar este historial
+
+
+#### CRUD de usuario
+Para registrar un usuario para la regla de CREATE
+<img src="images/register.png" alt="register">
+
+
+Para eliminar a un usuario, que cumple con la regla de DELETE tambien el de READ.
+
+<img src="images/panelAdmin.png" alt="PanelAdmin">
+
+Para la regla de UPDATE:
+para MENTEE
+
+<img src="images/editarperfilmentee.png" alt="perfil mente">
+para MENTOR
+<img src="images/editarperfilmentor
+.png" alt="perfil mentor">
+
+#### login de una cuenta de usuario
+En este proyecto tenemos 3 tipos de usuario, que son:
+ADMINISTRADOR, MENTEE, MENTOR
+
+<img src="images/loging.png" alt="loging">
+
+### Backend
+
+nuestro backend tiene este arbol de archivos:
+```text
+backend/                           # Capa Servidor (FastAPI + SQLAlchemy)
+│   ├── main.py                        # Entrypoint: Inicialización de la App y Rutas
+│   ├── requirements.txt               # Manifiesto de dependencias Python
+│   ├── .env.example                   # Plantilla de inyección de entorno
+│   └── app/
+│       ├── api/                       # Controladores de Endpoints (Meseros HTTP)
+│       │   ├── admin.py               # Gestión RBAC y purga de usuarios
+│       │   ├── auth.py                # JWT Issuance (Login/Signup)
+│       │   ├── deps.py                # Inyectores: get_db, dependencias de roles
+│       │   ├── disponibilidad.py      # Motor de agendamiento (Días/Horas UTC)
+│       │   ├── paquetes.py            # CRUD de oferta comercial del Mentor
+│       │   ├── profiles.py            # Gestión de perfiles Mentee/Mentor
+│       │   └── skills.py              # Taxonomía y declaración de habilidades
+│       ├── core/                      # Seguridad y Criptografía
+│       │   └── security.py            # Hashing (bcrypt) y firma JWT (PyJWT)
+│       ├── db/                        # Capa de Persistencia
+│       │   └── database.py            # Engine de SQLAlchemy y SessionLocal
+│       ├── models/                    # Modelos ORM (Mapeo a tablas SQL)
+│       │   ├── associations.py        # Tabla intermedia usuario_roles
+│       │   ├── main_models.py         # Tablas de negocio (Perfiles, Disponibilidad, etc)
+│       │   └── usuarios.py            # Entidad core de identidad (Usuarios, Roles)
+│       ├── repositories/              # Capa de Acceso a Datos (Consultas SQL/I-O)
+│       │   ├── mentee_repository.py   # Consultas específicas de Mentee
+│       │   ├── mentor_repository.py   # Consultas específicas de Mentor
+│       │   └── user_repository.py     # Consultas core de Usuarios y Roles
+│       ├── schemas/                   # DTOs de Pydantic (Validación de carga útil)
+│       │   ├── admin.py               # Validación de respuestas de administración
+│       │   ├── mentee_profile.py      # Validación de perfiles Mentee
+│       │   ├── mentor_profile.py      # Validación de perfiles Mentor
+│       │   ├── paquete_schema.py      # Validación de paquetes comerciales
+│       │   ├── skills.py              # Validación de habilidades y niveles
+│       │   └── user.py                # Validación de Auth y Tokens
+│       └── services/                  # Capa de Lógica de Negocio (Cerebro)
+│           ├── admin_service.py       # Lógica de listado de usuarios para admins
+│           ├── auth_service.py        # Orquestación de autenticación y registro
+│           └── profile_service.py     # Orquestación de creación/edición de perfiles
 ```
 
-Ingresa al directorio raíz del proyecto.
+Se uso las tecnologias de 
+* Python 3, FastAPI, SQLAlchemy, JWT
 
-```bash
-cd MentorMatch
-```
+#### base de datos
+* PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
 
-### 2. Definición del Entorno (Crítico)
 
-**Ojo:** El sistema no funcionará sin credenciales, y si usas claves por defecto, funciona, pero es mejor usar esto.
 
-Copia la plantilla para crear tu archivo local:
+### Frontend
 
-```bash
-cp backend/.env.example backend/.env
-```
-
-Genera una clave criptográfica segura para las sesiones de usuario ejecutando esto en tu terminal (si tienes huevos):
-
-```bash
-openssl rand -hex 32
-```
-
-*(Copia la cadena de 64 caracteres que te devolverá la terminal).*
-
-Abre tu editor de código y edita el archivo `backend/.env`.
-
-1. Busca la línea `SECRET_KEY=una_clave_secreta_muy_larga_y_segura`.
-2. Reemplaza ese valor por la cadena que acabas de copiar.
-3. Si ya tienes PostgreSQL instalado en tu máquina, cambia `POSTGRES_PORT=5432` a `POSTGRES_PORT=5433` y ajusta el puerto en la `DATABASE_URL` para evitar colisiones y agrega las configuraciones al que desees. y guardalos
-
-* **Nota:** Para desarrollo local, las credenciales falsas (`tu_usuario_aqui`) funcionan perfectamente. pero mejor si lo cambias.
-
-### 3. Aprovisionamiento de la Base de Datos
-
-Asegúrate de tener la aplicación **Docker Desktop** abierta. Luego, levanta la base de datos inyectando el archivo que acabamos de crear.
-
-```bash
-docker compose --env-file backend/.env up -d
-```
-
-*Espera a que la terminal diga `Started`. Esto significa que el contenedor está corriendo en segundo plano.*
-
-### 4. Configuración del Backend (API)
-
-Ingresa a la carpeta del servidor.
-
-```bash
-cd backend
-```
-
-Crea un "entorno virtual". Esto es una burbuja aislada para que las librerías de este proyecto no rompan el Python de tu computadora.
-
-```bash
-python -m venv venv
-```
-
-Activa la burbuja (Entorno Virtual) en **Windows** usando Git Bash:
-
-```bash
-source venv/Scripts/activate
-```
-
-*(Si usas **Linux/macOS**, el comando es: `source venv/bin/activate`)*
-
-Instala las librerías necesarias.
-
-```bash
-pip install -r requirements.txt
-```
-
-Enciende el motor del backend.
-
-```bash
-uvicorn main:app --reload
-```
-
-*Tu terminal quedará bloqueada mostrando logs. La API ahora vive en: [http://127.0.0.1:8000*](http://127.0.0.1:8000)
-
-### 5. Configuración del Frontend (React)
-
-Abre una **nueva pestaña o ventana en tu terminal** (deja el backend corriendo en la primera).
-Asegúrate de estar en la raíz de `MentorMatch/` y entra al frontend.
-
-```bash
-cd frontend
+```text 
+├── frontend/                          # Capa Cliente (React 19 + Vite 8)
+│   ├── vite.config.js                 # Configuración de compilación y Proxy API
+│   ├── src/
+│   │   ├── App.jsx                    # Enrutador principal (Definición de Layouts y Rutas)
+│   │   ├── AuthContext.jsx            # State management global (Sesión, Token y Rol decodificado)
+│   │   ├── ProtectedRoute.jsx         # Middleware de protección de rutas (RBAC visual)
+│   │   ├── components/                # Bloques de UI reutilizables (Legos)
+│   │   │   ├── MainLayout.jsx         # Wrapper base con Navbar persistente y Outlet de rutas
+│   │   │   ├── Navbar.jsx             # Barra de navegación inteligente con RBAC (Capa Interfaz)
+│   │   │   ├── MentorAvailabilityPanel.jsx # Gestión visual de horarios
+│   │   │   └── MentorSkillForm.jsx    # Registro visual de habilidades
+│   │   ├── pages/                     # Vistas completas e independientes
+│   │   │   ├── AdminDashboard/        # Panel de control con tabla de usuarios
+│   │   │   ├── CompleteProfile/       # Formulario del perfil profesional (Mentor)
+│   │   │   ├── Login/                 # Interfaz de acceso
+│   │   │   ├── MenteeCompleteProfile/ # Formulario de datos personales (Mentee)
+│   │   │   ├── MenteeDashboard/       # Vista principal del aprendiz
+│   │   │   ├── MentorDashboard/       # Vista principal del experto
+│   │   │   ├── Paquetes/              # CRUD visual de paquetes
+│   │   │   └── Register/              # Captura de nuevos usuarios (Signup)
+│   │   └── services/                  # Abstracción de red (Fetch API / Axios)
+│   │       ├── adminService.js        # Comunicación con /api/admin
+│   │       ├── authService.js         # Comunicación con /api/auth
+│   │       └── profileService.js      # Comunicación con /api/profiles
 
 ```
-
-Instala los paquetes de la interfaz. *Este paso puede tardar un minuto.*
-
-```bash
-npm install
-
-```
-
-Enciende la interfaz.
-
-```bash
-npm run dev
-
-```
-
-*Abre tu navegador en: http://localhost:5173*
-
----
-
-## FASE 2: Rutina Diaria de Colaboración
-
-Una vez que tienes el proyecto instalado, esta es la rutina obligatoria para escribir código nuevo.
-
-### 1. Sincronización Base
-
-La rama `main` es el código de producción. **Nunca** escribas código directamente aquí.
-
-Asegúrate de estar en la rama principal:
-
-```bash
-git checkout main
-
-```
-
-Descarga las últimas actualizaciones que hayan subido tus compañeros:
-
-```bash
-git pull origin main
-
-```
-
-### 2. Creación de tu Rama de Trabajo
-
-Crea una copia paralela (rama) exclusiva para lo que vas a programar.
-
-```bash
-git checkout -b <tipo>/<nombre-descriptivo>
-
-```
-
-**Ojo:** Usa esta convención estricta para el `<tipo>`:
-
-| Prefijo | Cuándo usarlo | Ejemplo |
-| --- | --- | --- |
-| `feature/` | Para agregar nuevas pantallas o funcionalidades. | `feature/login-ui` |
-| `fix/` | Para arreglar un error que rompe el sistema. | `fix/error-conexion` |
-| `docs/` | Para modificar texto, manuales o el README. | `docs/guia-instalacion` |
-
-### 3. Desarrollo
-
-Abre tu editor, programa, guarda tus archivos y prueba que todo funcione localmente.
-
-```bash
-code .
-
-```
-
-### 4. Guardar Cambios (Commits)
-
-Revisa qué archivos modificaste:
-
-```bash
-git status
-
-```
-
-Prepara todos los archivos modificados para ser guardados:
-
-```bash
-git add .
-
-```
-
-Empaqueta tus cambios con un mensaje claro siguiendo el estándar **Conventional Commits**:
-
-```bash
-git commit -m "<tipo>: <descripción breve en minúsculas>"
-
-```
-
-*Ejemplo: `git commit -m "feat: agregada validacion de email en login"*`
-
-### 5. Subir al Servidor (Pull Request)
-
-Sube tu rama a GitHub:
-
-```bash
-git push -u origin <nombre-de-tu-rama>
-
-```
-
-La terminal te dará un enlace HTTP. Haz clic (o cópialo en tu navegador). Te llevará a GitHub para crear un **Pull Request (PR)**. Llena la descripción explicando qué hiciste y envíalo.
-
-### 6. Revisión y Aprobación
-
-**Espera.** El administrador revisará tu código.
-
-* Si hay errores, te dejará comentarios en GitHub. Deberás volver a tu código, arreglarlo, hacer `git add .`, `git commit` y `git push` de nuevo.
-* Si todo está perfecto, el administrador hará el **Merge** (fusión) a la rama `main`.
-
-### 7. Limpieza Local (Post-Merge)
-
-Una vez que el administrador fusionó tu código en GitHub, debes limpiar tu máquina.
-
-Regresa a la rama principal:
-
-```bash
-git checkout main
-
-```
-
-Descarga el código fusionado (que ahora incluye tu trabajo y el de otros):
-
-```bash
-git pull origin main
-
-```
-
-Borra tu rama local (ya cumplió su propósito):
-
-```bash
-git branch -d <nombre-de-tu-rama>
-
-```
-
-Limpia la caché de ramas viejas:
-
-```bash
-git fetch -p
-
-```
-
----
-
-## FASE 3: Protocolo de Colisiones (Conflictos de Merge)
-
-**¿Qué es un conflicto?** Ocurre cuando tú y otro compañero modifican exactamente la misma línea del mismo archivo en ramas distintas. El sistema operativo no puede adivinar qué versión es la correcta, así que pausa el proceso y te pide intervención manual.
-
-Si al intentar actualizar tu código recibes un mensaje de **"Merge conflict"**, haz lo siguiente:
-
-**1. Trae los cambios conflictivos a tu rama:**
-Asegúrate de estar en tu rama de trabajo (ej. `feature/login`) e intenta traer lo que hay en main:
-
-```bash
-git pull origin main
-
-```
-
-*La terminal te dirá en rojo qué archivos tienen conflictos (CONFLICT: Merge conflict in...).*
-
-**2. Abre Visual Studio Code:**
-Abre los archivos marcados con conflicto. Verás bloques de código rodeados por `<<<<<<< HEAD` y `>>>>>>> main`.
-
-**3. Resuelve la colisión:**
-VS Code te dará botones encima del conflicto:
-
-* *Accept Current Change* (Mantener lo tuyo)
-* *Accept Incoming Change* (Mantener lo de tu compañero)
-* *Accept Both Changes* (Mantener ambos)
-
-Haz clic en la opción correcta (o borra los símbolos y ajusta el código manualmente). Guarda el archivo.
-
-**4. Sella la resolución:**
-Una vez resueltos todos los archivos, dile a Git que el conflicto terminó:
-
-```bash
-git add .
-
-```
-
-```bash
-git commit -m "fix: resuelto conflicto de fusion en main"
-
-```
-
-```bash
-git push
-
-```
-
-*Listo. Tu Pull Request en GitHub ahora estará libre de conflictos y listo para ser aprobado.*
+Las tecnologias que se uso fueron
+* React 19, Vite, Tailwind CSS, React Router

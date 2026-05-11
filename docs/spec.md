@@ -320,7 +320,7 @@ Las siguientes máquinas de estado están implementadas como restricciones (`CHE
 
 ---
 
-## 6. Notas para Inyección de Contexto a IA
+## 6. Notas
 
 *   **Obligatorio — PK UUID y pgcrypto:** Todas las entidades deben usar UUID generados por `gen_random_uuid()`. La extensión `pgcrypto` debe existir en el esquema de PostgreSQL. No está permitido reemplazar UUIDs por enteros autoincrementales bajo ninguna circunstancia.
 *   **Obligatorio — Timestamps UTC:** Todo campo temporal del dominio backend usa `TIMESTAMP WITH TIME ZONE` en UTC. El frontend es responsable de la localización usando `Perfil_Mentee.zona_horaria_preferida`. No almacenar horas locales en la base de datos.
