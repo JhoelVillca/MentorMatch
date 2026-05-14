@@ -1,100 +1,98 @@
-/* AdminDashboard.css - Estilos para el panel de administrador */
+/* AdminDashboard.css - Rediseño Cyber-Neon */
 
+/* Variables locales para este componente (puedes moverlas a un :root global luego) */
 .admin-dashboard {
+  --neon-cyan: #00ffff;
+  --neon-magenta: #ff00ff;
+  --bg-black: #050505;
+  --bg-card: #0a0a0a;
+  --text-dim: #9ca3af;
+  
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   color: #ffffff;
+  background-color: var(--bg-black);
+  min-height: 100vh;
 }
 
-/* Header */
+/* Header con efecto Glow */
 .admin-header {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  border-left: 4px solid var(--neon-cyan);
+  padding-left: 1.5rem;
 }
 
 .admin-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.5rem;
+  font-weight: 800;
   margin-bottom: 0.5rem;
-  color: #ffffff;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 .admin-header p {
-  color: #a0aec0;
-  font-size: 1rem;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
 }
 
-/* Loading */
+/* Loading - Spinner Neón */
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #374151;
-  border-top-color: #6366f1;
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 255, 0.1);
+  border-top-color: var(--neon-cyan);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Error message */
+/* Error message Estilo Alerta Cyber */
 .error-message {
-  background-color: #7f1d1d;
+  background-color: rgba(127, 29, 29, 0.2);
   border: 1px solid #ef4444;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.error-message p {
-  color: #fecaca;
-  margin: 0;
+  border-radius: 4px;
+  padding: 1.2rem;
+  margin-bottom: 2rem;
+  box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 .btn-retry {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  text-transform: uppercase;
+  transition: all 0.3s;
 }
 
 .btn-retry:hover {
-  background-color: #dc2626;
+  background-color: #ef4444;
+  color: white;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
 }
 
-/* Table container */
+/* Tabla con efecto de profundidad */
 .users-table-container {
-  background-color: #141414;
-  border: 1px solid rgba(127, 29, 29, 0.3);
-  border-radius: 0.75rem;
+  background-color: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-}
-
-/* Table */
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .users-table thead {
@@ -102,240 +100,99 @@
 }
 
 .users-table th {
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #9ca3af;
-  border-bottom: 1px solid #374151;
+  padding: 1.2rem;
+  color: var(--neon-magenta);
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
+  font-size: 0.75rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.05);
 }
 
 .users-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #374151;
-  font-size: 0.9375rem;
-}
-
-.users-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.users-table tbody tr:hover {
-  background-color: #374151;
-}
-
-/* Email cell */
-.email-cell {
-  font-weight: 500;
-  color: #ffffff;
-}
-
-/* Date cell */
-.date-cell {
-  color: #9ca3af;
-  font-size: 0.875rem;
-}
-
-/* No users */
-.no-users {
-  text-align: center;
-  color: #9ca3af;
-  padding: 3rem !important;
-}
-
-/* Actions cell */
-.actions-cell {
-  text-align: right;
-}
-
-/* Badges */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.badge-admin {
-  background-color: #7c3aed;
-  color: #ffffff;
-}
-
-.badge-mentor {
-  background-color: #059669;
-  color: #ffffff;
-}
-
-.badge-mentee {
-  background-color: #3b82f6;
-  color: #ffffff;
-}
-
-/* Status badges */
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-active {
-  background-color: #064e3b;
-  color: #6ee7b7;
-}
-
-.status-suspended {
-  background-color: #78350f;
-  color: #fcd34d;
-}
-
-.status-banned {
-  background-color: #7f1d1d;
-  color: #fca5a5;
-}
-
-.status-unknown {
-  background-color: #374151;
-  color: #9ca3af;
-}
-
-/* Delete button */
-.btn-delete {
+  padding: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background-color: transparent;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
   transition: all 0.2s;
 }
 
+.users-table tbody tr:hover {
+  background-color: rgba(0, 255, 255, 0.03);
+}
+
+/* Badges - Roles */
+.badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  border: 1px solid transparent;
+}
+
+.badge-admin { 
+  border-color: var(--neon-magenta); 
+  color: var(--neon-magenta);
+  box-shadow: 0 0 5px rgba(255, 0, 255, 0.2);
+}
+
+.badge-mentor { 
+  border-color: var(--neon-cyan); 
+  color: var(--neon-cyan);
+}
+
+.badge-mentee { 
+  border-color: #ffffff; 
+  color: #ffffff; 
+}
+
+/* Status Badges */
+.status-badge {
+  background: transparent !important;
+  border-left: 3px solid;
+  padding-left: 8px;
+}
+
+.status-active { border-color: #00ff88; color: #00ff88; }
+.status-suspended { border-color: #fcd34d; color: #fcd34d; }
+.status-banned { border-color: #ef4444; color: #ef4444; }
+
+/* Botón Eliminar Estilo Cyber */
+.btn-delete {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.4rem 1rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: all 0.3s;
+}
+
 .btn-delete:hover {
-  background-color: #ef4444;
-  color: white;
+  background-color: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
 }
 
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal content */
+/* Modal Neón */
 .modal-content {
-  background-color: #141414;
-  border: 1px solid rgba(127, 29, 29, 0.5);
-  border-radius: 0.75rem;
-  padding: 2rem;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-  animation: slideIn 0.2s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  background-color: #0a0a0a;
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .modal-content h2 {
-  color: #ffffff;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.modal-content p {
-  color: #9ca3af;
-  margin-bottom: 1.5rem;
-  line-height: 1.5;
-}
-
-/* Modal actions */
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-.btn-cancel {
-  background-color: #374151;
-  color: #ffffff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-cancel:hover {
-  background-color: #4b5563;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
 }
 
 .btn-confirm {
   background-color: #ef4444;
   color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
-.btn-confirm:hover {
-  background-color: #dc2626;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .admin-dashboard {
-    padding: 1rem;
-  }
-
-  .users-table-container {
-    overflow-x: auto;
-  }
-
-  .users-table {
-    min-width: 600px;
-  }
-
-  .users-table th,
-  .users-table td {
-    padding: 0.75rem;
-  }
+.btn-cancel {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 2px;
 }

@@ -1,0 +1,123 @@
+/* PaquetesPage.css */
+
+.paquetes-wrapper {
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: #080710;
+    color: #ffffff;
+}
+
+.paquetes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.paquetes-header h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #ff0000;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+}
+
+.btn-nuevo-paquete {
+    background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-nuevo-paquete:hover {
+    background: #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.paquetes-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) { .paquetes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .paquetes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.paquete-card {
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.3s;
+}
+
+.paquete-card:hover {
+    border-color: rgba(255, 0, 0, 0.6);
+}
+
+.status-indicator {
+    height: 0.75rem;
+    width: 0.75rem;
+    border-radius: 9999px;
+}
+
+.status-active { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+.status-inactive { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+.btn-toggle-status {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: rgba(185, 28, 28, 0.2);
+    border-radius: 0.5rem;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.btn-toggle-status:hover {
+    background-color: rgba(185, 28, 28, 0.5);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+}
+
+.modal-content {
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 28rem;
+}
+
+.cyber-input {
+    width: 100%;
+    background-color: #050505;
+    border: 1px solid #1f2937;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    color: white;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.cyber-input:focus {
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}

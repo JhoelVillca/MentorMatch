@@ -1,8 +1,10 @@
+/* Login.module.css */
+
 .loginBackground {
     width: 430px;
     height: 520px;
     position: absolute;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
     left: 50%;
     top: 50%;
     z-index: 0;
@@ -13,79 +15,121 @@
     width: 200px;
     position: absolute;
     border-radius: 50%;
+    filter: blur(8px); /* Efecto de resplandor */
 }
 
+/* Círculo superior: Rojo neón intenso */
 .shape1 {
-    background: linear-gradient(#450a0a, #991b1b);
+    background: linear-gradient(#ff0000, #991b1b);
     left: -80px;
     top: -80px;
+    box-shadow: 0 0 60px rgba(255, 0, 0, 0.5);
 }
 
+/* Círculo inferior: Rojo oscuro a negro */
 .shape2 {
-    background: linear-gradient(to right, #7f1d1d, #000000);
+    background: linear-gradient(to right, #7f1d1d, #050505);
     right: -30px;
     bottom: -80px;
+    box-shadow: 0 0 40px rgba(127, 29, 29, 0.4);
 }
 
 .glassForm {
-    height: 520px;
+    height: auto;
+    min-height: 540px;
     width: 400px;
-    background-color: rgba(255,255,255,0.13);
+    background-color: rgba(10, 10, 10, 0.85); /* Fondo oscuro profundo */
     position: absolute;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
     top: 50%;
     left: 50%;
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255,255,255,0.1);
-    box-shadow: 0 0 40px rgba(8,7,16,0.6);
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 0, 0, 0.3); /* Borde neón sutil */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
     padding: 50px 35px;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .glassForm h3 {
     font-size: 32px;
-    font-weight: 500;
+    font-weight: 800;
     line-height: 42px;
     text-align: center;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
 }
 
 .glassForm label {
     display: block;
-    margin-top: 30px;
-    font-size: 16px;
-    font-weight: 500;
+    margin-top: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fca5a5; /* text-red-300 */
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .glassForm input {
     display: block;
     height: 50px;
     width: 100%;
-    background-color: rgba(255,255,255,0.07);
-    border-radius: 3px;
-    padding: 0 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0 15px;
     margin-top: 8px;
     font-size: 14px;
-    font-weight: 300;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.glassForm input:focus {
+    outline: none;
+    border-color: #ff0000;
+    background-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
 }
 
 .glassForm input::placeholder {
-    color: #e5e5e5;
+    color: #6b7280;
 }
 
 .glassForm button {
-    margin-top: 50px;
+    margin-top: 45px;
     width: 100%;
-    background-color: #ffffff;
-    color: #080710;
+    background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+    color: #ffffff;
     padding: 15px 0;
-    font-size: 18px;
-    font-weight: 600;
-    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
 }
 
 .glassForm button:hover {
-    background-color: #e5e5e5;
+    background: #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    transform: translateY(-2px);
+}
+
+.errorMessage {
+    margin-top: 20px;
+    color: #ff4444;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(255, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 0, 0, 0.2);
 }

@@ -1,0 +1,138 @@
+/* CompleteProfile.css - Estilo Cyber Neon */
+
+.profile-container {
+    --neon-red: #ff0000;
+    --neon-red-glow: rgba(255, 0, 0, 0.4);
+    --bg-card: #0a0a0a;
+    --bg-darker: #050505;
+    
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.profile-card {
+    background-color: var(--bg-card);
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+/* Encabezado con degradado neón */
+.profile-header {
+    background: linear-gradient(to right, #450a0a, #000000);
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.profile-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--neon-red-glow);
+}
+
+.profile-header p {
+    color: #fca5a5; /* text-red-200 */
+    margin-top: 0.5rem;
+}
+
+/* Formulario */
+.profile-form-body {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.profile-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fca5a5;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Inputs con efecto Focus Neón */
+.profile-input, .profile-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-darker);
+    border: 1px solid #1f2937; /* gray-800 */
+    border-radius: 0.5rem;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.profile-input:focus, .profile-textarea:focus {
+    outline: none;
+    border-color: var(--neon-red);
+    box-shadow: 0 0 10px var(--neon-red-glow);
+    background-color: #000000;
+}
+
+.profile-textarea {
+    resize: none;
+    min-height: 120px;
+}
+
+/* Grid para los links */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Botón de Guardado Neón */
+.btn-save-profile {
+    background-color: #b91c1c; /* red-700 */
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.btn-save-profile:hover:not(:disabled) {
+    background-color: #ef4444; /* red-500 */
+    box-shadow: 0 0 15px var(--neon-red-glow);
+    transform: translateY(-2px);
+}
+
+.btn-save-profile:disabled {
+    background-color: #450a0a;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Spinner de carga */
+.spinner-neon {
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid rgba(255, 0, 0, 0.1);
+    border-top: 2px solid var(--neon-red);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

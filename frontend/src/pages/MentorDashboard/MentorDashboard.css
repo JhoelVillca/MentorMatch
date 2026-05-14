@@ -1,0 +1,41 @@
+/* MentorDashboard.css */
+
+.mentor-dash-bg {
+    min-height: 100vh;
+    background-color: #080710;
+    background-image: radial-gradient(circle at 50% -20%, #450a0a 0%, #080710 80%);
+    padding: 3rem 1rem;
+    color: white;
+}
+
+.mentor-dash-header h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    margin-bottom: 2.5rem;
+}
+
+.glass-container {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 56rem;
+    margin: 0 auto;
+}
+
+/* Efecto de línea decorativa neon */
+.glass-container::before {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #ff0000;
+    margin: 0 auto 2rem;
+    border-radius: 2px;
+    box-shadow: 0 0 10px #ff0000;
+}

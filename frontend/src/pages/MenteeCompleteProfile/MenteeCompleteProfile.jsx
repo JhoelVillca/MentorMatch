@@ -2,30 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { getMenteeProfileAPI, updateMenteeProfileAPI } from '../../services/profileService';
+import './MenteeCompleteProfile.css'; // Importación de estilos externos
 
 function buildTimezoneOptions() {
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
       return Intl.supportedValuesOf('timeZone').slice().sort();
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   return [
-    'UTC',
-    'America/Mexico_City',
-    'America/Bogota',
-    'America/Lima',
-    'America/Santiago',
-    'America/Buenos_Aires',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/Madrid',
-    'Europe/London',
-    'Europe/Paris',
-    'Asia/Tokyo',
+    'UTC', 'America/La_Paz', 'America/Mexico_City', 'America/Bogota',
+    'America/Lima', 'America/Santiago', 'America/Buenos_Aires',
+    'Europe/Madrid'
   ];
 }
 
@@ -43,7 +31,6 @@ export default function MenteeCompleteProfile() {
 
   useEffect(() => {
     let isMounted = true;
-
     const fetchProfile = async () => {
       setLoading(true);
       try {
@@ -58,21 +45,13 @@ export default function MenteeCompleteProfile() {
           });
         }
       } catch (error) {
-        if (isMounted) {
-          console.error('Error al cargar el perfil:', error);
-        }
+        if (isMounted) console.error('Error al cargar el perfil:', error);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
-
     fetchProfile();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [token]);
 
   const handleChange = (e) => {
@@ -84,7 +63,6 @@ export default function MenteeCompleteProfile() {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
-
     try {
       const payload = {
         nombre_completo: formData.nombre_completo,
@@ -102,97 +80,69 @@ export default function MenteeCompleteProfile() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500" />
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="spinner-neon" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-red-900/30">
-        <div className="bg-gradient-to-r from-red-900 to-black px-6 py-8 border-b border-red-900/50">
-          <h1 className="text-3xl font-bold text-white mb-2">Completar perfil</h1>
-          <p className="text-red-200">
-            Indica tu nombre, zona horaria y una breve biografía para organizar las sesiones.
-          </p>
+    <div className="profile-container">
+      <div className="profile-card">
+        <div className="profile-header">
+          <h1>Completar Perfil</h1>
+          <p>Indica tu información básica para organizar tus sesiones de mentoría.</p>
         </div>
 
-        <div className="p-6 sm:p-8">
+        <div className="profile-form-body">
           {message && (
-            <div
-              className={`mb-6 p-4 rounded-lg flex items-start ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}
-            >
-              <div className="ml-1 font-medium">{message.text}</div>
+            <div className={`status-message ${message.type === 'success' ? 'status-success' : 'status-error'}`}>
+              {message.text}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="nombre_completo" className="block text-sm font-semibold text-red-200 mb-1">
-                Nombre completo
-              </label>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="profile-label">Nombre completo</label>
               <input
                 type="text"
-                id="nombre_completo"
                 name="nombre_completo"
                 required
                 value={formData.nombre_completo}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
-                placeholder="Ej. María García"
+                className="profile-input"
+                placeholder="Ej. Juan Pérez"
               />
             </div>
 
-            <div>
-              <label htmlFor="zona_horaria_preferida" className="block text-sm font-semibold text-red-200 mb-1">
-                Zona horaria
-              </label>
+            <div className="form-group">
+              <label className="profile-label">Zona horaria</label>
               <select
-                id="zona_horaria_preferida"
                 name="zona_horaria_preferida"
                 value={formData.zona_horaria_preferida}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white"
+                className="profile-select"
               >
                 {timezoneOptions.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
-                  </option>
+                  <option key={tz} value={tz}>{tz}</option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label htmlFor="biografia_corta" className="block text-sm font-semibold text-red-200 mb-1">
-                Biografía corta
-              </label>
+            <div className="form-group">
+              <label className="profile-label">Biografía corta</label>
               <textarea
-                id="biografia_corta"
                 name="biografia_corta"
-                rows={5}
                 value={formData.biografia_corta}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-800 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors bg-[#0a0a0a] focus:bg-[#0a0a0a] text-white resize-none"
-                placeholder="Cuéntanos en pocas líneas qué te interesa aprender o en qué contexto buscas mentoría..."
+                className="profile-textarea"
+                placeholder="Cuéntanos sobre tus intereses académicos o metas..."
               />
             </div>
 
-            <div className="pt-4 flex justify-end">
-              <button
-                type="submit"
-                disabled={saving}
-                className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all ${
-                  saving
-                    ? 'bg-red-700 cursor-not-allowed'
-                    : 'bg-red-700 hover:bg-red-800 active:scale-95 hover:shadow-lg'
-                }`}
-              >
-                {saving ? 'Guardando...' : 'Guardar'}
+            <div className="flex justify-end pt-4">
+              <button type="submit" disabled={saving} className="btn-save-mentee">
+                {saving ? 'Guardando...' : 'Guardar Perfil'}
               </button>
             </div>
           </form>
@@ -200,8 +150,8 @@ export default function MenteeCompleteProfile() {
       </div>
 
       <p className="mt-6 text-center">
-        <Link to="/mentee" className="text-emerald-400 hover:text-emerald-300 text-sm underline-offset-2 hover:underline">
-          Volver al panel
+        <Link to="/mentee" className="text-gray-400 hover:text-red-500 text-sm transition-colors">
+          &larr; Volver al panel de Mentee
         </Link>
       </p>
     </div>
