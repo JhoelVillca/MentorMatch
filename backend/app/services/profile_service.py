@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional
+import urllib.parse
 
 from app.models.main_models import PerfilMentee, PerfilMentor
 from app.repositories import mentor_repository, mentee_repository
@@ -15,6 +16,13 @@ def get_mentor_profile(db: Session, user_id: UUID) -> Optional[PerfilMentor]:
 def upsert_mentor_profile(
     db: Session, user_id: UUID, data: ProfileUpdateOrCreate
 ) -> PerfilMentor:
+    # Lógica del motor de avatares para Mentor:
+    # Si 'foto_perfil' viene vacío, nulo o solo espacios, se le genera su avatar por defecto
+    if not data.foto_perfil or not data.foto_perfil.strip():
+        nombre_limpio = data.nombre_completo.strip()
+        nombre_codificado = urllib.parse.quote_plus(nombre_limpio)
+        data.foto_perfil = f"https://ui-avatars.com/api/?name={nombre_codificado}&background=random"
+    
     return mentor_repository.upsert_profile(db, user_id, data)
 
 
@@ -45,10 +53,18 @@ def upsert_mentee_profile(
     tz = (data.zona_horaria_preferida or "").strip() or "UTC"
     nombre = data.nombre_completo.strip()
     bio = data.biografia_corta.strip() if data.biografia_corta else None
+    
+    # Lógica del motor de avatares para Mentee:
+    foto = data.foto_perfil
+    if not foto or not foto.strip():
+        nombre_codificado = urllib.parse.quote_plus(nombre)
+        foto = f"https://ui-avatars.com/api/?name={nombre_codificado}&background=random"
+        
     return mentee_repository.upsert_profile(
         db,
         user_id,
         nombre,
         tz,
         bio,
+        foto,  # Se envía la variable procesada (con foto o avatar por defecto)
     )

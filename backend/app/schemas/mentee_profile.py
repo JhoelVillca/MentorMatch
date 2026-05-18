@@ -8,6 +8,7 @@ class MenteeProfileUpsert(BaseModel):
     nombre_completo: str = Field(..., min_length=1, max_length=255)
     zona_horaria_preferida: str = Field(default="UTC", max_length=50)
     biografia_corta: Optional[str] = Field(None, max_length=4000)
+    foto_perfil: Optional[str] = Field(None, max_length=500)  # <-- Campo opcional agregado para el request
 
 
 class MenteeProfileOut(BaseModel):
@@ -15,6 +16,7 @@ class MenteeProfileOut(BaseModel):
     nombre_completo: str = ""
     zona_horaria_preferida: str = "UTC"
     biografia_corta: Optional[str] = None
+    foto_perfil: Optional[str] = None  # <-- Agregado aquí también
 
     class Config:
         from_attributes = True
@@ -24,6 +26,7 @@ class MenteeProfileResponse(BaseModel):
     nombre_completo: str
     zona_horaria_preferida: str
     biografia_corta: Optional[str] = None
+    foto_perfil: Optional[str] = None  # <-- Agregado para la respuesta del endpoint de mentees
 
     class Config:
         from_attributes = True

@@ -16,6 +16,7 @@ class PerfilMentee(Base):
     nombre_completo = Column(String(255), nullable=False)
     zona_horaria_preferida = Column(String(50), server_default="UTC")
     biografia_corta = Column(Text)
+    foto_perfil = Column(String(500), nullable=True)
 
 class PerfilMentor(Base):
     __tablename__ = "perfil_mentor"
@@ -27,9 +28,12 @@ class PerfilMentor(Base):
     url_linkedin = Column(String(500))
     url_video_presentacion = Column(String(500))
     
+    foto_perfil = Column(String(500), nullable=True)
     # Relaciones
     habilidades = relationship("MentorHabilidad", back_populates="mentor", cascade="all, delete-orphan")
-
+    #Para que tu contenedor de Docker o base de datos local refleje este cambio sin romper los datos de los usuarios que ya tienes creados, ejecuta los siguientes comandos SQL desde tu cliente de base de datos (como pgAdmin o la consola interactiva):
+    #ALTER TABLE perfil_mentor ADD COLUMN foto_perfil VARCHAR(500) DEFAULT NULL;
+    #ALTER TABLE perfil_mentee ADD COLUMN foto_perfil VARCHAR(500) DEFAULT NULL;
 class PaqueteMentor(Base):
     __tablename__ = "paquetes_mentor"
     id_paquete = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
