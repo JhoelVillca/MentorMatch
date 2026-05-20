@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function MentorSkillForm() {
@@ -12,14 +11,9 @@ export default function MentorSkillForm() {
   
   const navigate = useNavigate();
   
-  const { token } = useAuth();
-  
-  // Si no hay token en el estado, intentamos recuperarlo de localStorage
-  const activeToken = token || localStorage.getItem('mentor_token');
-
   useEffect(() => {
     // Obtener las categorías y habilidades del backend
-    fetch('/api/skills/categories')
+    fetch('/api/skills/categories', { credentials: 'include' })
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error("Error fetching categories:", err));
@@ -36,19 +30,13 @@ export default function MentorSkillForm() {
       return;
     }
 
-    if (!activeToken) {
-      setMessage({ text: 'No estás autenticado. Por favor, inicia sesión.', type: 'error' });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const response = await fetch('/api/skills/mentor', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${activeToken}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           id_habilidad: selectedSkill,
           anios_experiencia: parseInt(yearsOfExperience),

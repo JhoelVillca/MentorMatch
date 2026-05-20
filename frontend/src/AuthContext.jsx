@@ -1,41 +1,43 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem('mentor_token'));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (newToken) => {
-    setToken(newToken);
-    localStorage.setItem('mentor_token', newToken);
-  };
-
-  const logout = () => {
-    setToken(null);
-    localStorage.removeItem('mentor_token');
-  };
-
-  // Desensamblador del payload JWT
-  let userRole = null;
-  if (token) {
+  const checkSession = async () => {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        window.atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join('')
-      );
-      userRole = JSON.parse(jsonPayload).rol;
-    } catch (e) {
-      console.error("Fallo de integridad en token JWT:", e);
-      userRole = null;
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setUser({ id: data.id, role: data.rol });
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const login = async () => {
+    await checkSession();
+  };
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ token, userRole, login, logout }}>
-      {children}
+    <AuthContext.Provider value={{ token: user, userRole: user?.role, login, logout, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

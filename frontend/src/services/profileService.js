@@ -6,17 +6,15 @@ function parseErrorDetail(data) {
   return 'Error en la solicitud';
 }
 
-function authJsonHeaders(token) {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
+function authJsonHeaders() {
+  return { 'Content-Type': 'application/json' };
 }
 
 // Mentor profile APIs
-export const getProfileAPI = async (token) => {
+export const getProfileAPI = async () => {
   const response = await fetch('/api/profiles/mentor/me', {
-    headers: authJsonHeaders(token),
+    headers: authJsonHeaders(),
+    credentials: 'include',
   });
 
   const data = await response.json();
@@ -28,10 +26,11 @@ export const getProfileAPI = async (token) => {
   return data;
 };
 
-export const updateProfileAPI = async (token, profileData) => {
+export const updateProfileAPI = async (profileData) => {
   const response = await fetch('/api/profiles/mentor/me', {
     method: 'PUT',
-    headers: authJsonHeaders(token),
+    headers: authJsonHeaders(),
+    credentials: 'include',
     body: JSON.stringify(profileData)
   });
 
@@ -45,9 +44,10 @@ export const updateProfileAPI = async (token, profileData) => {
 };
 
 // Mentee profile APIs
-export const getMenteeProfileAPI = async (token) => {
+export const getMenteeProfileAPI = async () => {
   const response = await fetch('/api/profiles/mentee/me', {
-    headers: authJsonHeaders(token),
+    headers: authJsonHeaders(),
+    credentials: 'include',
   });
 
   const data = await response.json();
@@ -59,10 +59,11 @@ export const getMenteeProfileAPI = async (token) => {
   return data;
 };
 
-export const updateMenteeProfileAPI = async (token, profileData) => {
+export const updateMenteeProfileAPI = async (profileData) => {
   const response = await fetch('/api/profiles/mentee/me', {
     method: 'PUT',
-    headers: authJsonHeaders(token),
+    headers: authJsonHeaders(),
+    credentials: 'include',
     body: JSON.stringify(profileData)
   });
 
@@ -76,10 +77,10 @@ export const updateMenteeProfileAPI = async (token, profileData) => {
 };
 
 // Legacy compatibility functions
-export async function fetchMenteeProfile(token) {
-  return getMenteeProfileAPI(token);
+export async function fetchMenteeProfile() {
+  return getMenteeProfileAPI();
 }
 
-export async function saveMenteeProfile(token, profileData) {
-  return updateMenteeProfileAPI(token, profileData);
+export async function saveMenteeProfile(profileData) {
+  return updateMenteeProfileAPI(profileData);
 }

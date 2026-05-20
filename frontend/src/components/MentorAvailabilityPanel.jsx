@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../AuthContext';
 
 const API_URL = '/api/disponibilidad/';
 
@@ -21,9 +20,8 @@ const MentorAvailabilityPanel = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { token } = useAuth();
-
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     fetchAvailabilities();
   }, []);
 
@@ -31,9 +29,7 @@ const MentorAvailabilityPanel = () => {
     setLoading(true);
     try {
       const response = await fetch(API_URL, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
@@ -65,9 +61,9 @@ const MentorAvailabilityPanel = () => {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           dia_semana: day,
           hora_inicio: startTime,
@@ -96,9 +92,7 @@ const MentorAvailabilityPanel = () => {
     try {
       const response = await fetch(`${API_URL}${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
 
       if (response.ok) {

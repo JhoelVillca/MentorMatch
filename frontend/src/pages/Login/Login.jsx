@@ -17,23 +17,15 @@ export default function Login() {
     setError('');
 
     try {
-      //le mandamos al servicio
-      const data = await loginAPI(email, password);
+      await loginAPI(email, password);
+      await login();
 
-      login(data.access_token);
-      
-      switch(data.role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'mentor':
-          navigate('/mentor');
-          break;
-        case 'mentee':
-        default:
-          navigate('/mentee');
-          break;
-      }
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await res.json();
+
+      if (data.rol === 'admin') navigate('/admin');
+      else if (data.rol === 'mentor') navigate('/mentor');
+      else navigate('/mentee');
     } catch (err) {
       setError(err.message);
     }
