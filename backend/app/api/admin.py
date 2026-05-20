@@ -54,11 +54,15 @@ async def get_all_users(
     """
     users_data = await get_all_users_with_roles(db)
     
-    # Convertir los resultados a un formato serializable
+    
     result = []
     for user_row in users_data:
-        # user_row es una tupla con (id_usuario, email, estado_cuenta, fecha_creacion, roles)
-        roles_list = list(user_row.roles) if user_row.roles else ["mentee"]
+        # user_row contiene (id_usuario, email, estado_cuenta, fecha_creacion, roles)
+        roles_list = []
+        if user_row.roles:
+            roles_list = list(user_row.roles) if isinstance(user_row.roles, (list, tuple)) else [str(user_row.roles)]
+        else:
+            roles_list = ["mentee"]
         result.append({
             "id_usuario": user_row.id_usuario,
             "email": user_row.email,

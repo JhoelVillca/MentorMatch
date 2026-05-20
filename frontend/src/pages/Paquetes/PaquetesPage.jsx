@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../AuthContext'; // Importación vital para el estado global del JWT
 
 const PaquetesPage = () => {
     const [paquetes, setPaquetes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    // Extraemos el token del estado global reactivo
-    const { token } = useAuth(); 
     
     const [nuevoPaquete, setNuevoPaquete] = useState({
         titulo_paquete: '',
@@ -16,18 +12,16 @@ const PaquetesPage = () => {
 
     const API_URL = '/api/paquetes';
 
-    // Ahora usamos el token que viene del context
     const getAuthHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
+        'Content-Type': 'application/json'
     });
 
     const fetchPaquetes = async () => {
-        if (!token) return; // Si no hay token, no intentamos peticiones muertas
         try {
             const response = await fetch(`${API_URL}/me`, {
                 method: 'GET',
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
+                credentials: 'include'
             });
             if (!response.ok) throw new Error('No autorizado');
             const data = await response.json();
@@ -39,7 +33,7 @@ const PaquetesPage = () => {
 
     useEffect(() => {
         fetchPaquetes();
-    }, [token]); // El efecto se dispara si el token cambia (ej. cierre de sesión)
+    }, []);
 
     const handleCrear = async (e) => {
         e.preventDefault();
@@ -56,6 +50,7 @@ const PaquetesPage = () => {
             const response = await fetch(`${API_URL}/`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
+                credentials: 'include',
                 body: JSON.stringify(payload) 
             });
             
@@ -74,6 +69,7 @@ const PaquetesPage = () => {
             await fetch(`${API_URL}/${id}/status`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
+                credentials: 'include',
                 body: JSON.stringify({ estado_activo: !estadoActual })
             });
             fetchPaquetes();

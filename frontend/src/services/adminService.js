@@ -7,16 +7,15 @@ const API_BASE = '/api/admin';
 
 /**
  * Obtiene la lista de todos los usuarios registrados
- * @param {string} token - Token JWT del usuario administrador
  * @returns {Promise<Array>} Lista de usuarios
  */
-export const getAllUsers = async (token) => {
+export const getAllUsers = async () => {
   const response = await fetch(`${API_BASE}/users`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
+    credentials: 'include',
   });
 
   const data = await response.json();
@@ -30,17 +29,16 @@ export const getAllUsers = async (token) => {
 
 /**
  * Elimina un usuario del sistema
- * @param {string} token - Token JWT del usuario administrador
  * @param {string} userId - ID del usuario a eliminar
  * @returns {Promise<Object>} Respuesta del servidor
  */
-export const deleteUser = async (token, userId) => {
+export const deleteUser = async (userId) => {
   const response = await fetch(`${API_BASE}/users/${userId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
+    credentials: 'include',
   });
 
   const data = await response.json();

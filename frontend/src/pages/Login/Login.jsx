@@ -17,22 +17,15 @@ export default function Login() {
     setError('');
 
     try {
-      //le mandamos al servicio
-      const data = await loginAPI(email, password);
+      await loginAPI(email, password);
+      const userData = await login();
 
-      login(data.access_token);
-      
-      switch(data.role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'mentor':
-          navigate('/mentor');
-          break;
-        case 'mentee':
-        default:
-          navigate('/mentee');
-          break;
+      if (userData) {
+        if (userData.rol === 'admin') navigate('/admin');
+        else if (userData.rol === 'mentor') navigate('/mentor');
+        else navigate('/mentee');
+      } else {
+        setError('Error fatal al recuperar sesion.');
       }
     } catch (err) {
       setError(err.message);
