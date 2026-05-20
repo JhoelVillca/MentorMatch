@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
 
@@ -21,13 +21,13 @@ class AdminUserResponse(UserResponse):
         from_attributes = True
 
 
-def require_admin(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+async def require_admin(db: AsyncSession = Depends(get_db), current_user = Depends(get_current_user)):
     """
     Dependencia que verifica si el usuario actual tiene rol de administrador.
     Lanza HTTP 403 Forbidden si no tiene permisos.
     """
     user_id = str(current_user.id_usuario)
-    role = get_user_role_name(db, user_id)
+    role = await get_user_role_name(db, user_id)
     if role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -37,8 +37,8 @@ def require_admin(db: Session = Depends(get_db), current_user = Depends(get_curr
 
 
 @router.get("/users", response_model=List[AdminUserResponse])
-def get_all_users(
-    db: Session = Depends(get_db),
+async def get_all_users(
+    db: AsyncSession = Depends(get_db),
     current_user = Depends(require_admin)
 ):
     """
@@ -52,7 +52,7 @@ def get_all_users(
     - fecha_creacion: Fecha de registro
     - roles: Lista de roles asignados
     """
-    users_data = get_all_users_with_roles(db)
+    users_data = await get_all_users_with_roles(db)
     
     # Convertir los resultados a un formato serializable
     result = []
@@ -71,9 +71,9 @@ def get_all_users(
 
 
 @router.delete("/users/{user_id}")
-def delete_user(
+async def delete_user(
     user_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user = Depends(require_admin)
 ):
     """
@@ -82,13 +82,14 @@ def delete_user(
     """
     from app.models.usuarios import Usuario
     
-    user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
+    from sqlalchemy.future import select
+    res = await db.execute(select(Usuario).filter(Usuario.id_usuario == user_id))
+    user = res.scalars().first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuario no encontrado en la base de datos"
         )
-
     db.delete(user)
-    db.commit()
+    await db.commit()
     return {"message": f"Usuario {user_id} eliminado del sistema."}

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_mentor_user_id, get_current_mentee_user_id
 from app.db.database import get_db
@@ -13,11 +13,11 @@ router = APIRouter(prefix="/profiles", tags=["Perfiles"])
 
 
 @router.get("/mentee/me", response_model=MenteeProfileResponse)
-def get_mentee_profile(
-    db: Session = Depends(get_db),
+async def get_mentee_profile(
+    db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(get_current_mentee_user_id),
 ):
-    perfil = profile_service.get_mentee_profile(db, user_id)
+    perfil = await profile_service.get_mentee_profile(db, user_id)
     if not perfil:
         # Añadimos foto_perfil=None para que el Schema de Pydantic no lance error
         return MenteeProfileResponse(
@@ -30,20 +30,20 @@ def get_mentee_profile(
 
 
 @router.put("/mentee/me", response_model=MenteeProfileResponse)
-def update_mentee_profile(
+async def update_mentee_profile(
     profile_data: MenteeProfileUpsert,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(get_current_mentee_user_id),
 ):
-    return profile_service.upsert_mentee_profile(db, user_id, profile_data)
+    return await profile_service.upsert_mentee_profile(db, user_id, profile_data)
 
 
 @router.get("/mentor/me", response_model=ProfileResponse)
-def get_mentor_profile(
-    db: Session = Depends(get_db),
+async def get_mentor_profile(
+    db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(get_current_mentor_user_id),
 ):
-    perfil = profile_service.get_mentor_profile(db, user_id)
+    perfil = await profile_service.get_mentor_profile(db, user_id)
     if not perfil:
         # Añadimos foto_perfil=None para mantener la consistencia con el nuevo Schema
         return ProfileResponse(
@@ -57,9 +57,9 @@ def get_mentor_profile(
 
 
 @router.put("/mentor/me", response_model=ProfileResponse)
-def update_mentor_profile(
+async def update_mentor_profile(
     profile_data: ProfileUpdateOrCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(get_current_mentor_user_id),
 ):
-    return profile_service.upsert_mentor_profile(db, user_id, profile_data)
+    return await profile_service.upsert_mentor_profile(db, user_id, profile_data)

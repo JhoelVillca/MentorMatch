@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from typing import List
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import time
@@ -58,12 +59,13 @@ class AvailabilityResponse(BaseModel):
         from_attributes = True
 
 @router.post("/", response_model=AvailabilityResponse, status_code=status.HTTP_201_CREATED)
-def create_availability(
+async def create_availability(
     availability: AvailabilityCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    perfil = db.query(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario).first()
+    res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario))
+    perfil = res.scalars().first()
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentor no encontrado")
 
@@ -76,38 +78,42 @@ def create_availability(
         hora_fin_utc=availability.hora_fin
     )
     db.add(new_availability)
-    db.commit()
-    db.refresh(new_availability)
+    await db.commit()
+    await db.refresh(new_availability)
     return new_availability
 
 @router.get("/", response_model=List[AvailabilityResponse])
-def get_availabilities(
-    db: Session = Depends(get_db),
+async def get_availabilities(
+    db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    perfil = db.query(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario).first()
+    res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario))
+    perfil = res.scalars().first()
     if not perfil:
         return []
 
-    availabilities = db.query(DisponibilidadMentor).filter(
+    res2 = await db.execute(select(DisponibilidadMentor).filter(
         DisponibilidadMentor.id_mentor == perfil.id_mentor
-    ).all()
+    ))
+    availabilities = res2.scalars().all()
     return availabilities
 
 @router.delete("/{availability_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_availability(
+async def delete_availability(
     availability_id: UUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
-    perfil = db.query(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario).first()
+    res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario))
+    perfil = res.scalars().first()
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentor no encontrado")
 
-    availability = db.query(DisponibilidadMentor).filter(
+    res2 = await db.execute(select(DisponibilidadMentor).filter(
         DisponibilidadMentor.id_disponibilidad == availability_id,
         DisponibilidadMentor.id_mentor == perfil.id_mentor
-    ).first()
+    ))
+    availability = res2.scalars().first()
     
     if not availability:
         raise HTTPException(
@@ -116,5 +122,5 @@ def delete_availability(
         )
         
     db.delete(availability)
-    db.commit()
+    await db.commit()
     return None

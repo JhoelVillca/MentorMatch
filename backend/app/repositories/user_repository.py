@@ -1,74 +1,67 @@
 from typing import List, Dict, Any
-from sqlalchemy import insert, func
-from sqlalchemy.orm import Session
+from sqlalchemy import insert, select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.associations import usuario_roles
 from app.models.main_models import Rol
 from app.models.usuarios import Usuario
 
+async def get_user_by_email(db: AsyncSession, email: str):
+    result = await db.execute(select(Usuario).filter(Usuario.email == email))
+    return result.scalars().first()
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(Usuario).filter(Usuario.email == email).first()
+async def get_all_users_with_roles(db: AsyncSession) -> List[Dict[str, Any]]:
+    query = (
+        select(
+            Usuario.id_usuario,
+            Usuario.email,
+            Usuario.estado_cuenta,
+            Usuario.fecha_creacion,
+            func.array_agg(Rol.nombre_rol).label('roles')
+        )
+        .outerjoin(usuario_roles, Usuario.id_usuario == usuario_roles.c.id_usuario)
+        .outerjoin(Rol, usuario_roles.c.id_rol == Rol.id_rol)
+        .group_by(
+            Usuario.id_usuario,
+            Usuario.email,
+            Usuario.estado_cuenta,
+            Usuario.fecha_creacion
+        )
+    )
+    result = await db.execute(query)
+    return result.all()
 
-
-def get_all_users_with_roles(db: Session) -> List[Dict[str, Any]]:
-    """
-    Obtiene todos los usuarios con su email, fecha de creación, estado de cuenta y rol.
-    Realiza un JOIN entre usuarios, usuario_roles y roles para obtener la información completa.
-    """
-    # Consulta que obtiene todos los usuarios con sus roles
-    # Usamos outerjoin para incluir usuarios sin rol (aunque no debería pasar)
-    query = db.query(
-        Usuario.id_usuario,
-        Usuario.email,
-        Usuario.estado_cuenta,
-        Usuario.fecha_creacion,
-        func.array_agg(Rol.nombre_rol).label('roles')
-    ).outerjoin(
-        usuario_roles, Usuario.id_usuario == usuario_roles.c.id_usuario
-    ).outerjoin(
-        Rol, usuario_roles.c.id_rol == Rol.id_rol
-    ).group_by(
-        Usuario.id_usuario,
-        Usuario.email,
-        Usuario.estado_cuenta,
-        Usuario.fecha_creacion
-    ).all()
-    
-    return query
-
-
-def get_user_role_name(db: Session, id_usuario: str) -> str:
-    """Rastrea el rol del usuario cruzando la tabla asociativa."""
-    rol_record = db.query(usuario_roles).filter(usuario_roles.c.id_usuario == id_usuario).first()
+async def get_user_role_name(db: AsyncSession, id_usuario: str) -> str:
+    result = await db.execute(select(usuario_roles).filter(usuario_roles.c.id_usuario == id_usuario))
+    rol_record = result.first()
     if rol_record:
-        rol_obj = db.query(Rol).filter(Rol.id_rol == rol_record.id_rol).first()
+        res_rol = await db.execute(select(Rol).filter(Rol.id_rol == rol_record.id_rol))
+        rol_obj = res_rol.scalars().first()
         if rol_obj:
             return rol_obj.nombre_rol
-    return "mentee"  # Fallback por defecto .-.
+    return "mentee"
 
-
-def create_user(
-    db: Session,
+async def create_user(
+    db: AsyncSession,
     email: str,
     hashed_password: str,
     nombre_rol: str = "mentee",
 ) -> Usuario:
-    """Persiste usuario y fila en Usuario_Roles dentro de una transacción."""
-    rol = db.query(Rol).filter(Rol.nombre_rol == nombre_rol).first()
+    res_rol = await db.execute(select(Rol).filter(Rol.nombre_rol == nombre_rol))
+    rol = res_rol.scalars().first()
     if not rol:
         raise ValueError(f"No existe el rol '{nombre_rol}'.")
 
     new_user = Usuario(email=email, password=hashed_password)
     db.add(new_user)
-    db.flush()
+    await db.flush()
 
-    db.execute(
+    await db.execute(
         insert(usuario_roles).values(
             id_usuario=new_user.id_usuario,
             id_rol=rol.id_rol,
         )
     )
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return new_user
