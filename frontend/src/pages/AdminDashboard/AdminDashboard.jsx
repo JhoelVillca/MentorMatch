@@ -1,117 +1,125 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../AuthContext';
-import { getAllUsers, deleteUser } from '../../services/adminService';
-import './AdminDashboard.css';
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+import { getAllUsers, softDeleteUser, updateUserStatus } from "../../services/adminService";
+import "./AdminDashboard.css";
 
-/**
- * Panel de control del Administrador
- * Muestra una tabla con todos los usuarios registrados en el sistema
- */
+const ESTADOS_VALIDOS = ["activo", "suspendido", "baneado", "inactivo"];
+
 export default function AdminDashboard() {
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
-  
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [statusModal, setStatusModal] = useState(null);
+  const [selectedEstado, setSelectedEstado] = useState("");
 
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllUsers(token);
+      const data = await getAllUsers();
       setUsers(data);
     } catch (err) {
       setError(err.message);
-      // Si es un error 401 o 403, cerrar sesión
-      if (err.message.includes('401') || err.message.includes('403')) {
+      if (err.message.includes("401") || err.message.includes("403")) {
         logout();
-        navigate('/login');
+        navigate("/login");
       }
     } finally {
       setLoading(false);
     }
-  }, [token, logout, navigate]);
+  }, [logout, navigate]);
 
-  // Cargar usuarios al montar el componente
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
-  const handleDeleteClick = (userId) => {
-    setConfirmDelete(userId);
-  };
+  const handleDeleteClick = (userId) => setConfirmDelete(userId);
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteUser(token, confirmDelete);
-      setUsers(users.filter(user => user.id_usuario !== confirmDelete));
+      await softDeleteUser(confirmDelete);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id_usuario === confirmDelete ? { ...u, estado_cuenta: "baneado" } : u
+        )
+      );
       setConfirmDelete(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleCancelDelete = () => {
-    setConfirmDelete(null);
+  const handleOpenStatusModal = (user) => {
+    setStatusModal(user);
+    setSelectedEstado(user.estado_cuenta);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleConfirmStatus = async () => {
+    if (!statusModal || selectedEstado === statusModal.estado_cuenta) {
+      setStatusModal(null);
+      return;
+    }
+    try {
+      await updateUserStatus(statusModal.id_usuario, selectedEstado);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id_usuario === statusModal.id_usuario
+            ? { ...u, estado_cuenta: selectedEstado }
+            : u
+        )
+      );
+      setStatusModal(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
+
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   const getRoleBadgeClass = (roles) => {
-    if (roles.includes('admin')) return 'badge-admin';
-    if (roles.includes('mentor')) return 'badge-mentor';
-    return 'badge-mentee';
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'activo':
-        return 'status-active';
-      case 'suspendido':
-        return 'status-suspended';
-      case 'baneado':
-        return 'status-banned';
-      default:
-        return 'status-unknown';
-    }
+    if (roles.includes("admin")) return "badge-admin";
+    if (roles.includes("mentor")) return "badge-mentor";
+    return "badge-mentee";
   };
 
   const getRoleLabel = (roles) => {
-    if (roles.includes('admin')) return 'Administrador';
-    if (roles.includes('mentor')) return 'Mentor';
-    return 'Mentee';
+    if (roles.includes("admin")) return "Administrador";
+    if (roles.includes("mentor")) return "Mentor";
+    return "Mentee";
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'activo':
-        return 'Activo';
-      case 'suspendido':
-        return 'Suspendido';
-      case 'baneado':
-        return 'Baneado';
-      default:
-        return status;
+  const getStatusBadgeClass = (s) => {
+    switch (s) {
+      case "activo": return "status-active";
+      case "suspendido": return "status-suspended";
+      case "baneado": return "status-banned";
+      case "inactivo": return "status-unknown";
+      default: return "status-unknown";
     }
+  };
+
+  const getStatusLabel = (s) => {
+    const map = { activo: "Activo", suspendido: "Suspendido", baneado: "Baneado", inactivo: "Inactivo" };
+    return map[s] || s;
   };
 
   if (loading) {
     return (
       <div className="admin-dashboard">
         <div className="loading-container">
-          <div className="spinner"></div>
+          <div className="spinner" />
           <p>Cargando usuarios...</p>
         </div>
       </div>
@@ -122,15 +130,13 @@ export default function AdminDashboard() {
     <div className="admin-dashboard">
       <div className="admin-header">
         <h1>Panel de Administrador</h1>
-        <p>Gestión de usuarios del sistema</p>
+        <p>Gestion de usuarios del sistema</p>
       </div>
 
       {error && (
         <div className="error-message">
           <p>{error}</p>
-          <button onClick={loadUsers} className="btn-retry">
-            Reintentar
-          </button>
+          <button onClick={loadUsers} className="btn-retry">Reintentar</button>
         </div>
       )}
 
@@ -148,9 +154,7 @@ export default function AdminDashboard() {
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan="5" className="no-users">
-                  No hay usuarios registrados
-                </td>
+                <td colSpan="5" className="no-users">No hay usuarios registrados</td>
               </tr>
             ) : (
               users.map((user) => (
@@ -167,13 +171,20 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="date-cell">{formatDate(user.fecha_creacion)}</td>
-                  <td className="actions-cell">
+                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                    <button
+                      className="btn-delete"
+                      style={{ background: "transparent", border: "1px solid #6366f1", color: "#6366f1" }}
+                      onClick={() => handleOpenStatusModal(user)}
+                    >
+                      Estado
+                    </button>
                     <button
                       className="btn-delete"
                       onClick={() => handleDeleteClick(user.id_usuario)}
-                      title="Eliminar usuario"
+                      title="Desactivar usuario"
                     >
-                      Eliminar
+                      Banear
                     </button>
                   </td>
                 </tr>
@@ -183,19 +194,44 @@ export default function AdminDashboard() {
         </table>
       </div>
 
-      {/* Modal de confirmación de eliminación */}
       {confirmDelete && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Confirmar eliminación</h2>
-            <p>¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</p>
+            <h2>Confirmar baneo</h2>
+            <p>El usuario quedara baneado. Esta accion queda registrada en auditoria.</p>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={handleCancelDelete}>
-                Cancelar
-              </button>
-              <button className="btn-confirm" onClick={handleConfirmDelete}>
-                Eliminar
-              </button>
+              <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+              <button className="btn-confirm" onClick={handleConfirmDelete}>Banear</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {statusModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Cambiar estado de {statusModal.email}</h2>
+            <p>Estado actual: <strong>{getStatusLabel(statusModal.estado_cuenta)}</strong></p>
+            <select
+              value={selectedEstado}
+              onChange={(e) => setSelectedEstado(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                borderRadius: "0.375rem",
+                background: "#0a0a0a",
+                color: "white",
+                border: "1px solid #374151",
+                marginBottom: "1rem",
+              }}
+            >
+              {ESTADOS_VALIDOS.map((e) => (
+                <option key={e} value={e}>{getStatusLabel(e)}</option>
+              ))}
+            </select>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setStatusModal(null)}>Cancelar</button>
+              <button className="btn-confirm" onClick={handleConfirmStatus}>Aplicar</button>
             </div>
           </div>
         </div>
