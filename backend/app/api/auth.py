@@ -27,7 +27,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         samesite="lax",
         max_age=3600
     )
-    return {"access_token": token_data["access_token"], "token_type": "bearer"}
+    return {"message": "Login exitoso"}
 
 @router.post("/logout")
 async def logout(response: Response):
