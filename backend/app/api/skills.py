@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 import jwt
 from sqlalchemy.orm import joinedload
+from sqlalchemy.future import select
 
 from app.db.database import get_db
 from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor
@@ -32,42 +33,45 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
         )
 
 @router.get("/categories", response_model=List[CategoriaResponse])
-def get_categories(db: Session = Depends(get_db)):
-    
-    categories = db.query(CategoriaHabilidad).options(joinedload(CategoriaHabilidad.habilidades)).all()
+async def get_categories(db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(CategoriaHabilidad).options(joinedload(CategoriaHabilidad.habilidades)))
+    categories = res.scalars().all()
     return categories
 
 @router.post("/mentor", status_code=status.HTTP_201_CREATED)
-def add_mentor_skill(
+async def add_mentor_skill(
     skill_data: MentorSkillCreate, 
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Permite a un mentor logueado añadir una habilidad a su perfil.
     """
     # 1. Buscar si el usuario existe
-    user = db.query(Usuario).filter(Usuario.id_usuario == user_id).first()
+    res = await db.execute(select(Usuario).filter(Usuario.id_usuario == user_id))
+    user = res.scalars().first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
     # 2. Buscar si el usuario tiene PerfilMentor
-    perfil_mentor = db.query(PerfilMentor).filter(PerfilMentor.id_usuario == user_id).first()
+    res2 = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+    perfil_mentor = res2.scalars().first()
     
     if not perfil_mentor:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debe completar su perfil de mentor primero")
     
     # 3. Verificar si el mentor ya tiene esta habilidad declarada
-    existing_skill = db.query(MentorHabilidad).filter(
+    existing_q = await db.execute(select(MentorHabilidad).filter(
         MentorHabilidad.id_mentor == perfil_mentor.id_mentor,
         MentorHabilidad.id_habilidad == skill_data.id_habilidad
-    ).first()
+    ))
+    existing_skill = existing_q.scalars().first()
 
     if existing_skill:
         # Actualizar la habilidad si ya la tiene
         existing_skill.anios_experiencia = skill_data.anios_experiencia
         existing_skill.nivel = skill_data.nivel
-        db.commit()
+        await db.commit()
         return {"detail": "Habilidad actualizada exitosamente"}
 
     # 4. Crear el registro en MentorHabilidad
@@ -78,6 +82,6 @@ def add_mentor_skill(
         nivel=skill_data.nivel
     )
     db.add(nueva_habilidad)
-    db.commit()
+    await db.commit()
     
     return {"detail": "Habilidad añadida exitosamente al perfil del mentor"}

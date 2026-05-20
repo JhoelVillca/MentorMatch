@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import Optional
 import urllib.parse
@@ -7,14 +7,12 @@ from app.models.main_models import PerfilMentee, PerfilMentor
 from app.repositories import mentor_repository, mentee_repository
 from app.schemas.mentor_profile import ProfileUpdateOrCreate
 from app.schemas.mentee_profile import MenteeProfileUpsert, MenteeProfileOut
+async def get_mentor_profile(db: AsyncSession, user_id: UUID) -> Optional[PerfilMentor]:
+    return await mentor_repository.get_profile_by_user_id(db, user_id)
 
 
-def get_mentor_profile(db: Session, user_id: UUID) -> Optional[PerfilMentor]:
-    return mentor_repository.get_profile_by_user_id(db, user_id)
-
-
-def upsert_mentor_profile(
-    db: Session, user_id: UUID, data: ProfileUpdateOrCreate
+async def upsert_mentor_profile(
+    db: AsyncSession, user_id: UUID, data: ProfileUpdateOrCreate
 ) -> PerfilMentor:
     # Lógica del motor de avatares para Mentor:
     # Si 'foto_perfil' viene vacío, nulo o solo espacios, se le genera su avatar por defecto
@@ -23,15 +21,15 @@ def upsert_mentor_profile(
         nombre_codificado = urllib.parse.quote_plus(nombre_limpio)
         data.foto_perfil = f"https://ui-avatars.com/api/?name={nombre_codificado}&background=random"
     
-    return mentor_repository.upsert_profile(db, user_id, data)
+    return await mentor_repository.upsert_profile(db, user_id, data)
 
 
-def get_mentee_profile(db: Session, user_id: UUID) -> Optional[PerfilMentee]:
-    return mentee_repository.get_profile_by_user_id(db, user_id)
+async def get_mentee_profile(db: AsyncSession, user_id: UUID) -> Optional[PerfilMentee]:
+    return await mentee_repository.get_profile_by_user_id(db, user_id)
 
 
-def get_mentee_profile_for_user(db: Session, id_usuario: UUID) -> MenteeProfileOut:
-    profile = mentee_repository.get_profile_by_user_id(db, id_usuario)
+async def get_mentee_profile_for_user(db: AsyncSession, id_usuario: UUID) -> MenteeProfileOut:
+    profile = await mentee_repository.get_profile_by_user_id(db, id_usuario)
     if not profile:
         return MenteeProfileOut(
             id_mentee=None,
@@ -47,8 +45,8 @@ def get_mentee_profile_for_user(db: Session, id_usuario: UUID) -> MenteeProfileO
     )
 
 
-def upsert_mentee_profile(
-    db: Session, user_id: UUID, data: MenteeProfileUpsert
+async def upsert_mentee_profile(
+    db: AsyncSession, user_id: UUID, data: MenteeProfileUpsert
 ) -> PerfilMentee:
     tz = (data.zona_horaria_preferida or "").strip() or "UTC"
     nombre = data.nombre_completo.strip()
@@ -60,7 +58,7 @@ def upsert_mentee_profile(
         nombre_codificado = urllib.parse.quote_plus(nombre)
         foto = f"https://ui-avatars.com/api/?name={nombre_codificado}&background=random"
         
-    return mentee_repository.upsert_profile(
+    return await mentee_repository.upsert_profile(
         db,
         user_id,
         nombre,

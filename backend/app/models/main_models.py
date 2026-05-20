@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -42,6 +42,7 @@ class PaqueteMentor(Base):
     cantidad_horas_totales = Column(Integer, nullable=False)
     precio_total = Column(Numeric(10, 2), nullable=False)
     estado_activo = Column(Boolean, server_default="true")
+    fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
 class ContratoMentoria(Base):
     __tablename__ = "contratos_mentoria"
@@ -50,13 +51,17 @@ class ContratoMentoria(Base):
     id_paquete = Column(UUID(as_uuid=True), ForeignKey("paquetes_mentor.id_paquete", ondelete="RESTRICT"))
     estado_contrato = Column(String(30), server_default="pendiente_pago")
     horas_consumidas = Column(Integer, server_default="0")
+    fecha_adquisicion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
 class TransaccionPago(Base):
     __tablename__ = "transacciones_pago"
     id_transaccion = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     id_contrato = Column(UUID(as_uuid=True), ForeignKey("contratos_mentoria.id_contrato", ondelete="RESTRICT"))
     monto_pagado = Column(Numeric(10, 2), nullable=False)
+    moneda = Column(String(3), server_default="USD")
     estado_pago = Column(String(20), server_default="procesando")
+    id_pasarela_externa = Column(String(255), unique=True)
+    fecha_procesamiento = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     url_recibo_externo = Column(String(500))
 
 class CategoriaHabilidad(Base):
