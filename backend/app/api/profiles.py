@@ -19,10 +19,12 @@ def get_mentee_profile(
 ):
     perfil = profile_service.get_mentee_profile(db, user_id)
     if not perfil:
+        # Añadimos foto_perfil=None para que el Schema de Pydantic no lance error
         return MenteeProfileResponse(
             nombre_completo="",
             zona_horaria_preferida="UTC",
             biografia_corta=None,
+            foto_perfil=None,  
         )
     return perfil
 
@@ -43,11 +45,13 @@ def get_mentor_profile(
 ):
     perfil = profile_service.get_mentor_profile(db, user_id)
     if not perfil:
+        # Añadimos foto_perfil=None para mantener la consistencia con el nuevo Schema
         return ProfileResponse(
             nombre_completo="",
             biografia_profesional="",
             url_linkedin="",
             url_video_presentacion="",
+            foto_perfil=None,  
         )
     return perfil
 
