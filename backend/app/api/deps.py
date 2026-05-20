@@ -1,8 +1,7 @@
 from typing import Optional
 from uuid import UUID
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -11,9 +10,13 @@ from app.db.database import get_db
 from app.models.usuarios import Usuario
 from app.repositories.user_repository import get_user_role_name
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+def get_token_from_cookie(request: Request) -> str:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token no encontrado")
+    return token
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
+def get_current_user_id(token: str = Depends(get_token_from_cookie)) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: Optional[str] = payload.get("sub")
@@ -21,13 +24,9 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
         return user_id
     except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se pudo validar las credenciales",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales invalidas")
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+async def get_current_user(token: str = Depends(get_token_from_cookie), db: AsyncSession = Depends(get_db)):
     user_id = get_current_user_id(token)
     try:
         uid = UUID(user_id)
