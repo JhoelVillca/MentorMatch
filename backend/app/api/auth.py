@@ -20,7 +20,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         key="access_token",
         value=token_data["access_token"],
         httponly=True,
-        secure=True, 
+        secure=False, 
         samesite="lax",
         max_age=3600
     )

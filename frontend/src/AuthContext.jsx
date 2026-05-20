@@ -12,22 +12,27 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUser({ id: data.id, role: data.rol });
+        return data; 
       } else {
         setUser(null);
+        return null;
       }
     } catch (error) {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    localStorage.removeItem('mentor_token');
+    
     checkSession();
   }, []);
 
   const login = async () => {
-    await checkSession();
+    return await checkSession();
   };
 
   const logout = async () => {

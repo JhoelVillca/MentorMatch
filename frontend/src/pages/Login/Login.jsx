@@ -18,14 +18,15 @@ export default function Login() {
 
     try {
       await loginAPI(email, password);
-      await login();
+      const userData = await login();
 
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
-      const data = await res.json();
-
-      if (data.rol === 'admin') navigate('/admin');
-      else if (data.rol === 'mentor') navigate('/mentor');
-      else navigate('/mentee');
+      if (userData) {
+        if (userData.rol === 'admin') navigate('/admin');
+        else if (userData.rol === 'mentor') navigate('/mentor');
+        else navigate('/mentee');
+      } else {
+        setError('Error fatal al recuperar sesion.');
+      }
     } catch (err) {
       setError(err.message);
     }
