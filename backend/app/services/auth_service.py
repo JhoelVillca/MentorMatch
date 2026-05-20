@@ -1,28 +1,35 @@
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.repositories import user_repository
 from app.core import security
 from app.schemas.user import UserCreate
 
+ESTADOS_BLOQUEADOS = {"suspendido", "baneado", "inactivo"}
+
 
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> dict:
     user = await user_repository.get_user_by_email(db, email)
-    
-    # para mitigar el timing
+
     if not user or not security.verify_password(password, user.password):
-        return None  # Retornamos nulo, la capa HTTP va decidir que hacer
-    
-    # Lectura de roles
+        return None
+
+    if user.estado_cuenta in ESTADOS_BLOQUEADOS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cuenta suspendida.",
+        )
+
     rol_name = await user_repository.get_user_role_name(db, str(user.id_usuario))
-    
-    # JWT
+
     access_token = security.create_access_token(
         data={"sub": str(user.id_usuario), "rol": rol_name}
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "role": rol_name
+        "role": rol_name,
     }
 
 
