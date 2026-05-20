@@ -1,11 +1,11 @@
 ## Descripción
 
-Plataforma de e-learning enfocada en conectar a estudiantes (**mentees**) que desean aprender una habilidad con expertos (**mentores**) que ofrecen enseñanza personalizada a cambio de una tarifa.
+Plataforma de e-learning enfocada en conectar a estudiantes (**mentees**) que desean aprender una habilidad con expertos (**mentores**) que ofrecen enseñanza personalizada a cambio de una tarifa. **El backend opera con I/O asíncrono** para máxima concurrencia y rendimiento.
 
 ## Stack Tecnológico
 
 * **Frontend:** React 19, Vite, Tailwind CSS, React Router.
-* **Backend:** Python 3, FastAPI, SQLAlchemy, JWT.
+* **Backend:** Python 3, FastAPI (Async), SQLAlchemy (Async), Alembic, JWT, asyncpg.
 * **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`).
 * **Infraestructura:** Docker & Docker Compose.
 
@@ -51,7 +51,7 @@ Genera una clave criptográfica segura para las sesiones de usuario ejecutando e
 openssl rand -hex 32
 ```
 
-*(Copia la cadena de 64 caracteres que te devolverá la terminal).*
+*(Copia la cadena de 64 caracteres que te devolverá la terminal).* 
 
 Abre tu editor de código y edita el archivo `backend/.env`.
 
@@ -99,13 +99,23 @@ Instala las librerías necesarias.
 pip install -r requirements.txt
 ```
 
-Enciende el motor del backend.
+**🔥 CRÍTICO: Ejecuta las migraciones de base de datos (Alembic)**
+
+Antes de encender el servidor, necesitas construir las tablas en PostgreSQL. Esto NO es automático:
+
+```bash
+alembic upgrade head
+```
+
+*Este comando lee todos los scripts de migración y aplica el esquema completo de la base de datos.*
+
+Enciende el motor del backend (ahora 100% asíncrono):
 
 ```bash
 uvicorn main:app --reload
 ```
 
-*Tu terminal quedará bloqueada mostrando logs. La API ahora vive en: [http://127.0.0.1:8000*](http://127.0.0.1:8000)
+*Tu terminal quedará bloqueada mostrando logs. La API ahora vive en: [http://127.0.0.1:8000](http://127.0.0.1:8000)*
 
 ### 5. Configuración del Frontend (React)
 
@@ -114,21 +124,18 @@ Asegúrate de estar en la raíz de `MentorMatch/` y entra al frontend.
 
 ```bash
 cd frontend
-
 ```
 
 Instala los paquetes de la interfaz. *Este paso puede tardar un minuto.*
 
 ```bash
 npm install
-
 ```
 
 Enciende la interfaz.
 
 ```bash
 npm run dev
-
 ```
 
 *Abre tu navegador en: http://localhost:5173*
@@ -147,14 +154,12 @@ Asegúrate de estar en la rama principal:
 
 ```bash
 git checkout main
-
 ```
 
 Descarga las últimas actualizaciones que hayan subido tus compañeros:
 
 ```bash
 git pull origin main
-
 ```
 
 ### 2. Creación de tu Rama de Trabajo
@@ -163,25 +168,33 @@ Crea una copia paralela (rama) exclusiva para lo que vas a programar.
 
 ```bash
 git checkout -b <tipo>/<nombre-descriptivo>
-
 ```
 
 **Ojo:** Usa esta convención estricta para el `<tipo>`:
 
 | Prefijo | Cuándo usarlo | Ejemplo |
 | --- | --- | --- |
-| `feature/` | Para agregar nuevas pantallas o funcionalidades. | `feature/login-ui` |
-| `fix/` | Para arreglar un error que rompe el sistema. | `fix/error-conexion` |
-| `docs/` | Para modificar texto, manuales o el README. | `docs/guia-instalacion` |
+| `feature/` | Para agregar nuevas pantallas o funcionalidades. | `feature/chat-async` |
+| `fix/` | Para arreglar un error que rompe el sistema. | `fix/doble-booking` |
+| `docs/` | Para modificar texto, manuales o el README. | `docs/actualizar-guia` |
 
-### 3. Desarrollo
+### 3. Desarrollo y Cambios en Base de Datos
 
 Abre tu editor, programa, guarda tus archivos y prueba que todo funcione localmente.
 
 ```bash
 code .
-
 ```
+
+**Si modificaste los modelos de la base de datos** (archivos en `backend/app/models/`), tienes que generar una migración con Alembic. No hay atajos:
+
+```bash
+cd backend
+alembic revision --autogenerate -m "nombre-descriptivo-del-cambio"
+alembic upgrade head
+```
+
+**Regla de oro:** Nunca modifiques la base de datos a mano (ni con SQL directo ni con `db.create_all()`). Siempre vía Alembic. Si no, tu compañero no tendrá tus cambios y todo explotará.
 
 ### 4. Guardar Cambios (Commits)
 
@@ -189,24 +202,21 @@ Revisa qué archivos modificaste:
 
 ```bash
 git status
-
 ```
 
 Prepara todos los archivos modificados para ser guardados:
 
 ```bash
 git add .
-
 ```
 
 Empaqueta tus cambios con un mensaje claro siguiendo el estándar **Conventional Commits**:
 
 ```bash
 git commit -m "<tipo>: <descripción breve en minúsculas>"
-
 ```
 
-*Ejemplo: `git commit -m "feat: agregada validacion de email en login"*`
+*Ejemplo: `git commit -m "feat: agregada validacion de email en login"`*
 
 ### 5. Subir al Servidor (Pull Request)
 
@@ -214,7 +224,6 @@ Sube tu rama a GitHub:
 
 ```bash
 git push -u origin <nombre-de-tu-rama>
-
 ```
 
 La terminal te dará un enlace HTTP. Haz clic (o cópialo en tu navegador). Te llevará a GitHub para crear un **Pull Request (PR)**. Llena la descripción explicando qué hiciste y envíalo.
@@ -234,28 +243,24 @@ Regresa a la rama principal:
 
 ```bash
 git checkout main
-
 ```
 
 Descarga el código fusionado (que ahora incluye tu trabajo y el de otros):
 
 ```bash
 git pull origin main
-
 ```
 
 Borra tu rama local (ya cumplió su propósito):
 
 ```bash
 git branch -d <nombre-de-tu-rama>
-
 ```
 
 Limpia la caché de ramas viejas:
 
 ```bash
 git fetch -p
-
 ```
 
 ---
@@ -271,7 +276,6 @@ Asegúrate de estar en tu rama de trabajo (ej. `feature/login`) e intenta traer 
 
 ```bash
 git pull origin main
-
 ```
 
 *La terminal te dirá en rojo qué archivos tienen conflictos (CONFLICT: Merge conflict in...).*
@@ -293,17 +297,30 @@ Una vez resueltos todos los archivos, dile a Git que el conflicto terminó:
 
 ```bash
 git add .
-
 ```
 
 ```bash
 git commit -m "fix: resuelto conflicto de fusion en main"
-
 ```
 
 ```bash
 git push
-
 ```
 
 *Listo. Tu Pull Request en GitHub ahora estará libre de conflictos y listo para ser aprobado.*
+
+---
+
+## ⚠️ ADVERTENCIA PARA DESARROLLADORES (BACKEND ASYNC)
+
+**El sistema es 100% asíncrono.** Si agregas un nuevo endpoint (o modificas uno existente), sigue estas reglas como un mantra:
+
+| ✅ **SÍ debes hacer** | ❌ **NUNCA hagas esto** |
+| --- | --- |
+| `async def mi_endpoint(...):` | `def mi_endpoint(...):` (si toca DB) |
+| `db: AsyncSession = Depends(get_db)` | `db: Session = Depends(get_db)` |
+| `await db.execute(select(...))` | `db.query(Model).filter(...)` |
+| `await db.commit()` | `db.commit()` sin await |
+| Usar `asyncpg` como driver | Usar `psycopg2` directamente |
+
+**Si tu endpoint no toca la base de datos** (ej. leer un archivo estático), puede ser `def` normal. Pero si ves `db`, tiene que ser `async`.

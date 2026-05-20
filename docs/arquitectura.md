@@ -1,82 +1,100 @@
-# Arquitectura de MentorMatch 
+# Arquitectura de MentorMatch
 
 ## Estructura del Proyecto (Monorepo)
 
 ```text
 MentorMatch/
 │
-├── README.md                          # Documentación raíz (v0.2.0)
+├── README.md                          # Documentación raíz (v0.3.0 - Async)
 ├── docker-compose.yml                 # Orquestación de contenedores (Postgres 16)
 ├── .gitignore                         # Exclusiones de Git (node_modules, venv, .env)
 │
 ├── docs/                              # Especificaciones de diseño y visión
-│   ├── arquitectura.md                # Diseño de sistemas (Actualizado)
+│   ├── arquitectura.md                # Diseño de sistemas (Actualizado con Async)
 │   ├── documentoVision.md             # Requerimientos de negocio
 │   └── spec.md                        # SDD: Fuente única de verdad técnica
 │
-├── backend/                           # Capa Servidor (FastAPI + SQLAlchemy)
+├── backend/                           # Capa Servidor (FastAPI + SQLAlchemy Async)
 │   ├── main.py                        # Entrypoint: Inicialización de la App y Rutas
-│   ├── requirements.txt               # Manifiesto de dependencias Python
+│   ├── requirements.txt               # Manifiesto con asyncpg, alembic
 │   ├── .env.example                   # Plantilla de inyección de entorno
+│   ├── alembic.ini                    # Configuración de Alembic
+│   ├── alembic/                       # Scripts de migración y versionado de esquema
+│   │   ├── env.py                     # Configuración asíncrona de migraciones
+│   │   ├── script.py.mako             # Plantilla para nuevas migraciones
+│   │   └── versions/                  # Historial de cambios de esquema
 │   └── app/
-│       ├── api/                       # Controladores de Endpoints (Meseros HTTP)
+│       ├── api/                       # Controladores de Endpoints (Async)
 │       │   ├── admin.py               # Gestión RBAC y purga de usuarios
 │       │   ├── auth.py                # JWT Issuance (Login/Signup)
-│       │   ├── deps.py                # Inyectores: get_db, dependencias de roles
-│       │   ├── disponibilidad.py      # Motor de agendamiento (Días/Horas UTC)
-│       │   ├── paquetes.py            # CRUD de oferta comercial del Mentor
-│       │   ├── profiles.py            # Gestión de perfiles Mentee/Mentor
-│       │   └── skills.py              # Taxonomía y declaración de habilidades
+│       │   ├── deps.py                # Inyectores: get_db, dependencias de roles (Async)
+│       │   ├── disponibilidad.py      # Motor de agendamiento (Async)
+│       │   ├── paquetes.py            # CRUD de oferta comercial del Mentor (Async)
+│       │   ├── profiles.py            # Gestión de perfiles (Async)
+│       │   └── skills.py              # Taxonomía y declaración de habilidades (Async)
 │       ├── core/                      # Seguridad y Criptografía
 │       │   └── security.py            # Hashing (bcrypt) y firma JWT (PyJWT)
 │       ├── db/                        # Capa de Persistencia
-│       │   └── database.py            # Engine de SQLAlchemy y SessionLocal
+│       │   └── database.py            # create_async_engine, AsyncSessionLocal
 │       ├── models/                    # Modelos ORM (Mapeo a tablas SQL)
 │       │   ├── associations.py        # Tabla intermedia usuario_roles
-│       │   ├── main_models.py         # Tablas de negocio (Perfiles, Disponibilidad, etc)
+│       │   ├── main_models.py         # Tablas de negocio (con fecha_creacion, etc)
 │       │   └── usuarios.py            # Entidad core de identidad (Usuarios, Roles)
-│       ├── repositories/              # Capa de Acceso a Datos (Consultas SQL/I-O)
-│       │   ├── mentee_repository.py   # Consultas específicas de Mentee
-│       │   ├── mentor_repository.py   # Consultas específicas de Mentor
-│       │   └── user_repository.py     # Consultas core de Usuarios y Roles
-│       ├── schemas/                   # DTOs de Pydantic (Validación de carga útil)
-│       │   ├── admin.py               # Validación de respuestas de administración
-│       │   ├── mentee_profile.py      # Validación de perfiles Mentee
-│       │   ├── mentor_profile.py      # Validación de perfiles Mentor
-│       │   ├── paquete_schema.py      # Validación de paquetes comerciales
-│       │   ├── skills.py              # Validación de habilidades y niveles
-│       │   └── user.py                # Validación de Auth y Tokens
-│       └── services/                  # Capa de Lógica de Negocio (Cerebro)
-│           ├── admin_service.py       # Lógica de listado de usuarios para admins
-│           ├── auth_service.py        # Orquestación de autenticación y registro
-│           └── profile_service.py     # Orquestación de creación/edición de perfiles
+│       ├── repositories/              # Capa de Acceso a Datos (Async)
+│       │   ├── mentee_repository.py   # async def / await db.execute
+│       │   ├── mentor_repository.py   # async def / await db.execute
+│       │   └── user_repository.py     # async def / await db.execute
+│       ├── schemas/                   # DTOs de Pydantic (Validación)
+│       │   ├── admin.py
+│       │   ├── mentee_profile.py
+│       │   ├── mentor_profile.py
+│       │   ├── paquete_schema.py
+│       │   ├── skills.py
+│       │   └── user.py
+│       └── services/                  # Capa de Lógica de Negocio (Async)
+│           ├── admin_service.py
+│           ├── auth_service.py        # async def authenticate_user
+│           └── profile_service.py     # async def upsert_mentor_profile
 │
 ├── frontend/                          # Capa Cliente (React 19 + Vite 8)
-│   ├── vite.config.js                 # Configuración de compilación y Proxy API
+│   ├── vite.config.js
 │   ├── src/
-│   │   ├── App.jsx                    # Enrutador principal (Definición de Layouts y Rutas)
-│   │   ├── AuthContext.jsx            # State management global (Sesión, Token y Rol decodificado)
-│   │   ├── ProtectedRoute.jsx         # Middleware de protección de rutas (RBAC visual)
-│   │   ├── components/                # Bloques de UI reutilizables (Legos)
-│   │   │   ├── MainLayout.jsx         # Wrapper base con Navbar persistente y Outlet de rutas
-│   │   │   ├── Navbar.jsx             # Barra de navegación inteligente con RBAC (Capa Interfaz)
-│   │   │   ├── MentorAvailabilityPanel.jsx # Gestión visual de horarios
-│   │   │   └── MentorSkillForm.jsx    # Registro visual de habilidades
-│   │   ├── pages/                     # Vistas completas e independientes
-│   │   │   ├── AdminDashboard/        # Panel de control con tabla de usuarios
-│   │   │   ├── CompleteProfile/       # Formulario del perfil profesional (Mentor)
-│   │   │   ├── Login/                 # Interfaz de acceso
-│   │   │   ├── MenteeCompleteProfile/ # Formulario de datos personales (Mentee)
-│   │   │   ├── MenteeDashboard/       # Vista principal del aprendiz
-│   │   │   ├── MentorDashboard/       # Vista principal del experto
-│   │   │   ├── Paquetes/              # CRUD visual de paquetes
-│   │   │   └── Register/              # Captura de nuevos usuarios (Signup)
-│   │   └── services/                  # Abstracción de red (Fetch API / Axios)
-│   │       ├── adminService.js        # Comunicación con /api/admin
-│   │       ├── authService.js         # Comunicación con /api/auth
-│   │       └── profileService.js      # Comunicación con /api/profiles
+│   │   ├── App.jsx
+│   │   ├── AuthContext.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── components/
+│   │   │   ├── MainLayout.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── MentorAvailabilityPanel.jsx
+│   │   │   └── MentorSkillForm.jsx
+│   │   ├── pages/
+│   │   │   ├── AdminDashboard/
+│   │   │   ├── CompleteProfile/
+│   │   │   ├── Login/
+│   │   │   ├── MenteeCompleteProfile/
+│   │   │   ├── MenteeDashboard/
+│   │   │   ├── MentorDashboard/
+│   │   │   ├── Paquetes/
+│   │   │   └── Register/
+│   │   └── services/
+│   │       ├── adminService.js
+│   │       ├── authService.js
+│   │       └── profileService.js
 │
-└── database/                          # Scripts de inicialización y migración SQL
-    └── schema_init.sql                # DDL: Definición de tablas, índices y FKs
-    
+└── database/                          # Scripts de inicialización SQL
+    └── schema_init.sql                # DDL inicial (Alembic toma el control luego)
 ```
+
+## Stack Tecnológico (Actualizado)
+
+* **Backend:** Python 3, FastAPI (Async), SQLAlchemy (Async), Alembic (Migraciones), JWT, asyncpg.
+* **Base de Datos:** PostgreSQL 16 (con UUIDs nativos vía `pgcrypto`), accedida exclusivamente mediante `asyncpg`.
+* **Frontend:** React 19, Vite, Tailwind CSS, React Router.
+* **Infraestructura:** Docker & Docker Compose.
+
+## Principios Arquitectónicos Clave
+
+1.  **I/O Totalmente Asíncrono:** Toda operación que toca la base de datos (desde `repositories/` hasta `api/`) usa `async def` y `await`. No hay `db.query()` ni `psycopg2`.
+2.  **Migraciones Profesionales:** El esquema de la base de datos es gestionado **exclusivamente** por Alembic. `Base.metadata.create_all()` no existe en producción.
+3.  **URL Forzada a Asyncpg:** El sistema automáticamente convierte `postgresql://` en `postgresql+asyncpg://` para garantizar el driver correcto.
+4.  **Transacciones Explícitas:** Todo `db.commit()`, `db.refresh()`, y `db.flush()` debe llevar `await`.
