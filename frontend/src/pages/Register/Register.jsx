@@ -5,7 +5,7 @@ import { registerAPI } from '../../services/authService';
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rol, setRol] = useState('Mentee'); // Valor por defecto
+  const [rol, setRol] = useState('Mentee');
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -15,11 +15,17 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMsg('La contrasena debe tener al menos 8 caracteres, 1 mayuscula y 1 numero.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       await registerAPI(email, password, rol);
-      // Si todo sale bien, redirigimos a login
       navigate('/login');
     } catch (error) {
       setErrorMsg(error.message);
@@ -37,7 +43,7 @@ const Register = () => {
         <p className="mt-2 text-center text-sm text-gray-600">
           O{' '}
           <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-            inicia sesión si ya tienes cuenta
+            inicia sesion si ya tienes cuenta
           </Link>
         </p>
       </div>
@@ -65,7 +71,7 @@ const Register = () => {
           <form className="space-y-6" onSubmit={handleRegister}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Correo electrónico
+                Correo electronico
               </label>
               <div className="mt-1">
                 <input
@@ -84,7 +90,7 @@ const Register = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Contraseña
+                Contrasena
               </label>
               <div className="mt-1">
                 <input
@@ -103,7 +109,7 @@ const Register = () => {
 
             <div>
               <label htmlFor="rol" className="block text-sm font-medium text-gray-700">
-                ¿Qué buscas en MentorMatch?
+                ¿Que buscas en MentorMatch?
               </label>
               <div className="mt-1">
                 <select
@@ -114,7 +120,7 @@ const Register = () => {
                   className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg shadow-sm transition-colors"
                 >
                   <option value="Mentee">Quiero aprender (Mentee)</option>
-                  <option value="Mentor">Quiero enseñar (Mentor)</option>
+                  <option value="Mentor">Quiero ensenar (Mentor)</option>
                 </select>
               </div>
             </div>
