@@ -11,36 +11,48 @@ from app.repositories.user_repository import get_user_role_name
 
 router = APIRouter(prefix="/auth", tags=["Autenticacion"])
 
+
 @router.post("/login")
-async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    token_data = await auth_service.authenticate_user(db, form_data.username, form_data.password)
+async def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        token_data = await auth_service.authenticate_user(db, form_data.username, form_data.password)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
     if not token_data:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
-    
+
     is_prod = os.getenv("ENVIRONMENT") == "production"
-    
+
     response.set_cookie(
         key="access_token",
         value=token_data["access_token"],
         httponly=True,
         secure=is_prod,
         samesite="lax",
-        max_age=3600
+        max_age=3600,
     )
     return {"message": "Login exitoso"}
+
 
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie("access_token")
     return {"message": "Logout exitoso"}
 
+
 @router.get("/me")
-async def get_me(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_me(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     rol = await get_user_role_name(db, str(current_user.id_usuario))
-    return {
-        "id": current_user.id_usuario, 
-        "rol": rol
-    }
+    return {"id": current_user.id_usuario, "rol": rol}
+
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)):
