@@ -11,7 +11,6 @@ from app.repositories.user_repository import get_user_role_name
 
 router = APIRouter(prefix="/auth", tags=["Autenticacion"])
 
-
 @router.post("/login")
 async def login(
     response: Response,
@@ -35,13 +34,14 @@ async def login(
         secure=is_prod,
         samesite="lax",
         max_age=3600,
+        path="/"  
     )
     return {"message": "Login exitoso"}
 
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token", path="/")
     return {"message": "Logout exitoso"}
 
 

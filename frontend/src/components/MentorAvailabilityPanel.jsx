@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { apiClient } from '../services/apiClient';
 
 const API_URL = '/api/disponibilidad/';
 
 const DAYS_OF_WEEK = [
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-  'Domingo'
+  'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'
 ];
 
 const MentorAvailabilityPanel = () => {
@@ -18,28 +13,22 @@ const MentorAvailabilityPanel = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [error, setError] = useState(null);
+  
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     fetchAvailabilities();
   }, []);
 
   const fetchAvailabilities = async () => {
     setLoading(true);
     try {
-      const response = await fetch(API_URL, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailabilities(data);
-        setError(null);
-      } else {
-        setError('Error al cargar los horarios');
-      }
+      const data = await apiClient(API_URL);
+      setAvailabilities(data);
+      setError(null);
     } catch (err) {
-      setError('Error de red al cargar los horarios');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -57,32 +46,22 @@ const MentorAvailabilityPanel = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const response = await fetch(API_URL, {
+      await apiClient(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          dia_semana: day,
-          hora_inicio: startTime,
-          hora_fin: endTime
-        })
+        body: { dia_semana: day, hora_inicio: startTime, hora_fin: endTime }
       });
 
-      if (response.ok) {
-        setStartTime('');
-        setEndTime('');
-        setDay('Lunes');
-        setError(null);
-        fetchAvailabilities(); // Recargar la lista
-      } else {
-        const errData = await response.json();
-        setError(errData.detail || 'Error al guardar el horario');
-      }
+      setStartTime('');
+      setEndTime('');
+      setDay('Lunes');
+      setError(null);
+      fetchAvailabilities();
     } catch (err) {
-      setError('Error de conexión al guardar el horario');
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,25 +69,17 @@ const MentorAvailabilityPanel = () => {
     if (!window.confirm('¿Seguro que deseas eliminar este horario?')) return;
     
     try {
-      const response = await fetch(`${API_URL}${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setAvailabilities(availabilities.filter(av => av.id !== id));
-      } else {
-        setError('Error al eliminar el horario');
-      }
+      await apiClient(`${API_URL}${id}`, { method: 'DELETE' });
+      setAvailabilities(availabilities.filter(av => av.id !== id));
     } catch (err) {
-      setError('Error de conexión al eliminar');
+      setError(err.message);
     }
   };
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 max-w-4xl mx-auto my-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
-        Configuración de Disponibilidad
+        Configuracion de Disponibilidad
       </h2>
 
       {error && (
@@ -117,15 +88,14 @@ const MentorAvailabilityPanel = () => {
         </div>
       )}
 
-      {/* Formulario */}
       <form onSubmit={handleAddSchedule} className="bg-gray-50 p-5 rounded-xl mb-8 border border-gray-100">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600 mb-1">Día</label>
+            <label className="text-sm font-medium text-gray-600 mb-1">Dia</label>
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-black"
             >
               {DAYS_OF_WEEK.map(d => (
                 <option key={d} value={d}>{d}</option>
@@ -139,7 +109,7 @@ const MentorAvailabilityPanel = () => {
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-black"
             />
           </div>
 
@@ -149,29 +119,29 @@ const MentorAvailabilityPanel = () => {
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-black"
             />
           </div>
 
           <div className="flex flex-col">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg active:scale-95"
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Añadir Horario
+              {isSubmitting ? 'Guardando...' : 'Anadir Horario'}
             </button>
           </div>
         </div>
       </form>
 
-      {/* Lista de horarios */}
       <div>
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Horarios Guardados</h3>
         {loading ? (
           <p className="text-gray-500 text-center py-4 animate-pulse">Cargando...</p>
         ) : availabilities.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500">No tienes horarios configurados aún.</p>
+            <p className="text-gray-500">No tienes horarios configurados aun.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

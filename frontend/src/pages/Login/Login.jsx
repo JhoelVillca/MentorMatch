@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext'; 
-import { loginAPI } from '../../services/authService'; // <-- Inyectamos el Músculo de red
+import { loginAPI } from '../../services/authService'; 
 import styles from './Login.module.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       await loginAPI(email, password);
@@ -29,6 +31,8 @@ export default function Login() {
       }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,7 +46,7 @@ export default function Login() {
       <form className={styles.glassForm} onSubmit={handleSubmit}>
           <h3>MentorMatch</h3>
 
-          <label htmlFor="username">Correo Electrónico</label>
+          <label htmlFor="username">Correo Electronico</label>
           <input 
             type="email" 
             placeholder="Email" 
@@ -52,7 +56,7 @@ export default function Login() {
             required 
           />
 
-          <label htmlFor="password">Contraseña</label>
+          <label htmlFor="password">Contrasena</label>
           <input 
             type="password" 
             placeholder="Password" 
@@ -62,7 +66,13 @@ export default function Login() {
             required 
           />
 
-          <button type="submit">Iniciar Sesión</button>
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+          >
+            {loading ? 'Iniciando...' : 'Iniciar Sesion'}
+          </button>
           
           {error && (
             <div className="mt-5 text-[#ff512f] text-center text-sm font-semibold">

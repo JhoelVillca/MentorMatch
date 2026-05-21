@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { apiClient } from '../../services/apiClient';
 
 const PaquetesPage = () => {
     const [paquetes, setPaquetes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [nuevoPaquete, setNuevoPaquete] = useState({
         titulo_paquete: '',
@@ -12,22 +14,12 @@ const PaquetesPage = () => {
 
     const API_URL = '/api/paquetes';
 
-    const getAuthHeaders = () => ({
-        'Content-Type': 'application/json'
-    });
-
     const fetchPaquetes = async () => {
         try {
-            const response = await fetch(`${API_URL}/me`, {
-                method: 'GET',
-                headers: getAuthHeaders(),
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('No autorizado');
-            const data = await response.json();
+            const data = await apiClient(`${API_URL}/me`, { method: 'GET' });
             setPaquetes(data);
         } catch (error) {
-            console.error("Error al cargar paquetes:", error);
+            console.error(error);
         }
     };
 
@@ -37,9 +29,8 @@ const PaquetesPage = () => {
 
     const handleCrear = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
         
-        // Aplicando la corrección de tipos de Jhoel: 
-        // Los inputs son strings, hay que convertirlos antes de enviarlos en el JSON.
         const payload = {
             titulo_paquete: nuevoPaquete.titulo_paquete,
             cantidad_horas_totales: parseInt(nuevoPaquete.cantidad_horas_totales, 10),
@@ -47,34 +38,30 @@ const PaquetesPage = () => {
         };
 
         try {
-            const response = await fetch(`${API_URL}/`, {
+            await apiClient(`${API_URL}/`, {
                 method: 'POST',
-                headers: getAuthHeaders(),
-                credentials: 'include',
-                body: JSON.stringify(payload) 
+                body: payload 
             });
             
-            if (response.ok) {
-                setIsModalOpen(false);
-                fetchPaquetes();
-                setNuevoPaquete({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
-            }
+            setIsModalOpen(false);
+            fetchPaquetes();
+            setNuevoPaquete({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
         } catch (error) {
-            console.error("Error en el POST:", error);
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleToggleStatus = async (id, estadoActual) => {
         try {
-            await fetch(`${API_URL}/${id}/status`, {
+            await apiClient(`${API_URL}/${id}/status`, {
                 method: 'PATCH',
-                headers: getAuthHeaders(),
-                credentials: 'include',
-                body: JSON.stringify({ estado_activo: !estadoActual })
+                body: { estado_activo: !estadoActual }
             });
             fetchPaquetes();
         } catch (error) {
-            console.error("Error al actualizar:", error);
+            console.error(error);
         }
     };
 
@@ -116,7 +103,7 @@ const PaquetesPage = () => {
                         <h2 className="text-2xl font-bold mb-6">Crear Paquete</h2>
                         <form onSubmit={handleCrear} className="space-y-4">
                             <input 
-                                type="text" placeholder="Título" required 
+                                type="text" placeholder="Titulo" required 
                                 value={nuevoPaquete.titulo_paquete}
                                 className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg p-3 text-white outline-none focus:border-red-600"
                                 onChange={(e) => setNuevoPaquete({...nuevoPaquete, titulo_paquete: e.target.value})}
@@ -136,7 +123,13 @@ const PaquetesPage = () => {
                                 />
                             </div>
                             <div className="flex gap-3">
-                                <button type="submit" className="flex-1 bg-red-700 py-3 rounded-lg font-bold">Guardar</button>
+                                <button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className="flex-1 bg-red-700 py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? 'Guardando...' : 'Guardar'}
+                                </button>
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button>
                             </div>
                         </form>
