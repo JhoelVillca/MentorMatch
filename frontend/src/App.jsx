@@ -11,6 +11,7 @@ import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
+import Marketplace from './pages/Marketplace/Marketplace';
 
 export default function App() {
   return (
@@ -40,8 +41,8 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
               <Route path="/mentee" element={<MenteeDashboard />} />
               <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
+              <Route path="/mentee/marketplace" element={<Marketplace />} />
             </Route>
-
           </Route>
           
           <Route path="*" element={<Navigate to="/login" replace />} />
