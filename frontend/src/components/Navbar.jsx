@@ -55,6 +55,7 @@ export default function Navbar() {
                 {userRole === 'mentee' && (
                   <>
                     <Link to="/mentee" className="hover:text-white px-3 py-2 text-sm font-medium">Mi Panel</Link>
+                    <Link to="/mentee/marketplace" className="hover:text-white px-3 py-2 text-sm font-medium">Marketplace</Link>
                     <Link to="/mentee/completar-perfil" className="hover:text-white px-3 py-2 text-sm font-medium">Mi Perfil</Link>
                   </>
                 )}
