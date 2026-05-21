@@ -6,19 +6,38 @@ from uuid import UUID
 
 from app.db.database import get_db
 from app.models.main_models import PaqueteMentor, PerfilMentor
-from app.schemas.paquete_schema import PaqueteCreate, PaqueteOut, PaqueteUpdate
-from app.api.deps import get_current_user_id  # Corrección: Importar la dependencia de seguridad
+from app.schemas.paquete_schema import PaqueteCreate, PaqueteOut, PaqueteUpdate, PaqueteDisponibleOut
+from app.api.deps import get_current_user_id
 
-router = APIRouter(prefix="/paquetes", tags=["Paquetes de Mentoría"])
+router = APIRouter(prefix="/paquetes", tags=["Paquetes de Mentoria"])
 
-# --- ENDPOINT: CREAR UN PAQUETE ---
+@router.get("/disponibles", response_model=List[PaqueteDisponibleOut])
+async def listar_paquetes_disponibles(db: AsyncSession = Depends(get_db)):
+    query = (
+        select(
+            PaqueteMentor.id_paquete,
+            PaqueteMentor.id_mentor,
+            PaqueteMentor.titulo_paquete,
+            PaqueteMentor.cantidad_horas_totales,
+            PaqueteMentor.precio_total,
+            PerfilMentor.nombre_completo.label("mentor_nombre"),
+            PerfilMentor.foto_perfil.label("mentor_foto")
+        )
+        .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+        .filter(
+            PaqueteMentor.estado_activo == True,
+            PerfilMentor.estado_verificacion == "verificado"
+        )
+    )
+    res = await db.execute(query)
+    return res.all()
+
 @router.post("/", response_model=PaqueteOut)
 async def crear_paquete(
     paquete: PaqueteCreate, 
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id) # Corrección: Endpoint protegido
+    user_id: str = Depends(get_current_user_id)
 ):
-    # Corrección: Buscar id_mentor usando el user_id del JWT para evitar que sea NULL
     res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
     mentor = res.scalars().first()
     if not mentor:
@@ -30,13 +49,11 @@ async def crear_paquete(
     await db.refresh(nuevo_paquete)
     return nuevo_paquete
 
-# --- ENDPOINT: LISTAR PAQUETES DEL MENTOR ---
 @router.get("/me", response_model=List[PaqueteOut])
 async def listar_mis_paquetes(
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id) # Corrección: Endpoint protegido
+    user_id: str = Depends(get_current_user_id)
 ):
-    # Corrección: Filtrar por id_mentor para no devolver paquetes ajenos
     res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
     mentor = res.scalars().first()
     if not mentor:
@@ -45,15 +62,13 @@ async def listar_mis_paquetes(
     res2 = await db.execute(select(PaqueteMentor).filter(PaqueteMentor.id_mentor == mentor.id_mentor))
     return res2.scalars().all()
 
-# --- ENDPOINT: ACTIVA O DESACTIVA ---
 @router.patch("/{paquete_id}/status", response_model=PaqueteOut)
 async def cambiar_estado(
     paquete_id: UUID, 
     update: PaqueteUpdate, 
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id) # Corrección: Endpoint protegido
+    user_id: str = Depends(get_current_user_id)
 ):
-    # Corrección: Validar que el paquete pertenezca al mentor logueado antes de modificar
     res = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
     mentor = res.scalars().first()
     

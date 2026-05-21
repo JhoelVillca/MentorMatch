@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 class PaqueteBase(BaseModel):
     titulo_paquete: str = Field(..., example="Pack Inicial 5 Horas")
@@ -19,6 +20,19 @@ class PaqueteOut(PaqueteBase):
     id_mentor: UUID
     estado_activo: bool
     fecha_creacion: datetime
+
+    class Config:
+        from_attributes = True
+
+# El esquema del marketplace lo estoy poniendo aqui
+class PaqueteDisponibleOut(BaseModel):
+    id_paquete: UUID
+    id_mentor: UUID
+    titulo_paquete: str
+    cantidad_horas_totales: int
+    precio_total: Decimal
+    mentor_nombre: str
+    mentor_foto: Optional[str] = None
 
     class Config:
         from_attributes = True
