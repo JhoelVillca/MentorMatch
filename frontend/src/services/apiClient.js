@@ -8,8 +8,15 @@ export async function apiClient(endpoint, customOptions = {}) {
     },
   };
 
-  if (customOptions.body && typeof customOptions.body === 'object') {
+  if (
+    customOptions.body && 
+    typeof customOptions.body === 'object' && 
+    !(customOptions.body instanceof URLSearchParams) &&
+    !(customOptions.body instanceof FormData)
+  ) {
     options.body = JSON.stringify(customOptions.body);
+  } else if (customOptions.body) {
+    options.body = customOptions.body;
   }
 
   const response = await fetch(endpoint, options);
@@ -22,7 +29,17 @@ export async function apiClient(endpoint, customOptions = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.detail || data.message || 'Fallo de red en el servidor.');
+    let errorMessage = 'Fallo de red en el servidor.';
+    
+    if (Array.isArray(data.detail)) {
+      errorMessage = data.detail.map(e => e.msg || 'Dato invalido').join('. ');
+    } else if (typeof data.detail === 'string') {
+      errorMessage = data.detail;
+    } else if (data.message) {
+      errorMessage = data.message;
+    }
+
+    throw new Error(errorMessage);
   }
 
   return data;

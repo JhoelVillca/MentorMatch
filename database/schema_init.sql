@@ -189,11 +189,13 @@ INSERT INTO Roles (id_rol, nombre_rol, descripcion_rol) VALUES
 ON CONFLICT (nombre_rol) DO NOTHING;
 
 
+-- la contraseña sigue siendo 123456
 INSERT INTO Usuarios (id_usuario, email, password, estado_cuenta) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@test.com', crypt('123456', gen_salt('bf')), 'activo'),
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'mentor@test.com', crypt('123456', gen_salt('bf')), 'activo'),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', 'mentee@test.com', crypt('123456', gen_salt('bf')), 'activo')
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@test.com', '$2b$12$uzMxzht4J8NnvlBdq8JumuoScvtnapIqlJLIoFXyved3E7Lym62F6', 'activo'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'mentor@test.com', '$2b$12$uzMxzht4J8NnvlBdq8JumuoScvtnapIqlJLIoFXyved3E7Lym62F6', 'activo'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', 'mentee@test.com', '$2b$12$uzMxzht4J8NnvlBdq8JumuoScvtnapIqlJLIoFXyved3E7Lym62F6', 'activo')
 ON CONFLICT (email) DO NOTHING;
+
 
 -- 3. Acoplando Usuarios con sus Roles
 INSERT INTO Usuario_Roles (id_usuario, id_rol) VALUES
