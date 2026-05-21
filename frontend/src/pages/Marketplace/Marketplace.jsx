@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 
 export default function Marketplace() {
   const [paquetes, setPaquetes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -23,6 +25,19 @@ export default function Marketplace() {
     fetchMarketplace();
     return () => { isMounted = false; };
   }, []);
+
+  const handleAdquirir = async (idPaquete) => {
+    try {
+      const res = await apiClient('/api/contratos/adquirir', {
+        method: 'POST',
+        body: { id_paquete: idPaquete }
+      });
+      alert(`Contrato generado: ${res.estado}. Redirigiendo...`);
+      navigate('/mentee/contratos');
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -82,7 +97,10 @@ export default function Marketplace() {
                 </div>
               </div>
 
-              <button className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20">
+              <button
+                onClick={() => handleAdquirir(p.id_paquete)}
+                className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+              >
                 Adquirir Paquete
               </button>
             </div>
