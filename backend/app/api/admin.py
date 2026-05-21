@@ -109,16 +109,16 @@ async def soft_delete_user(
     db: AsyncSession = Depends(get_db),
     auth: tuple = Depends(require_admin),
 ):
-    _, admin_record = auth
+    current_user, admin_record = auth
     target = await _get_target_user(db, user_id)
 
-    if str(target.id_usuario) == str(auth[0].id_usuario):
+    if str(target.id_usuario) == str(current_user.id_usuario):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Un administrador no puede desactivarse a si mismo.",
         )
 
-    target.estado_cuenta = "baneado"
+    target.estado_cuenta = "inactivo"
 
     await _registrar_auditoria(
         db,
@@ -129,7 +129,7 @@ async def soft_delete_user(
     )
 
     await db.commit()
-    return {"message": f"Usuario {user_id} desactivado del sistema."}
+    return {"message": f"Usuario {user_id} marcado como inactivo."}
 
 
 @router.patch("/users/{user_id}/status", status_code=status.HTTP_200_OK)
@@ -139,10 +139,10 @@ async def update_user_status(
     db: AsyncSession = Depends(get_db),
     auth: tuple = Depends(require_admin),
 ):
-    _, admin_record = auth
+    current_user, admin_record = auth
     target = await _get_target_user(db, user_id)
 
-    if str(target.id_usuario) == str(auth[0].id_usuario):
+    if str(target.id_usuario) == str(current_user.id_usuario):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Un administrador no puede cambiar su propio estado.",
