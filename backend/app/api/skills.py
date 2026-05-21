@@ -35,7 +35,7 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
 @router.get("/categories", response_model=List[CategoriaResponse])
 async def get_categories(db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(CategoriaHabilidad).options(joinedload(CategoriaHabilidad.habilidades)))
-    categories = res.scalars().all()
+    categories = res.scalars().unique().all()
     return categories
 
 @router.post("/mentor", status_code=status.HTTP_201_CREATED)

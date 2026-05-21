@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
 import Marketplace from './pages/Marketplace/Marketplace';
+import MisContratos from './pages/MisContratos/MisContratos';
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="/mentee" element={<MenteeDashboard />} />
               <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
               <Route path="/mentee/marketplace" element={<Marketplace />} />
+              <Route path="/mentee/contratos" element={<MisContratos />} />
             </Route>
           </Route>
           
