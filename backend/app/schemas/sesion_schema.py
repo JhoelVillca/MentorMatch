@@ -2,7 +2,6 @@ from pydantic import BaseModel, field_validator
 from uuid import UUID
 from datetime import datetime
 
-
 class AgendarSesionRequest(BaseModel):
     id_contrato: UUID
     fecha_hora_inicio_utc: datetime
@@ -15,7 +14,6 @@ class AgendarSesionRequest(BaseModel):
             raise ValueError("fecha_hora_fin_utc debe ser posterior a fecha_hora_inicio_utc")
         return v
 
-
 class SesionOut(BaseModel):
     id_sesion: UUID
     id_contrato: UUID
@@ -27,3 +25,14 @@ class SesionOut(BaseModel):
     class Config:
         from_attributes = True
 
+class SesionListOut(BaseModel):
+    id_sesion: UUID
+    fecha_hora_inicio_utc: datetime
+    fecha_hora_fin_utc: datetime
+    estado_sesion: str
+    url_videollamada: str | None = None
+    titulo_paquete: str
+    contraparte_nombre: str
+
+    class Config:
+        from_attributes = True
