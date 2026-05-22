@@ -4,7 +4,7 @@ from typing import List
 from uuid import UUID
 
 from app.db.database import get_db
-from app.schemas.paquete_schema import PaqueteCreate, PaqueteOut, PaqueteUpdate, PaqueteDisponibleOut
+from app.schemas.paquete_schema import PaqueteCreate, PaqueteOut, PaqueteUpdate, PaqueteDisponibleOut, PaqueteEdit
 from app.api.deps import get_current_user_id
 from app.services.paquete_service import PaqueteService
 
@@ -47,6 +47,22 @@ async def cambiar_estado(
     servicio = PaqueteService(db)
     try:
         return await servicio.cambiar_estado(user_id, paquete_id, update.estado_activo)
+    except LookupError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
+    except Exception as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error transaccional: {str(e)}")
+
+
+@router.patch("/{paquete_id}", response_model=PaqueteOut)
+async def editar_paquete(
+    paquete_id: UUID,
+    update: PaqueteEdit,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    servicio = PaqueteService(db)
+    try:
+        return await servicio.editar_paquete(user_id, paquete_id, update.model_dump(exclude_unset=True))
     except LookupError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
     except Exception as e:

@@ -12,6 +12,16 @@ class PaqueteBase(BaseModel):
 class PaqueteCreate(PaqueteBase):
     pass
 
+
+class PaqueteEdit(BaseModel):
+    titulo_paquete: Optional[str] = None
+    cantidad_horas_totales: Optional[int] = None
+    precio_total: Optional[Decimal] = None
+
+
+class PaqueteValidacion(BaseModel):
+    estado_validacion: str
+
 class PaqueteUpdate(BaseModel):
     estado_activo: bool
 
@@ -19,6 +29,7 @@ class PaqueteOut(PaqueteBase):
     id_paquete: UUID
     id_mentor: UUID
     estado_activo: bool
+    estado_validacion: str
     fecha_creacion: datetime
 
     class Config:

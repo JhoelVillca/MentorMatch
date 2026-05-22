@@ -13,4 +13,12 @@ export const updateUserStatus = (userId, estado) =>
     body: { estado }
   });
 
+export const getPaquetesPendientes = () => apiClient(`${API_BASE}/paquetes/pendientes`);
+
+export const validarPaquete = (paqueteId, estado_validacion) => 
+  apiClient(`${API_BASE}/paquetes/${paqueteId}/validar`, {
+    method: 'PATCH',
+    body: { estado_validacion }
+  });
+
 export const deleteUser = softDeleteUser;
