@@ -1,10 +1,8 @@
+import os
 from fastapi import FastAPI
-from app.api import paquetes
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, admin, profiles, skills, disponibilidad # Importaremos estos a continuación
-from app.models import usuarios, main_models # Carga los modelos para SQLAlchemy
-from app.api import contratos
-from app.api import sesiones
+from app.api import paquetes, auth, admin, profiles, skills, disponibilidad, contratos, sesiones
+from app.models import usuarios, main_models
 
 
 app = FastAPI(
@@ -13,16 +11,21 @@ app = FastAPI(
     version="0.2.0"
 )
 
-# Configuración de CORS
+origenes_permitidos = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    os.getenv("FRONTEND_URL", "")
+]
+origenes_permitidos = [origen for origen in origenes_permitidos if origen]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], 
+    allow_origins=origenes_permitidos,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Módulos de la API
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(profiles.router)
