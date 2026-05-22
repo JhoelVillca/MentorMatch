@@ -22,6 +22,7 @@ class PaqueteService:
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
             .filter(
                 PaqueteMentor.estado_activo == True,
+                PaqueteMentor.estado_validacion == "aprobado",
                 PerfilMentor.estado_verificacion == "verificado"
             )
         )
@@ -34,11 +35,42 @@ class PaqueteService:
         if not mentor:
             raise PermissionError("Perfil de mentor no encontrado")
 
-        nuevo_paquete = PaqueteMentor(**paquete.dict(), id_mentor=mentor.id_mentor)
+        nuevo_paquete = PaqueteMentor(**paquete.model_dump(), id_mentor=mentor.id_mentor, estado_validacion="pendiente")
         self.db.add(nuevo_paquete)
         await self.db.commit()
         await self.db.refresh(nuevo_paquete)
         return nuevo_paquete
+
+    async def editar_paquete(self, user_id: str, paquete_id: UUID, datos_nuevos: dict):
+        res = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+        mentor = res.scalars().first()
+
+        res2 = await self.db.execute(select(PaqueteMentor).filter(
+            PaqueteMentor.id_paquete == paquete_id,
+            PaqueteMentor.id_mentor == (mentor.id_mentor if mentor else None)
+        ))
+        paquete = res2.scalars().first()
+
+        if not paquete:
+            raise LookupError("El paquete no existe o no te pertenece")
+
+        cambio_critico = False
+        if 'titulo_paquete' in datos_nuevos and datos_nuevos['titulo_paquete']:
+            paquete.titulo_paquete = datos_nuevos['titulo_paquete']
+            cambio_critico = True
+        if 'cantidad_horas_totales' in datos_nuevos and datos_nuevos['cantidad_horas_totales'] is not None:
+            paquete.cantidad_horas_totales = datos_nuevos['cantidad_horas_totales']
+            cambio_critico = True
+        if 'precio_total' in datos_nuevos and datos_nuevos['precio_total'] is not None:
+            paquete.precio_total = datos_nuevos['precio_total']
+            cambio_critico = True
+
+        if cambio_critico:
+            paquete.estado_validacion = "pendiente"
+
+        await self.db.commit()
+        await self.db.refresh(paquete)
+        return paquete
 
     async def listar_mis_paquetes(self, user_id: str):
         res = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))

@@ -42,6 +42,7 @@ class PaqueteMentor(Base):
     cantidad_horas_totales = Column(Integer, nullable=False)
     precio_total = Column(Numeric(10, 2), nullable=False)
     estado_activo = Column(Boolean, server_default="true")
+    estado_validacion = Column(String(20), server_default=text("'pendiente'"))
     fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
 class ContratoMentoria(Base):

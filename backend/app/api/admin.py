@@ -7,11 +7,12 @@ from uuid import UUID
 
 from app.db.database import get_db
 from app.api.deps import get_current_user
-from app.models.main_models import Administrador, AuditoriaAdministrativa
+from app.models.main_models import Administrador, AuditoriaAdministrativa, PaqueteMentor
 from app.models.usuarios import Usuario
 from app.repositories.user_repository import get_all_users_with_roles, get_user_role_name
 from app.schemas.user import UserResponse
 from app.schemas.admin import UserStatusUpdate
+from app.schemas.paquete_schema import PaqueteOut, PaqueteValidacion
 
 
 router = APIRouter(prefix="/admin", tags=["Administracion"])
@@ -165,3 +166,47 @@ async def update_user_status(
         "estado_anterior": estado_anterior,
         "estado_nuevo": payload.estado,
     }
+
+
+@router.get("/paquetes/pendientes", response_model=List[PaqueteOut])
+async def get_paquetes_pendientes(
+    db: AsyncSession = Depends(get_db),
+    auth: tuple = Depends(require_admin),
+):
+    res = await db.execute(
+        select(PaqueteMentor).filter(PaqueteMentor.estado_validacion == 'pendiente')
+    )
+    return res.scalars().all()
+
+
+@router.patch("/paquetes/{paquete_id}/validar", response_model=PaqueteOut)
+async def validar_paquete(
+    paquete_id: UUID,
+    payload: PaqueteValidacion,
+    db: AsyncSession = Depends(get_db),
+    auth: tuple = Depends(require_admin),
+):
+    current_user, admin_record = auth
+    if payload.estado_validacion not in ["aprobado", "rechazado"]:
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Estado no valido")
+
+    res = await db.execute(
+        select(PaqueteMentor).filter(PaqueteMentor.id_paquete == paquete_id)
+    )
+    paquete = res.scalars().first()
+    if not paquete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado")
+
+    paquete.estado_validacion = payload.estado_validacion
+
+    await _registrar_auditoria(
+        db,
+        id_admin=admin_record.id_admin,
+        accion=f"VALIDACION_PAQUETE:{paquete.estado_validacion}",
+        tabla="paquetes_mentor",
+        id_registro=paquete.id_paquete,
+    )
+
+    await db.commit()
+    await db.refresh(paquete)
+    return paquete

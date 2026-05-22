@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../AuthContext";
-import { getAllUsers, softDeleteUser, updateUserStatus } from "../../services/adminService";
+import { getAllUsers, softDeleteUser, updateUserStatus, getPaquetesPendientes, validarPaquete } from "../../services/adminService";
 import "./AdminDashboard.css";
 
 const ESTADOS_VALIDOS = ["activo", "suspendido", "baneado", "inactivo"];
@@ -10,19 +10,26 @@ export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState("usuarios");
   const [users, setUsers] = useState([]);
+  const [paquetes, setPaquetes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [statusModal, setStatusModal] = useState(null);
   const [selectedEstado, setSelectedEstado] = useState("");
 
-  const loadUsers = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllUsers();
-      setUsers(data);
+      if (activeTab === "usuarios") {
+        const data = await getAllUsers();
+        setUsers(data);
+      } else {
+        const data = await getPaquetesPendientes();
+        setPaquetes(data);
+      }
     } catch (err) {
       setError(err.message);
       if (err.message.includes("401") || err.message.includes("403")) {
@@ -32,11 +39,20 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [logout, navigate]);
+  }, [activeTab, logout, navigate]);
 
   useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
+    loadData();
+  }, [loadData]);
+
+  const handleValidarPaquete = async (id, estado) => {
+    try {
+      await validarPaquete(id, estado);
+      setPaquetes(prev => prev.filter(p => p.id_paquete !== id));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const handleDeleteClick = (userId) => setConfirmDelete(userId);
 
@@ -136,64 +152,66 @@ export default function AdminDashboard() {
       {error && (
         <div className="error-message">
           <p>{error}</p>
-          <button onClick={loadUsers} className="btn-retry">Reintentar</button>
+          <button onClick={loadData} className="btn-retry">Reintentar</button>
         </div>
       )}
 
-      <div className="users-table-container">
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Fecha de Registro</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="no-users">No hay usuarios registrados</td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id_usuario}>
-                  <td className="email-cell">{user.email}</td>
-                  <td>
-                    <span className={`badge ${getRoleBadgeClass(user.roles)}`}>
-                      {getRoleLabel(user.roles)}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${getStatusBadgeClass(user.estado_cuenta)}`}>
-                      {getStatusLabel(user.estado_cuenta)}
-                    </span>
-                  </td>
-                  <td className="date-cell">{formatDate(user.fecha_creacion)}</td>
-                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                    <button
-                      className="btn-delete"
-                      style={{ background: "transparent", border: "1px solid #6366f1", color: "#6366f1" }}
-                      onClick={() => handleOpenStatusModal(user)}
-                    >
-                      Estado
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDeleteClick(user.id_usuario)}
-                      title="Desactivar usuario"
-                    >
-                      Banear
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+        <button 
+          onClick={() => setActiveTab("usuarios")} 
+          style={{ padding: "0.5rem 1rem", background: activeTab === "usuarios" ? "#6366f1" : "transparent", color: "white", border: "1px solid #6366f1", borderRadius: "0.375rem", cursor: "pointer" }}>
+          Usuarios
+        </button>
+        <button 
+          onClick={() => setActiveTab("paquetes")} 
+          style={{ padding: "0.5rem 1rem", background: activeTab === "paquetes" ? "#6366f1" : "transparent", color: "white", border: "1px solid #6366f1", borderRadius: "0.375rem", cursor: "pointer" }}>
+          Validacion Paquetes
+        </button>
       </div>
 
+      {activeTab === "usuarios" ? (
+        <div className="users-table-container">
+          <table className="users-table">
+            <thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Fecha Registro</th><th>Acciones</th></tr></thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id_usuario}>
+                  <td className="email-cell">{user.email}</td>
+                  <td>{user.roles.join(', ')}</td>
+                  <td><span className={`status-badge status-${user.estado_cuenta}`}>{user.estado_cuenta}</span></td>
+                  <td className="date-cell">{formatDate(user.fecha_creacion)}</td>
+                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                    <button className="btn-delete" style={{ borderColor: "#6366f1", color: "#6366f1" }} onClick={() => { setStatusModal(user); setSelectedEstado(user.estado_cuenta); }}>Estado</button>
+                    <button className="btn-delete" onClick={() => setConfirmDelete(user.id_usuario)}>Banear</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="users-table-container">
+          <table className="users-table">
+            <thead><tr><th>Titulo</th><th>Horas</th><th>Precio</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <tbody>
+              {paquetes.length === 0 ? <tr><td colSpan="5" style={{textAlign:"center", padding:"2rem"}}>No hay paquetes pendientes</td></tr> : paquetes.map(p => (
+                <tr key={p.id_paquete}>
+                  <td className="email-cell">{p.titulo_paquete}</td>
+                  <td>{p.cantidad_horas_totales}</td>
+                  <td>${p.precio_total}</td>
+                  <td className="date-cell">{formatDate(p.fecha_creacion)}</td>
+                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                    <button className="btn-delete" style={{ borderColor: "#059669", color: "#059669" }} onClick={() => handleValidarPaquete(p.id_paquete, "aprobado")}>Aprobar</button>
+                    <button className="btn-delete" onClick={() => handleValidarPaquete(p.id_paquete, "rechazado")}>Rechazar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modals para confirmDelete y statusModal van aqui como en el original */}
       {confirmDelete && (
         <div className="modal-overlay">
           <div className="modal-content">
