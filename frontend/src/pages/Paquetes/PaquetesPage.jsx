@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiClient } from '../../services/apiClient';
 
 const PaquetesPage = () => {
     const [paquetes, setPaquetes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     
     const [nuevoPaquete, setNuevoPaquete] = useState({
         titulo_paquete: '',
@@ -18,13 +19,22 @@ const PaquetesPage = () => {
         try {
             const data = await apiClient(`${API_URL}/me`, { method: 'GET' });
             setPaquetes(data);
+            setErrorMessage('');
         } catch (error) {
-            console.error(error);
+            setErrorMessage(error?.message || 'No se pudieron cargar los paquetes.');
         }
     };
 
     useEffect(() => {
-        fetchPaquetes();
+        void (async () => {
+            try {
+                const data = await apiClient(`${API_URL}/me`, { method: 'GET' });
+                setPaquetes(data);
+                setErrorMessage('');
+            } catch (error) {
+                setErrorMessage(error?.message || 'No se pudieron cargar los paquetes.');
+            }
+        })();
     }, []);
 
     const handleCrear = async (e) => {
@@ -44,10 +54,11 @@ const PaquetesPage = () => {
             });
             
             setIsModalOpen(false);
+            setErrorMessage('');
             fetchPaquetes();
             setNuevoPaquete({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
         } catch (error) {
-            console.error(error);
+            setErrorMessage(error?.message || 'No se pudo crear el paquete.');
         } finally {
             setIsSubmitting(false);
         }
@@ -59,14 +70,21 @@ const PaquetesPage = () => {
                 method: 'PATCH',
                 body: { estado_activo: !estadoActual }
             });
+            setErrorMessage('');
             fetchPaquetes();
         } catch (error) {
-            console.error(error);
+            setErrorMessage(error?.message || 'No se pudo actualizar el estado del paquete.');
         }
     };
 
     return (
         <div className="p-8 min-h-screen text-white">
+            {errorMessage && (
+                <div className="mb-6 rounded-xl border border-red-900/40 bg-red-950/40 px-4 py-3 text-red-200">
+                    {errorMessage}
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-10">
                 <h1 className="text-3xl font-bold text-red-400">Panel de Paquetes</h1>
                 <button 

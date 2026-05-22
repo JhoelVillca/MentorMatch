@@ -13,6 +13,7 @@ export default function CompleteProfile() {
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function CompleteProfile() {
 
     const fetchProfile = async () => {
       setLoading(true);
+      setLoadError('');
       try {
         const data = await getProfileAPI(token);
         if (isMounted) {
@@ -32,7 +34,7 @@ export default function CompleteProfile() {
         }
       } catch (error) {
         if (isMounted) {
-          console.error('Error al cargar el perfil:', error);
+          setLoadError(error.message || 'Error al cargar el perfil');
         }
       } finally {
         if (isMounted) {
@@ -93,6 +95,12 @@ export default function CompleteProfile() {
         </div>
         
         <div className="p-6 sm:p-8">
+          {loadError && (
+            <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200 font-medium">
+              {loadError}
+            </div>
+          )}
+
           {message && (
             <div className={`mb-6 p-4 rounded-lg flex items-start ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
               <div className="flex-shrink-0 mt-0.5">

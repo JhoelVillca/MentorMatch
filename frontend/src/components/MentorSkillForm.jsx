@@ -16,7 +16,7 @@ export default function MentorSkillForm() {
     fetch('/api/skills/categories', { credentials: 'include' })
       .then(res => res.json())
       .then(data => setCategories(data))
-      .catch(err => console.error("Error fetching categories:", err));
+      .catch(() => setMessage({ text: 'No se pudieron cargar las habilidades.', type: 'error' }));
   }, []);
 
   const handleSubmit = async (e) => {
