@@ -1,3 +1,5 @@
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
+
 export async function apiClient(endpoint, customOptions = {}) {
   const options = {
     credentials: 'include',
@@ -19,14 +21,25 @@ export async function apiClient(endpoint, customOptions = {}) {
     options.body = customOptions.body;
   }
 
-  const response = await fetch(endpoint, options);
+  let finalEndpoint = endpoint;
+  if (BASE_URL && finalEndpoint.startsWith('/api')) {
+    finalEndpoint = finalEndpoint.replace(/^\/api/, '');
+  }
+
+  const url = `${BASE_URL}${finalEndpoint}`;
+  const response = await fetch(url, options);
 
   if (response.status === 401) {
     window.location.href = '/login';
     throw new Error('Sesion expirada. Vuelve a ingresar.');
   }
 
-  const data = await response.json().catch(() => ({}));
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (e) {
+    data = {};
+  }
 
   if (!response.ok) {
     let errorMessage = 'Fallo de red en el servidor.';

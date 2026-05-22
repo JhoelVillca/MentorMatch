@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../services/apiClient';
 
 export default function MentorSkillForm() {
   const [categories, setCategories] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
-  const [level, setLevel] = useState('Básico');
+  const [level, setLevel] = useState('Basico');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Obtener las categorías y habilidades del backend
-    fetch('/api/skills/categories', { credentials: 'include' })
-      .then(res => res.json())
+    apiClient('/api/skills/categories', { method: 'GET' })
       .then(data => setCategories(data))
       .catch(() => setMessage({ text: 'No se pudieron cargar las habilidades.', type: 'error' }));
   }, []);
@@ -31,41 +30,25 @@ export default function MentorSkillForm() {
     }
 
     try {
-      const response = await fetch('/api/skills/mentor', {
+      const data = await apiClient('/api/skills/mentor', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+        body: {
           id_habilidad: selectedSkill,
           anios_experiencia: parseInt(yearsOfExperience),
           nivel: level
-        })
+        }
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({ text: data.detail || 'Habilidad guardada exitosamente.', type: 'success' });
-        // Limpiar el formulario excepto la categoría
-        setSelectedSkill('');
-        setYearsOfExperience('');
-        setLevel('Básico');
+      setMessage({ text: data.detail || 'Habilidad guardada exitosamente.', type: 'success' });
+      setSelectedSkill('');
+      setYearsOfExperience('');
+      setLevel('Basico');
+    } catch (error) {
+      if (error.message.includes("Debe completar su perfil")) {
+        navigate('/mentor/completar-perfil');
       } else {
-        if (response.status === 400 && data.detail === "Debe completar su perfil de mentor primero") {
-          navigate('/mentor/completar-perfil');
-          return;
-        }
-        // Parche de mitigación: Pydantic envía un Array en el 422, no un String.
-        if (response.status === 422) {
-          setMessage({ text: 'Datos corruptos. Revisa que los números y selecciones sean válidos.', type: 'error' });
-          return;
-        }
-        setMessage({ text: data.detail || 'Error al guardar la habilidad.', type: 'error' });
+        setMessage({ text: error.message || 'Error al guardar la habilidad.', type: 'error' });
       }
-    } catch {
-      setMessage({ text: 'Error de conexión con el servidor.', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +107,7 @@ export default function MentorSkillForm() {
             onChange={(e) => setLevel(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
           >
-            <option value="Básico">Básico</option>
+            <option value="Basico">Basico</option>
             <option value="Intermedio">Intermedio</option>
             <option value="Avanzado">Avanzado</option>
             <option value="Experto">Experto</option>

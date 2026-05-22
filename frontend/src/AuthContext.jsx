@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { apiClient } from './services/apiClient';
 
 const AuthContext = createContext();
 
@@ -8,15 +9,9 @@ export const AuthProvider = ({ children }) => {
 
   const checkSession = async () => {
     try {
-      const response = await fetch('/api/auth/me', { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setUser({ id: data.id, role: data.rol });
-        return data; 
-      } else {
-        setUser(null);
-        return null;
-      }
+      const data = await apiClient('/api/auth/me', { method: 'GET' });
+      setUser({ id: data.id, role: data.rol });
+      return data;
     } catch (error) {
       setUser(null);
       return null;
@@ -36,7 +31,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    try {
+      await apiClient('/api/auth/logout', { method: 'POST' });
+    } catch (e) {}
     setUser(null);
   };
 
