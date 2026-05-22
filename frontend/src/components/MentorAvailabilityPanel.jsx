@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../services/apiClient';
 
 const API_URL = '/api/disponibilidad/';
@@ -17,10 +17,6 @@ const MentorAvailabilityPanel = () => {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchAvailabilities();
-  }, []);
-
   const fetchAvailabilities = async () => {
     setLoading(true);
     try {
@@ -33,6 +29,34 @@ const MentorAvailabilityPanel = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) {
+        setLoading(true);
+      }
+      try {
+        const data = await apiClient(API_URL);
+        if (isMounted) {
+          setAvailabilities(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleAddSchedule = async (e) => {
     e.preventDefault();

@@ -10,7 +10,7 @@ import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
 import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
-import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
+import PackagesPage from './pages/PackagesPage/PackagesPage'; 
 import Marketplace from './pages/Marketplace/Marketplace';
 import MisContratos from './pages/MisContratos/MisContratos';
 import AgendarSesion from './pages/AgendarSesion/AgendarSesion';
@@ -37,7 +37,7 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
               <Route path="/mentor" element={<MentorDashboard />} />
               <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
-              <Route path="/mentor/paquetes" element={<PaquetesPage />} />
+              <Route path="/mentor/paquetes" element={<PackagesPage />} />
               <Route path="/mentor/horarios" element={<MentorAvailabilityPanel />} />
             </Route>
 

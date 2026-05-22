@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { getMenteeProfileAPI, updateMenteeProfileAPI } from '../../services/profileService';

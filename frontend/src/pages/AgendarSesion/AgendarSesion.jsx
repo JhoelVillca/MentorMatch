@@ -52,15 +52,33 @@ export default function AgendarSesion() {
 
   useEffect(() => {
     if (!selectedContrato) return;
-    setLoadingDisp(true);
-    setDisponibilidades([]);
-    setSelectedDia('');
-    setSelectedDisp('');
-
-    apiClient('/api/disponibilidad/', { method: 'GET' })
-      .then((data) => setDisponibilidades(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoadingDisp(false));
+    let isMounted = true;
+    const fetchDisp = async () => {
+      if (isMounted) {
+        setLoadingDisp(true);
+        setDisponibilidades([]);
+        setSelectedDia('');
+        setSelectedDisp('');
+      }
+      try {
+        const data = await apiClient('/api/disponibilidad/', { method: 'GET' });
+        if (isMounted) {
+          setDisponibilidades(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingDisp(false);
+        }
+      }
+    };
+    fetchDisp();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedContrato]);
 
   const diasDisponibles = [...new Set(disponibilidades.map((d) => d.dia_semana))];

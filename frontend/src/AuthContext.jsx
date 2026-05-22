@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         return null;
       }
-    } catch (error) {
+    } catch {
       setUser(null);
       return null;
     } finally {
@@ -28,7 +28,34 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     localStorage.removeItem('mentor_token');
     
-    checkSession();
+    let isMounted = true;
+    const init = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          if (isMounted) {
+            setUser({ id: data.id, role: data.rol });
+          }
+        } else {
+          if (isMounted) {
+            setUser(null);
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+    init();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async () => {
@@ -47,4 +74,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
