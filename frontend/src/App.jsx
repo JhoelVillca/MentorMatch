@@ -14,6 +14,7 @@ import PaquetesPage from './pages/Paquetes/PaquetesPage';
 import Marketplace from './pages/Marketplace/Marketplace';
 import MisContratos from './pages/MisContratos/MisContratos';
 import AgendarSesion from './pages/AgendarSesion/AgendarSesion';
+import MentorAvailabilityPanel from './components/MentorAvailabilityPanel';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/mentor" element={<MentorDashboard />} />
               <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
               <Route path="/mentor/paquetes" element={<PaquetesPage />} />
+              <Route path="/mentor/horarios" element={<MentorAvailabilityPanel />} />
             </Route>
 
             {/* Rutas de Mentee */}
