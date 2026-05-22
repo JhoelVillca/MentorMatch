@@ -23,15 +23,26 @@ export const getProfileAPI = async () => {
     throw new Error(parseErrorDetail(data));
   }
 
-  return data;
+  return {
+    ...data,
+    avatar_url: data.foto_perfil || ''
+  };
 };
 
-export const updateProfileAPI = async (profileData) => {
+export const updateProfileAPI = async (arg1, arg2) => {
+  // Handle signature mismatch: updateProfileAPI(token, formData) vs updateProfileAPI(formData)
+  const profileData = arg2 !== undefined ? arg2 : arg1;
+
+  const payload = { ...profileData };
+  if (payload.avatar_url !== undefined) {
+    payload.foto_perfil = payload.avatar_url;
+  }
+
   const response = await fetch('/api/profiles/mentor/me', {
     method: 'PUT',
     headers: authJsonHeaders(),
     credentials: 'include',
-    body: JSON.stringify(profileData)
+    body: JSON.stringify(payload)
   });
 
   const data = await response.json();
@@ -40,7 +51,10 @@ export const updateProfileAPI = async (profileData) => {
     throw new Error(parseErrorDetail(data));
   }
 
-  return data;
+  return {
+    ...data,
+    avatar_url: data.foto_perfil || ''
+  };
 };
 
 // Mentee profile APIs
@@ -56,15 +70,26 @@ export const getMenteeProfileAPI = async () => {
     throw new Error(parseErrorDetail(data));
   }
 
-  return data;
+  return {
+    ...data,
+    avatar_url: data.foto_perfil || ''
+  };
 };
 
-export const updateMenteeProfileAPI = async (profileData) => {
+export const updateMenteeProfileAPI = async (arg1, arg2) => {
+  // Handle signature mismatch: updateMenteeProfileAPI(token, payload) vs updateMenteeProfileAPI(payload)
+  const profileData = arg2 !== undefined ? arg2 : arg1;
+
+  const payload = { ...profileData };
+  if (payload.avatar_url !== undefined) {
+    payload.foto_perfil = payload.avatar_url;
+  }
+
   const response = await fetch('/api/profiles/mentee/me', {
     method: 'PUT',
     headers: authJsonHeaders(),
     credentials: 'include',
-    body: JSON.stringify(profileData)
+    body: JSON.stringify(payload)
   });
 
   const data = await response.json();
@@ -73,7 +98,10 @@ export const updateMenteeProfileAPI = async (profileData) => {
     throw new Error(parseErrorDetail(data));
   }
 
-  return data;
+  return {
+    ...data,
+    avatar_url: data.foto_perfil || ''
+  };
 };
 
 // Legacy compatibility functions
