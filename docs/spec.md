@@ -258,6 +258,28 @@
 3. **Zona horaria absoluta UTC:** Todo el modelo temporal opera bajo UTC (`TIMESTAMP WITH TIME ZONE`, `hora_inicio_utc`, `hora_fin_utc`). La conversión a hora local del usuario ocurre exclusivamente en la capa de presentación utilizando `zona_horaria_preferida` del Mentee.
 4. **Integridad cronológica estricta:** En `Disponibilidad_Mentor` y `Sesiones`, la hora/fecha de inicio debe ser estrictamente menor a la de fin: `CHECK (hora_inicio_utc < hora_fin_utc)` y `CHECK (fecha_hora_inicio_utc < fecha_hora_fin_utc)`.
 5. **Restricción de valores económicos y temporales:**
+
+## Feature: Registro y Validación de Paquetes de Mentoría
+**Escenario: Creación de paquete por un Ofertante (HU-01)**
+- Dado que soy un "Mentor" autenticado
+- Cuando lleno el formulario de creación de paquete con "Título", "Horas" y "Precio"
+- Y envío la solicitud
+- Entonces el sistema guarda el paquete en la base de datos
+- Y le asigna automáticamente el estado de validación "Pendiente"
+
+**Escenario: Edición de paquete por un Ofertante (HU-02)**
+- Dado que soy un "Mentor" y tengo un paquete "Aprobado"
+- Cuando edito el precio del paquete
+- Entonces el sistema actualiza el precio
+- Y el sistema cambia el estado de validación de regreso a "Pendiente"
+- Y el paquete deja de ser visible en el Marketplace.
+
+**Escenario: Validación por el Administrador (HU-03)**
+- Dado que soy un "Administrador"
+- Cuando visualizo la lista de paquetes
+- Entonces veo solo los paquetes en estado "Pendiente"
+- Y cuando presiono "Aprobar" en un paquete
+- Entonces el paquete cambia su estado a "Aprobado" y es visible para los Mentees.
    *   `Paquetes_Mentor.cantidad_horas_totales` > 0.
    *   `Paquetes_Mentor.precio_total` ≥ 0 (tipo `DECIMAL(10,2)`).
    *   `Contratos_Mentoria.horas_consumidas` ≥ 0.
