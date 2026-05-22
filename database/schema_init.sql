@@ -37,7 +37,8 @@ CREATE TABLE Perfil_Mentee (
     id_usuario UUID UNIQUE REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
     nombre_completo VARCHAR(255) NOT NULL,
     zona_horaria_preferida VARCHAR(50) DEFAULT 'UTC',
-    biografia_corta TEXT
+    biografia_corta TEXT,
+    foto_perfil VARCHAR(500) DEFAULT NULL
 );
 
 CREATE TABLE Perfil_Mentor (
@@ -47,8 +48,10 @@ CREATE TABLE Perfil_Mentor (
     biografia_profesional TEXT,
     url_video_presentacion VARCHAR(500),
     estado_verificacion VARCHAR(20) DEFAULT 'pendiente' CHECK (estado_verificacion IN ('pendiente', 'verificado', 'rechazado')),
-    url_linkedin VARCHAR(500)
+    url_linkedin VARCHAR(500),
+    foto_perfil VARCHAR(500) DEFAULT NULL
 );
+
 
 -- 3. TAXONOMÍA DE HABILIDADES
 
