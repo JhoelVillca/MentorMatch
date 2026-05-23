@@ -30,8 +30,11 @@ export async function apiClient(endpoint, customOptions = {}) {
   const response = await fetch(url, options);
 
   if (response.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Sesion expirada. Vuelve a ingresar.');
+    const path = window.location.pathname;
+    if (path !== '/login' && path !== '/register') {
+      window.location.href = '/login';
+    }
+    throw new Error('Sesion expirada o no iniciada.');
   }
 
   let data = {};
