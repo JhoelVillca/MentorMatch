@@ -89,11 +89,19 @@ async def get_all_users(
     users_data = await get_all_users_with_roles(db)
     result = []
     for row in users_data:
-        roles_list = (
-            list(row.roles)
-            if isinstance(row.roles, (list, tuple))
-            else [str(row.roles)]
-        ) if row.roles else ["mentee"]
+        raw_roles = row.roles
+        roles_list = []
+        
+        if raw_roles:
+            if isinstance(raw_roles, (list, tuple)):
+                roles_list = [str(r) for r in raw_roles if r is not None and str(r).strip() != "None"]
+            elif isinstance(raw_roles, str):
+                roles_list = [r.strip() for r in raw_roles.split(",") if r.strip() and r.strip() != "None"]
+            elif raw_roles is not None:
+                roles_list = [str(raw_roles)]
+        if not roles_list:
+            roles_list = ["mentee"]
+
         result.append({
             "id_usuario": row.id_usuario,
             "email": row.email,
