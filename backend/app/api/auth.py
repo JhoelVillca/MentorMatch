@@ -32,9 +32,9 @@ async def login(
         value=token_data["access_token"],
         httponly=True,
         secure=is_prod,
-        samesite="lax",
+        samesite="none",
         max_age=3600,
-        path="/"  
+        path="/"
     )
     return {"message": "Login exitoso"}
 
