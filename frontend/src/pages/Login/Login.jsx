@@ -76,7 +76,7 @@ export default function Login() {
           
           {error && (
             <div className="mt-5 text-[#ff512f] text-center text-sm font-semibold">
-              {error}
+              {typeof error === 'object' ? JSON.stringify(error) : error}
             </div>
           )}
       </form>
