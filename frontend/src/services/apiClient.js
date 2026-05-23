@@ -25,15 +25,11 @@ export async function apiClient(endpoint, customOptions = {}) {
   if (BASE_URL && finalEndpoint.startsWith('/api')) {
     finalEndpoint = finalEndpoint.replace(/^\/api/, '');
   }
-
+  
   const url = `${BASE_URL}${finalEndpoint}`;
   const response = await fetch(url, options);
 
   if (response.status === 401) {
-    const path = window.location.pathname;
-    if (path !== '/login' && path !== '/register') {
-      window.location.href = '/login';
-    }
     throw new Error('Sesion expirada o no iniciada.');
   }
 
@@ -46,7 +42,6 @@ export async function apiClient(endpoint, customOptions = {}) {
 
   if (!response.ok) {
     let errorMessage = 'Fallo de red en el servidor.';
-    
     if (Array.isArray(data.detail)) {
       errorMessage = data.detail.map(e => e.msg || 'Dato invalido').join('. ');
     } else if (typeof data.detail === 'string') {
@@ -54,7 +49,6 @@ export async function apiClient(endpoint, customOptions = {}) {
     } else if (data.message) {
       errorMessage = data.message;
     }
-
     throw new Error(errorMessage);
   }
 
