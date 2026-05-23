@@ -14,7 +14,7 @@ from app.schemas.user import UserResponse
 from app.schemas.admin import UserStatusUpdate
 from app.schemas.paquete_schema import PaqueteOut, PaqueteValidacion
 
-
+# Dia 1 aprendiendo python :v, (esto nunca estubo aqui)
 router = APIRouter(prefix="/admin", tags=["Administracion"])
 
 
