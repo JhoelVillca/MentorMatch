@@ -111,7 +111,7 @@ export default function Login() {
           
           {error && (
             <div className="mt-5 bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-3 rounded text-red-700 dark:text-red-400 text-center text-sm font-medium transition-all">
-              {error}
+              {typeof error === 'object' ? JSON.stringify(error) : error}
             </div>
           )}
         </div>

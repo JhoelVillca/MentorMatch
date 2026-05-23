@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 
 from alembic import context
 
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 load_dotenv()
 
 from app.db.database import Base
@@ -24,7 +26,9 @@ target_metadata = Base.metadata
 
 db_url = os.getenv("DATABASE_URL")
 if not db_url:
-    raise ValueError("Falta DATABASE_URL en el .env")
+    raise ValueError("ERROR CRÍTICO: DATABASE_URL no encontrada en el entorno")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 

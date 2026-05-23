@@ -11,16 +11,11 @@ app = FastAPI(
     version="0.2.0"
 )
 
-origenes_permitidos = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    os.getenv("FRONTEND_URL", "")
-]
-origenes_permitidos = [origen for origen in origenes_permitidos if origen]
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mentormatch-ui-fwl1.onrender.com")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origenes_permitidos,
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
