@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerAPI } from '../../services/authService';
 
-const Register = () => {
+export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rol, setRol] = useState('Mentee');
@@ -18,7 +18,7 @@ const Register = () => {
     
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(password)) {
-      setErrorMsg('La contrasena debe tener al menos 8 caracteres, 1 mayuscula y 1 numero.');
+      setErrorMsg('La contraseña debe tener al menos 8 caracteres, 1 mayúscula y 1 número.');
       return;
     }
 
@@ -35,32 +35,38 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    // Fondo adaptativo Celeste Plomo alineado con Login
+    <div className="min-h-screen bg-background dark:bg-plomo-darkCanvas font-['Poppins'] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
+      
+      {/* Efectos de Luces de Fondo */}
+      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-celeste/20 dark:bg-celeste/10 blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] rounded-full bg-plomo-700/20 dark:bg-plomo-800/30 blur-[80px] pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-plomo-900 dark:text-white tracking-tight">
           Crea tu cuenta en MentorMatch
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-plomo-700 dark:text-plomo-100/70">
           O{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-            inicia sesion si ya tienes cuenta
+          <Link to="/login" className="font-semibold text-celeste hover:text-celeste-dark transition-colors">
+            inicia sesión si ya tienes cuenta
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="bg-surface dark:bg-plomo-darkSurface py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-plomo-100 dark:border-plomo-700/50 backdrop-blur-sm transition-all duration-300">
           
           {errorMsg && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+            <div className="mb-6 bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-4 rounded-md">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-red-500 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-700 font-medium">
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium">
                     {errorMsg}
                   </p>
                 </div>
@@ -70,8 +76,8 @@ const Register = () => {
 
           <form className="space-y-6" onSubmit={handleRegister}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Correo electronico
+              <label htmlFor="email" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+                Correo electrónico
               </label>
               <div className="mt-1">
                 <input
@@ -82,15 +88,15 @@ const Register = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
                   placeholder="ejemplo@correo.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Contrasena
+              <label htmlFor="password" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+                Contraseña
               </label>
               <div className="mt-1">
                 <input
@@ -101,15 +107,15 @@ const Register = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="rol" className="block text-sm font-medium text-gray-700">
-                ¿Que buscas en MentorMatch?
+              <label htmlFor="rol" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+                ¿Qué buscas en MentorMatch?
               </label>
               <div className="mt-1">
                 <select
@@ -117,10 +123,10 @@ const Register = () => {
                   name="rol"
                   value={rol}
                   onChange={(e) => setRol(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg shadow-sm transition-colors"
+                  className="block w-full pl-3 pr-10 py-2.5 text-base border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm rounded-lg shadow-sm transition-all duration-200"
                 >
-                  <option value="Mentee">Quiero aprender (Mentee)</option>
-                  <option value="Mentor">Quiero ensenar (Mentor)</option>
+                  <option value="Mentee" className="bg-surface dark:bg-plomo-darkSurface text-plomo-900 dark:text-white">Quiero aprender (Mentee)</option>
+                  <option value="Mentor" className="bg-surface dark:bg-plomo-darkSurface text-plomo-900 dark:text-white">Quiero enseñar (Mentor)</option>
                 </select>
               </div>
             </div>
@@ -129,9 +135,11 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                  loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all`}
+                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-semibold text-white transition-all duration-200 ${
+                  loading 
+                    ? 'bg-celeste/60 cursor-not-allowed' 
+                    : 'bg-celeste hover:bg-celeste-dark active:scale-[0.98]'
+                }`}
               >
                 {loading ? (
                   <span className="flex items-center">
@@ -151,6 +159,4 @@ const Register = () => {
       </div>
     </div>
   );
-};
-
-export default Register;
+}
