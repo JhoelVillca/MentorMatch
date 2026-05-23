@@ -12,8 +12,14 @@ export async function apiClient(endpoint, customOptions = {}) {
     },
   };
 
-  if (customOptions.body && typeof customOptions.body === 'object') {
+  const isPlainObject =
+    customOptions.body &&
+    Object.prototype.toString.call(customOptions.body) === '[object Object]';
+
+  if (isPlainObject) {
     options.body = JSON.stringify(customOptions.body);
+  } else if (customOptions.body !== undefined) {
+    options.body = customOptions.body;
   }
 
   let finalEndpoint = endpoint;
