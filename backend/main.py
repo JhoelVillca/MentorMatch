@@ -11,7 +11,7 @@ app = FastAPI(
     version="0.2.0"
 )
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mentormatch-ui-fwl1.onrender.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app.add_middleware(
     CORSMiddleware,
