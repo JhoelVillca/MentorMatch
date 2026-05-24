@@ -12,9 +12,13 @@ app = FastAPI(
 )
 
 origenes_permitidos = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
 ]
+
+if os.getenv("ENVIRONMENT") == "development":
+    origenes_permitidos.extend([
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ])
 
 url_produccion = os.getenv("FRONTEND_URL")
 if url_produccion:
