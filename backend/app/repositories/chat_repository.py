@@ -51,6 +51,7 @@ async def get_salas_for_user(db: AsyncSession, user_id: str) -> list[dict]:
 
         salas.append({
             "id_sala": row.id_sala,
+            "contraparte_user_id": str(row.mentor_user_id) if is_mentee else str(row.mentee_user_id),
             "nombre_otro": row.nombre_mentor if is_mentee else row.nombre_mentee,
             "foto_otro": row.foto_mentor if is_mentee else row.foto_mentee,
             "ultimo_mensaje": msg.contenido_texto if msg else None,
@@ -124,4 +125,27 @@ async def get_or_create_sala(db: AsyncSession, id_mentee: UUID, id_mentor: UUID)
     await db.commit()
     await db.refresh(nueva_sala)
     return str(nueva_sala.id_sala)
+
+
+async def get_contact_user_ids(db: AsyncSession, user_id: str) -> list[str]:
+    mentee_id, mentor_id = await _get_user_profile_ids(db, user_id)
+    contact_ids = []
+
+    if mentee_id:
+        rows = (await db.execute(
+            select(PerfilMentor.id_usuario)
+            .join(SalaChat, SalaChat.id_mentor == PerfilMentor.id_mentor)
+            .where(SalaChat.id_mentee == mentee_id)
+        )).scalars().all()
+        contact_ids.extend([str(r) for r in rows])
+
+    if mentor_id:
+        rows = (await db.execute(
+            select(PerfilMentee.id_usuario)
+            .join(SalaChat, SalaChat.id_mentee == PerfilMentee.id_mentee)
+            .where(SalaChat.id_mentor == mentor_id)
+        )).scalars().all()
+        contact_ids.extend([str(r) for r in rows])
+
+    return list(set(contact_ids))
 

@@ -5,15 +5,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.core.security import SECRET_KEY, ALGORITHM
 from app.db.database import get_db, AsyncSessionLocal
 from app.api.deps import get_current_user
 from app.schemas.chat_schema import SalaResponse, MensajesPage, IniciarChatRequest
-from app.repositories.chat_repository import get_salas_for_user, get_mensajes_paginated, save_mensaje, mark_as_read, verify_sala_participant, get_or_create_sala
+from app.repositories.chat_repository import get_salas_for_user, get_mensajes_paginated, save_mensaje, mark_as_read, verify_sala_participant, get_or_create_sala, get_contact_user_ids
 from app.services.connection_manager import manager
-from app.models.main_models import PerfilMentee, PerfilMentor
+from app.models.main_models import PerfilMentee, PerfilMentor, SalaChat
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -36,6 +36,35 @@ async def read_messages(id_sala: UUID, current_user=Depends(get_current_user), d
     
     await mark_as_read(db, id_sala, auth_data["is_mentee"])
     return {"status": "ok"}
+
+
+@router.get("/unread-count")
+async def get_unread_count(current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    uid = current_user.id_usuario
+
+    mentee_id = (
+        await db.execute(select(PerfilMentee.id_mentee).where(PerfilMentee.id_usuario == uid))
+    ).scalar_one_or_none()
+
+    mentor_id = (
+        await db.execute(select(PerfilMentor.id_mentor).where(PerfilMentor.id_usuario == uid))
+    ).scalar_one_or_none()
+
+    total = 0
+
+    if mentee_id:
+        result = await db.execute(
+            select(func.coalesce(func.sum(SalaChat.no_leidos_mentee), 0)).where(SalaChat.id_mentee == mentee_id)
+        )
+        total += int(result.scalar_one())
+
+    if mentor_id:
+        result = await db.execute(
+            select(func.coalesce(func.sum(SalaChat.no_leidos_mentor), 0)).where(SalaChat.id_mentor == mentor_id)
+        )
+        total += int(result.scalar_one())
+
+    return {"total": total}
 
 
 @router.post("/iniciar")
@@ -84,7 +113,23 @@ async def websocket_endpoint(websocket: WebSocket):
         return
 
     await websocket.accept()
-    manager.connect(user_id, websocket)
+    was_offline = manager.connect(user_id, websocket)
+
+    async with AsyncSessionLocal() as db:
+        contact_ids = await get_contact_user_ids(db, user_id)
+
+    online_contacts = [uid for uid in contact_ids if manager.is_online(uid)]
+
+    await websocket.send_json({
+        "type": "contacts_status",
+        "online": online_contacts
+    })
+
+    if was_offline:
+        await manager.broadcast_to_contacts(contact_ids, {
+            "type": "user_online",
+            "user_id": user_id
+        })
 
     try:
         while True:
@@ -121,7 +166,21 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         manager.disconnect(user_id, websocket)
+        if not manager.is_online(user_id):
+            async with AsyncSessionLocal() as db:
+                contact_ids = await get_contact_user_ids(db, user_id)
+            await manager.broadcast_to_contacts(contact_ids, {
+                "type": "user_offline",
+                "user_id": user_id
+            })
     except Exception:
         manager.disconnect(user_id, websocket)
+        if not manager.is_online(user_id):
+            async with AsyncSessionLocal() as db:
+                contact_ids = await get_contact_user_ids(db, user_id)
+            await manager.broadcast_to_contacts(contact_ids, {
+                "type": "user_offline",
+                "user_id": user_id
+            })
 
 

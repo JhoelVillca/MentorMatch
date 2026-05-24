@@ -6,7 +6,7 @@ import { useChat } from '../../hooks/useChat';
 export default function ChatPage() {
   const { token } = useAuth();
   const location = useLocation();
-  const currentUserId = token?.id;
+  const currentUserId = token?.id ? String(token.id) : null;
 
   const {
     salas,
@@ -17,6 +17,7 @@ export default function ChatPage() {
     loadMoreMessages,
     hasMore,
     connectionStatus,
+    onlineUsers,
   } = useChat();
 
   const [inputText, setInputText] = useState('');
@@ -55,21 +56,28 @@ export default function ChatPage() {
           {salas.length === 0 ? (
             <p className="text-center p-4 text-sm text-gray-500">No tienes conversaciones</p>
           ) : (
-            salas.map((sala) => (
-              <button
-                key={sala.id_sala}
-                onClick={() => selectSala(sala.id_sala)}
-                className={`w-full text-left p-4 border-b border-gray-800/50 hover:bg-[#141414] transition-colors ${selectedSalaId === sala.id_sala ? 'border-l-2 border-l-red-600 bg-[#141414]' : ''}`}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-sm truncate">{sala.nombre_otro}</span>
-                  {sala.unread_count > 0 && (
-                    <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">{sala.unread_count}</span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 truncate">{sala.ultimo_mensaje || 'Inicia la conversacion...'}</p>
-              </button>
-            ))
+            salas.map((sala) => {
+              const isContactOnline = onlineUsers.has(sala.contraparte_user_id);
+
+              return (
+                <button
+                  key={sala.id_sala}
+                  onClick={() => selectSala(sala.id_sala)}
+                  className={`w-full text-left p-4 border-b border-gray-800/50 hover:bg-[#141414] transition-colors ${selectedSalaId === sala.id_sala ? 'border-l-2 border-l-red-600 bg-[#141414]' : ''}`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isContactOnline ? 'bg-green-500' : 'bg-gray-600'}`} />
+                      <span className="font-semibold text-sm truncate">{sala.nombre_otro}</span>
+                    </div>
+                    {sala.unread_count > 0 && (
+                      <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">{sala.unread_count}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate pl-4">{sala.ultimo_mensaje || 'Inicia la conversacion...'}</p>
+                </button>
+              );
+            })
           )}
         </div>
       </div>
@@ -89,8 +97,8 @@ export default function ChatPage() {
               <div className="flex-1">
                 <h3 className="font-bold text-white">{selectedSala.nombre_otro}</h3>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                  <p className="text-xs text-gray-500">{connectionStatus === 'connected' ? 'Tunel Activo' : 'Reconectando...'}</p>
+                  <div className={`w-2 h-2 rounded-full transition-colors ${onlineUsers.has(selectedSala.contraparte_user_id) ? 'bg-green-500' : 'bg-gray-600'}`} />
+                  <p className="text-xs text-gray-500">{onlineUsers.has(selectedSala.contraparte_user_id) ? 'En linea' : 'Desconectado'}</p>
                 </div>
               </div>
             </div>

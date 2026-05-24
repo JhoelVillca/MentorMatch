@@ -16,12 +16,6 @@ export default defineConfig(({ mode }) => {
           ws: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
-        '/chat': {
-          target: backendTarget,
-          changeOrigin: true,
-          secure: false,
-          ws: true,
-        },
       },
     },
   }

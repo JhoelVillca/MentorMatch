@@ -5,6 +5,7 @@ from typing import Optional
 
 class SalaResponse(BaseModel):
     id_sala: UUID
+    contraparte_user_id: str
     nombre_otro: str
     foto_otro: Optional[str] = None
     ultimo_mensaje: Optional[str] = None

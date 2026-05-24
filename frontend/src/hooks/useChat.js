@@ -14,10 +14,12 @@ export function useChat() {
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
 
   const wsRef = useRef(null);
   const reconnectAttempts = useRef(0);
   const reconnectTimeout = useRef(null);
+  const connectTimeout = useRef(null);
   const shouldReconnectRef = useRef(true);
   const selectedSalaRef = useRef(null);
 
@@ -88,6 +90,25 @@ export function useChat() {
       const data = JSON.parse(event.data);
       if (data.type === 'pong') return;
 
+      if (data.type === 'contacts_status') {
+        setOnlineUsers(new Set(data.online));
+        return;
+      }
+
+      if (data.type === 'user_online') {
+        setOnlineUsers((prev) => new Set([...prev, data.user_id]));
+        return;
+      }
+
+      if (data.type === 'user_offline') {
+        setOnlineUsers((prev) => {
+          const next = new Set(prev);
+          next.delete(data.user_id);
+          return next;
+        });
+        return;
+      }
+
       if (data.type === 'new_message') {
         if (data.id_sala === selectedSalaRef.current) {
           setMessages((prev) => {
@@ -102,6 +123,7 @@ export function useChat() {
 
     ws.onclose = (event) => {
       setConnectionStatus('disconnected');
+      setOnlineUsers(new Set());
       if (!shouldReconnectRef.current) return;
       if (event.code === 1000 || event.code === 1008) return;
 
@@ -135,9 +157,12 @@ export function useChat() {
   useEffect(() => {
     shouldReconnectRef.current = true;
     refreshSalas();
-    connectWs();
+    connectTimeout.current = setTimeout(() => {
+      connectWs();
+    }, 0);
     return () => {
       shouldReconnectRef.current = false;
+      clearTimeout(connectTimeout.current);
       if (wsRef.current) wsRef.current.close(1000);
       clearTimeout(reconnectTimeout.current);
     };
@@ -152,6 +177,7 @@ export function useChat() {
     loadMoreMessages,
     hasMore,
     connectionStatus,
+    onlineUsers,
     refreshSalas,
   };
 }
