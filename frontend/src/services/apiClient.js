@@ -23,7 +23,7 @@ export async function apiClient(endpoint, customOptions = {}) {
   }
 
   let finalEndpoint = endpoint;
-  // Purgar prefijo /api en produccion
+  // Purgar prefijo /api solo cuando hay URL de backend explicita
   if (BASE_URL && finalEndpoint.startsWith('/api')) {
     finalEndpoint = finalEndpoint.replace(/^\/api/, '');
   }
@@ -58,3 +58,4 @@ export async function apiClient(endpoint, customOptions = {}) {
 
   return data;
 }
+

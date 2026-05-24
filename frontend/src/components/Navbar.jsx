@@ -37,13 +37,17 @@ export default function Navbar() {
               <>
                 {/* Rutas Admin */}
                 {userRole === 'admin' && (
-                  <Link to="/admin" className="hover:text-white px-3 py-2 text-sm font-medium">Panel Admin</Link>
+                  <>
+                    <Link to="/admin" className="hover:text-white px-3 py-2 text-sm font-medium">Panel Admin</Link>
+                    <Link to="/chat" className="hover:text-white px-3 py-2 text-sm font-medium">Mensajes</Link>
+                  </>
                 )}
 
                 {/* Rutas Mentor */}
                 {userRole === 'mentor' && (
                   <>
                     <Link to="/mentor" className="hover:text-white px-3 py-2 text-sm font-medium">Mi Panel</Link>
+                    <Link to="/chat" className="hover:text-white px-3 py-2 text-sm font-medium">Mensajes</Link>
                     <Link to="/mentor/paquetes" className="hover:text-white px-3 py-2 text-sm font-medium">Mis Paquetes</Link>
                     {/* Placeholder para cuando implementes horarios visuales completos */}
                     <Link to="/mentor/horarios" className="hover:text-white px-3 py-2 text-sm font-medium">Mis Horarios</Link>
@@ -55,6 +59,7 @@ export default function Navbar() {
                 {userRole === 'mentee' && (
                   <>
                     <Link to="/mentee" className="hover:text-white px-3 py-2 text-sm font-medium">Mi Panel</Link>
+                    <Link to="/chat" className="hover:text-white px-3 py-2 text-sm font-medium">Mensajes</Link>
                     <Link to="/mentee/marketplace" className="hover:text-white px-3 py-2 text-sm font-medium">Marketplace</Link>
                     <Link to="/mentee/agendar" className="hover:text-white px-3 py-2 text-sm font-medium">Agendar</Link>
                     <Link to="/mentee/completar-perfil" className="hover:text-white px-3 py-2 text-sm font-medium">Mi Perfil</Link>

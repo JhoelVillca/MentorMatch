@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
+import { iniciarChat } from '../../services/chatService';
 
 export default function Marketplace() {
   const [paquetes, setPaquetes] = useState([]);
@@ -36,6 +37,15 @@ export default function Marketplace() {
       navigate('/mentee/contratos');
     } catch (err) {
       alert(`Error: ${err.message}`);
+    }
+  };
+
+  const handleContactar = async (idMentor) => {
+    try {
+      const res = await iniciarChat(idMentor, null);
+      navigate('/chat', { state: { salaId: res.id_sala } });
+    } catch (err) {
+      alert(`Error al iniciar chat: ${err.message}`);
     }
   };
 
@@ -97,12 +107,20 @@ export default function Marketplace() {
                 </div>
               </div>
 
-              <button
-                onClick={() => handleAdquirir(p.id_paquete)}
-                className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
-              >
-                Adquirir Paquete
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleContactar(p.id_mentor)}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md"
+                >
+                  Mensaje
+                </button>
+                <button
+                  onClick={() => handleAdquirir(p.id_paquete)}
+                  className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+                >
+                  Adquirir
+                </button>
+              </div>
             </div>
           ))}
         </div>

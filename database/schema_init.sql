@@ -165,7 +165,9 @@ CREATE TABLE Salas_Chat (
     id_mentee UUID REFERENCES Perfil_Mentee(id_mentee) ON DELETE CASCADE,
     id_mentor UUID REFERENCES Perfil_Mentor(id_mentor) ON DELETE CASCADE,
     fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    -- Evita crear múltiples salas para las mismas dos personas
+    no_leidos_mentee INT DEFAULT 0,
+    no_leidos_mentor INT DEFAULT 0,
+    ultima_actividad TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (id_mentee, id_mentor) 
 );
 
