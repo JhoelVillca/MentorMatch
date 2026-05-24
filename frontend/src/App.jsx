@@ -16,6 +16,7 @@ import Marketplace from './pages/Marketplace/Marketplace';
 import MisContratos from './pages/MisContratos/MisContratos';
 import AgendarSesion from './pages/AgendarSesion/AgendarSesion';
 import MentorAvailabilityPanel from './components/MentorAvailabilityPanel';
+import ChatPage from './pages/Chat/ChatPage';
 
 export default function App() {
   // Estado para controlar el modo oscuro de Tailwind de forma creativa
@@ -66,6 +67,12 @@ export default function App() {
               <Route path="/mentee/agendar" element={<AgendarSesion />} />
               <Route path="/mentee/contratos" element={<MisContratos />} />
             </Route>
+
+            {/* Rutas de Chat */}
+            <Route element={<ProtectedRoute allowedRoles={['mentor', 'mentee', 'admin']} />}>
+              <Route path="/chat" element={<ChatPage />} />
+            </Route>
+            
           </Route>
           
           <Route path="*" element={<Navigate to="/login" replace />} />

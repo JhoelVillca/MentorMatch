@@ -148,6 +148,12 @@ class SalaChat(Base):
     id_mentee = Column(UUID(as_uuid=True), ForeignKey("perfil_mentee.id_mentee", ondelete="CASCADE"))
     id_mentor = Column(UUID(as_uuid=True), ForeignKey("perfil_mentor.id_mentor", ondelete="CASCADE"))
     fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    no_leidos_mentee = Column(Integer, server_default=text("0"))
+    no_leidos_mentor = Column(Integer, server_default=text("0"))
+    ultima_actividad = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+
+
+
 
 class MensajeChat(Base):
     __tablename__ = "mensajes_chat"
