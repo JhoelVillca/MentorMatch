@@ -11,10 +11,11 @@ app = FastAPI(
     version="0.2.0"
 )
 
+environment = os.getenv("ENVIRONMENT", "development")
 origenes_permitidos = [
 ]
 
-if os.getenv("ENVIRONMENT") == "development":
+if environment == "development":
     origenes_permitidos.extend([
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -23,6 +24,9 @@ if os.getenv("ENVIRONMENT") == "development":
 url_produccion = os.getenv("FRONTEND_URL")
 if url_produccion:
     origenes_permitidos.append(url_produccion)
+
+if environment == "production" and not url_produccion:
+    raise ValueError("FRONTEND_URL es obligatoria cuando ENVIRONMENT=production")
 
 app.add_middleware(
     CORSMiddleware,
