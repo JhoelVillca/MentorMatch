@@ -113,6 +113,19 @@ export default function Marketplace() {
         <h1 className="text-3xl font-bold text-white mb-2">Escaparate de Mentores</h1>
         <p className="text-gray-400 mb-6">Encuentra al experto ideal filtrando por atributos clave.</p>
 
+        {/* Banner de entorno de pruebas */}
+        <div className="mb-6 bg-amber-950/40 border border-amber-700/50 rounded-xl p-4 flex items-start gap-3">
+          <span className="text-amber-400 text-lg mt-0.5">⚠️</span>
+          <div className="text-sm leading-relaxed">
+            <p className="text-amber-300 font-semibold mb-1">Entorno de desarrollo — Pagos en modo prueba</p>
+            <p className="text-amber-200/70">
+              Para probar la compra, usa la tarjeta de prueba de Stripe:{' '}
+              <code className="bg-amber-900/50 text-amber-200 px-2 py-0.5 rounded font-mono text-xs">4242 4242 4242 4242</code>.
+              Fecha de expiración: cualquier fecha futura. CVC: cualquier número de 3 dígitos, y el correo cualquier correo.
+            </p>
+          </div>
+        </div>
+
         <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
             type="text"
