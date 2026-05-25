@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import paquetes, auth, admin, profiles, skills, disponibilidad, contratos, sesiones, chat
+from app.api import paquetes, auth, admin, profiles, skills, disponibilidad, contratos, sesiones, chat, webhooks
 from app.models import usuarios, main_models
 
 
@@ -46,6 +46,7 @@ app.include_router(disponibilidad.router)
 app.include_router(contratos.router)
 app.include_router(sesiones.router)
 app.include_router(chat.router)
+app.include_router(webhooks.router)
 
 
 
