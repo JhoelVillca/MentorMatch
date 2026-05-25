@@ -21,7 +21,7 @@ import ChatPage from './pages/Chat/ChatPage';
 export default function App() {
   // Estado para controlar el modo oscuro de Tailwind de forma creativa
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
+    return localStorage.getItem('theme') !== 'light';
   });
 
   useEffect(() => {
@@ -30,7 +30,6 @@ export default function App() {
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'dark'); // Cambiado explícitamente a light si se desactiva
       localStorage.setItem('theme', 'light');
     }
   }, [darkMode]);
