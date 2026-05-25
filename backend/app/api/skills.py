@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.security import OAuth2PasswordBearer
 from typing import List
-import jwt
+from uuid import UUID
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
 
@@ -10,27 +9,10 @@ from app.db.database import get_db
 from app.models.main_models import CategoriaHabilidad, MentorHabilidad, PerfilMentor
 from app.models.usuarios import Usuario
 from app.schemas.skills import CategoriaResponse, MentorSkillCreate
-from app.core.security import SECRET_KEY, ALGORITHM
+from app.api.deps import get_current_user_id
 
 
 router = APIRouter(prefix="/skills", tags=["Habilidades"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
-
-
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
-        return user_id
-    except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se pudo validar las credenciales",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
 @router.get("/categories", response_model=List[CategoriaResponse])
 async def get_categories(db: AsyncSession = Depends(get_db)):
@@ -47,14 +29,16 @@ async def add_mentor_skill(
     """
     Permite a un mentor logueado añadir una habilidad a su perfil.
     """
+    user_uuid = UUID(user_id)
+
     # 1. Buscar si el usuario existe
-    res = await db.execute(select(Usuario).filter(Usuario.id_usuario == user_id))
+    res = await db.execute(select(Usuario).filter(Usuario.id_usuario == user_uuid))
     user = res.scalars().first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
     # 2. Buscar si el usuario tiene PerfilMentor
-    res2 = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+    res2 = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_uuid))
     perfil_mentor = res2.scalars().first()
     
     if not perfil_mentor:
