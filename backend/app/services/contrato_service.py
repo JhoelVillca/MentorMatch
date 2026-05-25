@@ -1,7 +1,12 @@
+import os
 from uuid import UUID
+import stripe
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.main_models import PaqueteMentor, ContratoMentoria, TransaccionPago, PerfilMentor, PerfilMentee
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+FRONTEND_URL = os.getenv("FRONTEND_URL") or "http://localhost:5173"
 
 class ContratoService:
     def __init__(self, db: AsyncSession):
@@ -55,11 +60,36 @@ class ContratoService:
                 estado_pago="procesando"
             )
             self.db.add(nueva_trx)
+            await self.db.flush()
+
+            # Creacion de la sesion en Stripe
+            precio_centavos = int(paquete.precio_total * 100)
+
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount': precio_centavos,
+                        'product_data': {
+                            'name': f"Mentoria: {paquete.titulo_paquete}",
+                            'description': f"Mentor: {mentor.nombre_completo}"
+                        },
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=f"{FRONTEND_URL}/mentee/contratos?success=true",
+                cancel_url=f"{FRONTEND_URL}/mentee/marketplace?canceled=true",
+                metadata={
+                    "id_contrato": str(nuevo_contrato.id_contrato),
+                    "id_transaccion": str(nueva_trx.id_transaccion)
+                }
+            )
 
             await self.db.commit()
-            await self.db.refresh(nuevo_contrato)
 
-            return {"id_contrato": str(nuevo_contrato.id_contrato), "estado": nuevo_contrato.estado_contrato}
+            return {"url_pago": checkout_session.url}
 
         except Exception:
             await self.db.rollback()

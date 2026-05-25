@@ -58,10 +58,18 @@ export default function Marketplace() {
         method: 'POST',
         body: { id_paquete: idPaquete },
       });
-      alert(`Contrato generado: ${res.estado}. Redirigiendo...`);
-      navigate('/mentee/contratos');
+
+      // Si Stripe creo la sesion y nos devolvio la URL de pago, redirigimos la ventana.
+      // El flujo normal de la app se detiene aqui hasta que Stripe nos devuelva por success_url.
+      if (res.url_pago) {
+        window.location.href = res.url_pago;
+      } else {
+        // Fallback en caso de que la logica de pagos este apagada
+        alert(`Contrato generado: ${res.estado}.`);
+        navigate('/mentee/contratos');
+      }
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(`Error transaccional: ${err.message}`);
     }
   };
 
