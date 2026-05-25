@@ -34,4 +34,4 @@ async def register_new_user(db: AsyncSession, user_data: UserCreate):
         raise ValueError("Ese correo ya esta registrado.")
 
     hashed_pwd = security.get_password_hash(user_data.password)
-    return await user_repository.create_user(db, user_data.email, hashed_pwd)
+    return await user_repository.create_user(db, user_data.email, hashed_pwd, user_data.rol)

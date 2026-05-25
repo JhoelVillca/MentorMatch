@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import or_
 from uuid import UUID
-from app.models.main_models import PaqueteMentor, PerfilMentor
+from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad
 from app.schemas.paquete_schema import PaqueteCreate
 
 class PaqueteService:
@@ -26,6 +27,46 @@ class PaqueteService:
                 PerfilMentor.estado_verificacion == "verificado"
             )
         )
+        res = await self.db.execute(query)
+        return res.all()
+
+    async def buscar_paquetes(self, q: str | None = None, precio_max: float | None = None, id_habilidad: UUID | None = None):
+        query = (
+            select(
+                PaqueteMentor.id_paquete,
+                PaqueteMentor.id_mentor,
+                PaqueteMentor.titulo_paquete,
+                PaqueteMentor.cantidad_horas_totales,
+                PaqueteMentor.precio_total,
+                PerfilMentor.nombre_completo.label("mentor_nombre"),
+                PerfilMentor.foto_perfil.label("mentor_foto")
+            )
+            .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+        )
+
+        if id_habilidad:
+            query = query.join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+
+        query = query.filter(
+            PaqueteMentor.estado_activo == True,
+            PaqueteMentor.estado_validacion == "aprobado",
+            PerfilMentor.estado_verificacion == "verificado"
+        )
+
+        if q:
+            query = query.filter(
+                or_(
+                    PaqueteMentor.titulo_paquete.ilike(f"%{q}%"),
+                    PerfilMentor.nombre_completo.ilike(f"%{q}%")
+                )
+            )
+
+        if precio_max:
+            query = query.filter(PaqueteMentor.precio_total <= precio_max)
+
+        if id_habilidad:
+            query = query.filter(MentorHabilidad.id_habilidad == id_habilidad)
+
         res = await self.db.execute(query)
         return res.all()
 

@@ -1,7 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import paquetes, auth, admin, profiles, skills, disponibilidad, contratos, sesiones
+
+from app.api import paquetes, auth, admin, profiles, skills, disponibilidad, contratos, sesiones, chat, webhooks
 from app.models import usuarios, main_models
 
 
@@ -11,11 +12,26 @@ app = FastAPI(
     version="0.2.0"
 )
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mentormatch-ui-fwl1.onrender.com")
+environment = os.getenv("ENVIRONMENT", "development")
+origenes_permitidos = [
+]
+
+if environment == "development":
+    origenes_permitidos.extend([
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ])
+
+url_produccion = os.getenv("FRONTEND_URL")
+if url_produccion:
+    origenes_permitidos.append(url_produccion)
+
+if environment == "production" and not url_produccion:
+    raise ValueError("FRONTEND_URL es obligatoria cuando ENVIRONMENT=production")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=origenes_permitidos,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +45,10 @@ app.include_router(paquetes.router)
 app.include_router(disponibilidad.router)
 app.include_router(contratos.router)
 app.include_router(sesiones.router)
+app.include_router(chat.router)
+app.include_router(webhooks.router)
+
+
 
 @app.get("/", tags=["Root"])
 def read_root():
@@ -37,3 +57,5 @@ def read_root():
         "message": "MentorMatch listo para peticiones.",
         "docs": "/docs"
     }
+
+

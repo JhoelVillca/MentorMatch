@@ -26,13 +26,14 @@ async def login(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
 
     is_prod = os.getenv("ENVIRONMENT") == "production"
+    same_site = "none" if is_prod else "lax"
 
     response.set_cookie(
         key="access_token",
         value=token_data["access_token"],
         httponly=True,
         secure=is_prod,
-        samesite="none",
+        samesite=same_site,
         max_age=3600,
         path="/"
     )

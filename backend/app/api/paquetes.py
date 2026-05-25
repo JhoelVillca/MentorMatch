@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
@@ -9,6 +9,16 @@ from app.api.deps import get_current_user_id
 from app.services.paquete_service import PaqueteService
 
 router = APIRouter(prefix="/paquetes", tags=["Paquetes de Mentoria"])
+
+@router.get("/buscar", response_model=List[PaqueteDisponibleOut])
+async def buscar_paquetes(
+    q: str | None = Query(None, description="Termino de busqueda general"),
+    precio_max: float | None = Query(None, description="Precio maximo dispuesto a pagar"),
+    id_habilidad: UUID | None = Query(None, description="Filtrar por id de habilidad especifica"),
+    db: AsyncSession = Depends(get_db)
+):
+    servicio = PaqueteService(db)
+    return await servicio.buscar_paquetes(q, precio_max, id_habilidad)
 
 @router.get("/disponibles", response_model=List[PaqueteDisponibleOut])
 async def listar_paquetes_disponibles(db: AsyncSession = Depends(get_db)):
