@@ -25,7 +25,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await registerAPI(email, password, rol);
+      await registerAPI(email, password, rol.toLowerCase());
       navigate('/login');
     } catch (error) {
       setErrorMsg(error.message);

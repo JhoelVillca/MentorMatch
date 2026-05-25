@@ -1,11 +1,13 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
+from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
     password: str
+    rol: Optional[str] = "mentee"
 
 class UserResponse(UserBase):
     id_usuario: UUID

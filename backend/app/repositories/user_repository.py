@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 from sqlalchemy import insert, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
 from app.models.associations import usuario_roles
 from app.models.main_models import Rol
@@ -32,7 +33,7 @@ async def get_all_users_with_roles(db: AsyncSession) -> List[Dict[str, Any]]:
     return result.all()
 
 async def get_user_role_name(db: AsyncSession, id_usuario: str) -> str:
-    result = await db.execute(select(usuario_roles).filter(usuario_roles.c.id_usuario == id_usuario))
+    result = await db.execute(select(usuario_roles).filter(usuario_roles.c.id_usuario == UUID(id_usuario)))
     rol_record = result.first()
     if rol_record:
         res_rol = await db.execute(select(Rol).filter(Rol.id_rol == rol_record.id_rol))
