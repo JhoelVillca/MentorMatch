@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import { iniciarChat } from '../../services/chatService';
 
@@ -11,8 +11,24 @@ export default function Marketplace() {
   const [q, setQ] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [idHabilidad, setIdHabilidad] = useState('');
+  const [toastMsg, setToastMsg] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('canceled') === 'true') {
+      setToastMsg({ type: 'warn', text: 'Pago cancelado. Puedes intentarlo de nuevo.' });
+      window.history.replaceState({}, '', '/mentee/marketplace');
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!toastMsg) return;
+    const t = setTimeout(() => setToastMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [toastMsg]);
 
   useEffect(() => {
     apiClient('/api/skills/categories', { method: 'GET' })
@@ -45,7 +61,6 @@ export default function Marketplace() {
     };
 
     const debounceTimer = setTimeout(fetchMarketplace, 400);
-
     return () => {
       clearTimeout(debounceTimer);
       controller.abort();
@@ -59,17 +74,13 @@ export default function Marketplace() {
         body: { id_paquete: idPaquete },
       });
 
-      // Si Stripe creo la sesion y nos devolvio la URL de pago, redirigimos la ventana.
-      // El flujo normal de la app se detiene aqui hasta que Stripe nos devuelva por success_url.
       if (res.url_pago) {
         window.location.href = res.url_pago;
       } else {
-        // Fallback en caso de que la logica de pagos este apagada
-        alert(`Contrato generado: ${res.estado}.`);
         navigate('/mentee/contratos');
       }
     } catch (err) {
-      alert(`Error transaccional: ${err.message}`);
+      setToastMsg({ type: 'error', text: `Error: ${err.message}` });
     }
   };
 
@@ -78,12 +89,25 @@ export default function Marketplace() {
       const res = await iniciarChat(idMentor, null);
       navigate('/chat', { state: { salaId: res.id_sala } });
     } catch (err) {
-      alert(`Error al iniciar chat: ${err.message}`);
+      setToastMsg({ type: 'error', text: `Error al iniciar chat: ${err.message}` });
     }
   };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+
+      {toastMsg && (
+        <div
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
+            toastMsg.type === 'error'
+              ? 'bg-red-800 text-white border border-red-600'
+              : 'bg-yellow-800 text-white border border-yellow-600'
+          }`}
+        >
+          {toastMsg.text}
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Escaparate de Mentores</h1>
         <p className="text-gray-400 mb-6">Encuentra al experto ideal filtrando por atributos clave.</p>
@@ -111,17 +135,18 @@ export default function Marketplace() {
             className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
           >
             <option value="">Todas las habilidades</option>
-            {categorias.map((cat) => (
-              cat.habilidades?.length > 0 && (
-                <optgroup key={cat.id_categoria} label={cat.nombre_categoria}>
-                  {cat.habilidades.map((hab) => (
-                    <option key={hab.id_habilidad} value={hab.id_habilidad}>
-                      {hab.nombre_habilidad}
-                    </option>
-                  ))}
-                </optgroup>
-              )
-            ))}
+            {categorias.map(
+              (cat) =>
+                cat.habilidades?.length > 0 && (
+                  <optgroup key={cat.id_categoria} label={cat.nombre_categoria}>
+                    {cat.habilidades.map((hab) => (
+                      <option key={hab.id_habilidad} value={hab.id_habilidad}>
+                        {hab.nombre_habilidad}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+            )}
           </select>
         </div>
       </div>
@@ -136,15 +161,24 @@ export default function Marketplace() {
         </div>
       ) : paquetes.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
-          <p className="text-gray-400">No se encontraron conjuntos de datos que coincidan con la metrica solicitada.</p>
+          <p className="text-gray-400">
+            No se encontraron conjuntos de datos que coincidan con la metrica solicitada.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {paquetes.map((p) => (
-            <div key={p.id_paquete} className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg">
+            <div
+              key={p.id_paquete}
+              className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg"
+            >
               <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800">
                 {p.mentor_foto ? (
-                  <img src={p.mentor_foto} alt={p.mentor_nombre} className="w-14 h-14 rounded-full object-cover border-2 border-gray-700" />
+                  <img
+                    src={p.mentor_foto}
+                    alt={p.mentor_nombre}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700"
+                  />
                 ) : (
                   <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700">
                     {p.mentor_nombre.charAt(0).toUpperCase()}
@@ -152,7 +186,9 @@ export default function Marketplace() {
                 )}
                 <div>
                   <h3 className="text-lg font-semibold text-white leading-tight">{p.mentor_nombre}</h3>
-                  <span className="text-xs text-green-400 font-medium tracking-wide uppercase">Operador Verificado</span>
+                  <span className="text-xs text-green-400 font-medium tracking-wide uppercase">
+                    Operador Verificado
+                  </span>
                 </div>
               </div>
 
