@@ -98,6 +98,7 @@ export default function Marketplace() {
 
       {toastMsg && (
         <div
+          role="alert"
           className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
             toastMsg.type === 'error'
               ? 'bg-red-800 text-white border border-red-600'
@@ -162,7 +163,7 @@ export default function Marketplace() {
       ) : paquetes.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
           <p className="text-gray-400">
-            No se encontraron conjuntos de datos que coincidan con la metrica solicitada.
+            No se encontraron conjuntos de datos que coincidan con la métrica solicitada.
           </p>
         </div>
       ) : (

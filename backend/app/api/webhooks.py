@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 import stripe
 from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy.future import select
@@ -31,6 +32,10 @@ async def stripe_webhook(request: Request):
         logger.error("STRIPE_WEBHOOK_SECRET no configurada")
         raise HTTPException(status_code=500, detail="Configuracion de webhook incompleta")
 
+    if not sig_header:
+        logger.warning("Header stripe-signature faltante")
+        raise HTTPException(status_code=400, detail="Firma faltante")
+
     try:
         event = _stripe().construct_event(payload, sig_header, WEBHOOK_SECRET)
     except stripe.SignatureVerificationError:
@@ -47,17 +52,18 @@ async def stripe_webhook(request: Request):
 
 
 async def _handle_checkout_completed(session) -> None:
-    metadata = session.metadata
-    id_contrato_str = getattr(metadata, "id_contrato", None)
-    id_transaccion_str = getattr(metadata, "id_transaccion", None)
+    metadata = getattr(session, "metadata", None) or {}
+    id_contrato_str = metadata.get("id_contrato") if isinstance(metadata, dict) else getattr(metadata, "id_contrato", None)
+    id_transaccion_str = metadata.get("id_transaccion") if isinstance(metadata, dict) else getattr(metadata, "id_transaccion", None)
 
     if not id_contrato_str or not id_transaccion_str:
         logger.error(
-            "Webhook sin metadata completa — session_id=%s", session.id
+            "Webhook sin metadata completa — session_id=%s",
+            getattr(session, "id", "unknown")
         )
         return
 
-    receipt_url = _extract_receipt_url(session)
+    receipt_url = await asyncio.to_thread(_extract_receipt_url, session)
 
     async with AsyncSessionLocal() as db:
         try:

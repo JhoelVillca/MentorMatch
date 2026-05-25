@@ -12,7 +12,7 @@ export default function MisContratos() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('success') === 'true') {
-      setSuccessMsg('Pago procesado. Tu contrato estara activo en segundos.');
+      setSuccessMsg('Pago procesado. Tu contrato estará activo en segundos.');
       window.history.replaceState({}, '', '/mentee/contratos');
     }
   }, [location.search]);
@@ -57,7 +57,7 @@ export default function MisContratos() {
 
       {contratos.length === 0 && !error ? (
         <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
-          <p className="text-gray-400">No tienes contratos aun.</p>
+          <p className="text-gray-400">No tienes contratos aún.</p>
         </div>
       ) : (
         <ul className="space-y-3">
