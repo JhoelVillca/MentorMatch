@@ -5,33 +5,58 @@ import { iniciarChat } from '../../services/chatService';
 
 export default function Marketplace() {
   const [paquetes, setPaquetes] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [q, setQ] = useState('');
+  const [precioMax, setPrecioMax] = useState('');
+  const [idHabilidad, setIdHabilidad] = useState('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    let isMounted = true;
-    
+    apiClient('/api/skills/categories', { method: 'GET' })
+      .then(setCategorias)
+      .catch((err) => console.error('Error cargando taxonomias:', err));
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
     const fetchMarketplace = async () => {
+      setLoading(true);
       try {
-        const data = await apiClient('/api/paquetes/disponibles', { method: 'GET' });
-        if (isMounted) setPaquetes(data);
+        const params = new URLSearchParams();
+        if (q) params.append('q', q);
+        if (precioMax) params.append('precio_max', precioMax);
+        if (idHabilidad) params.append('id_habilidad', idHabilidad);
+
+        const data = await apiClient(`/api/paquetes/buscar?${params.toString()}`, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        setPaquetes(data);
+        setError(null);
       } catch (err) {
-        if (isMounted) setError(err.message);
+        if (err.name !== 'AbortError') setError(err.message);
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchMarketplace();
-    return () => { isMounted = false; };
-  }, []);
+    const debounceTimer = setTimeout(fetchMarketplace, 400);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      controller.abort();
+    };
+  }, [q, precioMax, idHabilidad]);
 
   const handleAdquirir = async (idPaquete) => {
     try {
       const res = await apiClient('/api/contratos/adquirir', {
         method: 'POST',
-        body: { id_paquete: idPaquete }
+        body: { id_paquete: idPaquete },
       });
       alert(`Contrato generado: ${res.estado}. Redirigiendo...`);
       navigate('/mentee/contratos');
@@ -49,40 +74,66 @@ export default function Marketplace() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-8">
-        <div className="bg-red-900/30 border border-red-500 text-red-200 p-4 rounded-lg">
-          Error al cargar el catalogo: {error}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Escaparate de Mentores</h1>
-        <p className="text-gray-400">Encuentra al experto ideal y adquiere tu paquete de horas.</p>
+        <p className="text-gray-400 mb-6">Encuentra al experto ideal filtrando por atributos clave.</p>
+
+        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input
+            type="text"
+            placeholder="Buscar por titulo o nombre..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
+          />
+
+          <input
+            type="number"
+            placeholder="Precio maximo (USD)"
+            value={precioMax}
+            onChange={(e) => setPrecioMax(e.target.value)}
+            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
+          />
+
+          <select
+            value={idHabilidad}
+            onChange={(e) => setIdHabilidad(e.target.value)}
+            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
+          >
+            <option value="">Todas las habilidades</option>
+            {categorias.map((cat) => (
+              cat.habilidades?.length > 0 && (
+                <optgroup key={cat.id_categoria} label={cat.nombre_categoria}>
+                  {cat.habilidades.map((hab) => (
+                    <option key={hab.id_habilidad} value={hab.id_habilidad}>
+                      {hab.nombre_habilidad}
+                    </option>
+                  ))}
+                </optgroup>
+              )
+            ))}
+          </select>
+        </div>
       </div>
 
-      {paquetes.length === 0 ? (
+      {error ? (
+        <div className="bg-red-900/30 border border-red-500 text-red-200 p-4 rounded-lg">
+          Excepcion capturada: {error}
+        </div>
+      ) : loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-red-600"></div>
+        </div>
+      ) : paquetes.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
-          <p className="text-gray-400">No hay mentores disponibles en este momento.</p>
+          <p className="text-gray-400">No se encontraron conjuntos de datos que coincidan con la metrica solicitada.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {paquetes.map((p) => (
             <div key={p.id_paquete} className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg">
-              
               <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800">
                 {p.mentor_foto ? (
                   <img src={p.mentor_foto} alt={p.mentor_nombre} className="w-14 h-14 rounded-full object-cover border-2 border-gray-700" />
@@ -93,14 +144,14 @@ export default function Marketplace() {
                 )}
                 <div>
                   <h3 className="text-lg font-semibold text-white leading-tight">{p.mentor_nombre}</h3>
-                  <span className="text-xs text-green-400 font-medium tracking-wide uppercase">Mentor Verificado</span>
+                  <span className="text-xs text-green-400 font-medium tracking-wide uppercase">Operador Verificado</span>
                 </div>
               </div>
 
               <div className="mb-6 flex-1">
                 <h4 className="text-xl font-bold text-red-400 mb-2">{p.titulo_paquete}</h4>
                 <div className="flex justify-between items-end mt-4">
-                  <span className="text-gray-400 bg-[#0a0a0a] px-3 py-1 rounded-md text-sm">
+                  <span className="text-gray-400 bg-[#0a0a0a] px-3 py-1 rounded-md text-sm border border-gray-800">
                     {p.cantidad_horas_totales} Horas
                   </span>
                   <span className="text-2xl font-bold text-white">${p.precio_total}</span>
