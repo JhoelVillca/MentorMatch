@@ -182,7 +182,10 @@ async def get_paquetes_pendientes(
     auth: tuple = Depends(require_admin),
 ):
     res = await db.execute(
-        select(PaqueteMentor).filter(PaqueteMentor.estado_validacion == 'pendiente')
+        select(PaqueteMentor).filter(
+            PaqueteMentor.estado_validacion == 'pendiente',
+            PaqueteMentor.id_mentor.isnot(None),
+        )
     )
     return res.scalars().all()
 
