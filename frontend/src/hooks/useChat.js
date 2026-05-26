@@ -4,8 +4,8 @@ import { getSalas, getMensajes, markAsRead } from '../services/chatService';
 const getWsUrl = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
   const protocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:';
-  const host = backendUrl.replace(/^https?:\/\//, '');
-  return `${protocol}//${host}/api/chat/ws`;
+  const host = backendUrl.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '');
+  return `${protocol}//${host}/chat/ws`;
 };
 
 export function useChat() {
