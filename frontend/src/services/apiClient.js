@@ -35,6 +35,9 @@ export async function apiClient(endpoint, customOptions = {}) {
   try {
     response = await fetch(url, options);
   } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw error;
+    }
     console.error('[Telemetria API] Error critico de red o bloqueo CORS:', error);
     throw new Error('Error de conexion con el servidor.');
   }

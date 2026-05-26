@@ -71,6 +71,21 @@ async def create_availability(
 
     dia_int = DIA_STR_TO_INT.get(availability.dia_semana, 1)
 
+    # Validar solapamiento con bloques existentes del mismo día
+    res_overlap = await db.execute(
+        select(DisponibilidadMentor).filter(
+            DisponibilidadMentor.id_mentor == perfil.id_mentor,
+            DisponibilidadMentor.dia_semana == dia_int,
+            DisponibilidadMentor.hora_inicio_utc < availability.hora_fin,
+            DisponibilidadMentor.hora_fin_utc > availability.hora_inicio,
+        )
+    )
+    if res_overlap.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Ya existe un bloque de disponibilidad en {availability.dia_semana} que se solapa con el rango {availability.hora_inicio} - {availability.hora_fin}."
+        )
+
     new_availability = DisponibilidadMentor(
         id_mentor=perfil.id_mentor,
         dia_semana=dia_int,
@@ -97,6 +112,13 @@ async def get_availabilities(
     ))
     availabilities = res2.scalars().all()
     return availabilities
+
+@router.get("/mentor/{id_mentor}", response_model=List[AvailabilityResponse])
+async def get_mentor_availability(id_mentor: UUID, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(
+        select(DisponibilidadMentor).filter(DisponibilidadMentor.id_mentor == id_mentor)
+    )
+    return res.scalars().all()
 
 @router.delete("/{availability_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_availability(

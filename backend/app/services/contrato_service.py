@@ -133,7 +133,7 @@ class ContratoService:
             return []
 
         query = (
-            select(ContratoMentoria, PaqueteMentor.titulo_paquete)
+            select(ContratoMentoria, PaqueteMentor.titulo_paquete, PaqueteMentor.id_mentor)
             .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
             .filter(ContratoMentoria.id_mentee == mentee.id_mentee)
         )
@@ -142,6 +142,7 @@ class ContratoService:
         return [
             {
                 "id_contrato": c.ContratoMentoria.id_contrato,
+                "id_mentor": c.id_mentor,
                 "estado": c.ContratoMentoria.estado_contrato,
                 "horas_consumidas": c.ContratoMentoria.horas_consumidas,
                 "fecha": c.ContratoMentoria.fecha_adquisicion,

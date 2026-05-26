@@ -14,7 +14,7 @@ import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteP
 import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
 import Marketplace from './pages/Marketplace/Marketplace';
 import MisContratos from './pages/MisContratos/MisContratos';
-import AgendarSesion from './pages/AgendarSesion/AgendarSesion';
+import AgendarSesion from './pages/AgendarSesion/AgendarSesionPage';
 import MentorAvailabilityPanel from './components/MentorAvailabilityPanel';
 import ChatPage from './pages/Chat/ChatPage';
 
