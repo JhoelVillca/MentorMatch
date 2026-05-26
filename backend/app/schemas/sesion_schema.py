@@ -25,6 +25,13 @@ class SesionOut(BaseModel):
     class Config:
         from_attributes = True
 
+class SesionOcupadaOut(BaseModel):
+    fecha_hora_inicio_utc: datetime
+    fecha_hora_fin_utc: datetime
+
+    class Config:
+        from_attributes = True
+
 class SesionListOut(BaseModel):
     id_sesion: UUID
     fecha_hora_inicio_utc: datetime

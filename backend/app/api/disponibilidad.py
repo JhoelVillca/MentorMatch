@@ -71,6 +71,21 @@ async def create_availability(
 
     dia_int = DIA_STR_TO_INT.get(availability.dia_semana, 1)
 
+    # Validar solapamiento con bloques existentes del mismo día
+    res_overlap = await db.execute(
+        select(DisponibilidadMentor).filter(
+            DisponibilidadMentor.id_mentor == perfil.id_mentor,
+            DisponibilidadMentor.dia_semana == dia_int,
+            DisponibilidadMentor.hora_inicio_utc < availability.hora_fin,
+            DisponibilidadMentor.hora_fin_utc > availability.hora_inicio,
+        )
+    )
+    if res_overlap.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Ya existe un bloque de disponibilidad en {availability.dia_semana} que se solapa con el rango {availability.hora_inicio} - {availability.hora_fin}."
+        )
+
     new_availability = DisponibilidadMentor(
         id_mentor=perfil.id_mentor,
         dia_semana=dia_int,

@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import math
 
 from app.models.main_models import (
     ContratoMentoria,
@@ -93,7 +94,7 @@ class SesionService:
                 estado_sesion="programada",
             )
             self.db.add(nueva_sesion)
-            contrato.horas_consumidas += int(duracion_horas)
+            contrato.horas_consumidas += math.ceil(duracion_horas)
             
             await self.db.commit()
             await self.db.refresh(nueva_sesion)
@@ -137,6 +138,29 @@ class SesionService:
             .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
             .join(PerfilMentee, ContratoMentoria.id_mentee == PerfilMentee.id_mentee)
             .filter(PaqueteMentor.id_mentor == mentor.id_mentor)
+            .order_by(Sesion.fecha_hora_inicio_utc.asc())
+        )
+        res = await self.db.execute(query)
+        return res.all()
+
+    async def listar_sesiones_ocupadas_mentor(self, id_mentor: UUID):
+        """Retorna sesiones programadas del mentor en los próximos 14 días (público)."""
+        ahora = datetime.now(timezone.utc)
+        limite = ahora + timedelta(days=14)
+
+        query = (
+            select(
+                Sesion.fecha_hora_inicio_utc,
+                Sesion.fecha_hora_fin_utc,
+            )
+            .join(ContratoMentoria, Sesion.id_contrato == ContratoMentoria.id_contrato)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .filter(
+                PaqueteMentor.id_mentor == id_mentor,
+                Sesion.estado_sesion.not_in(["cancelada", "ausente"]),
+                Sesion.fecha_hora_inicio_utc >= ahora,
+                Sesion.fecha_hora_inicio_utc <= limite,
+            )
             .order_by(Sesion.fecha_hora_inicio_utc.asc())
         )
         res = await self.db.execute(query)

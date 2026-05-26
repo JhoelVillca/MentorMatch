@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.db.database import get_db
 from app.api.deps import get_current_mentee_user_id, get_current_mentor_user_id
-from app.schemas.sesion_schema import AgendarSesionRequest, SesionOut, SesionListOut
+from app.schemas.sesion_schema import AgendarSesionRequest, SesionOut, SesionListOut, SesionOcupadaOut
 from app.services.sesion_service import SesionService
 
 router = APIRouter(prefix="/sesiones", tags=["Sesiones"])
@@ -46,3 +46,12 @@ async def listar_sesiones_mentor(
 ):
     servicio = SesionService(db)
     return await servicio.listar_sesiones_mentor(user_id)
+
+@router.get("/ocupadas/{id_mentor}", response_model=list[SesionOcupadaOut])
+async def listar_sesiones_ocupadas_mentor(
+    id_mentor: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint público: retorna horarios ocupados del mentor en los próximos 14 días."""
+    servicio = SesionService(db)
+    return await servicio.listar_sesiones_ocupadas_mentor(id_mentor)
