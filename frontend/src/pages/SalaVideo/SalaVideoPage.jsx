@@ -38,15 +38,36 @@ export default function SalaVideoPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [accionando, setAccionando] = useState(false);
+  const [urlSegura, setUrlSegura] = useState(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
 
   const cargarSesion = async () => {
     try {
       const data = await apiClient(`/api/sesiones/${id_sesion}`);
       setSesion(data);
+      if (data.estado_sesion === 'en_curso') {
+        pedirTokenVideo(data.url_videollamada);
+      }
     } catch (e) {
       setLoadError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pedirTokenVideo = async (urlFallback = null) => {
+    setLoadingVideo(true);
+    try {
+      const { url_con_token } = await apiClient(`/api/sesiones/${id_sesion}/token`);
+      setUrlSegura(url_con_token);
+    } catch (e) {
+      console.error("Fallo al obtener el token seguro:", e);
+      const fallback = urlFallback || sesion?.url_videollamada;
+      if (fallback) {
+        setUrlSegura(fallback); 
+      }
+    } finally {
+      setLoadingVideo(false);
     }
   };
 
@@ -61,15 +82,13 @@ export default function SalaVideoPage() {
 
       if (accion === 'finalizar') {
         setSesion((prev) => ({ ...prev, estado_sesion: 'finalizada' }));
+        setUrlSegura(null); // Matamos el iframe
         setTimeout(() => navigate(-1), 2000);
       } else {
-        // Recargar datos completos — el backend genera un meeting token nuevo
-        // con el nombre del participante, asi que la url_videollamada cambia
         await cargarSesion();
+        await pedirTokenVideo();
       }
     } catch (e) {
-      // Si falla al finalizar, probablemente ya fue finalizada por el otro participante.
-      // Refrescar el estado real desde el backend en vez de mostrar error genérico.
       await cargarSesion();
     } finally {
       setAccionando(false);
@@ -156,13 +175,27 @@ export default function SalaVideoPage() {
       <div className="flex flex-col lg:flex-row flex-1 gap-0">
 
         <div className="flex-1 bg-black relative min-h-[400px] lg:min-h-0">
-          {puedeEntrar && sesion.url_videollamada ? (
-            <iframe
-              src={sesion.url_videollamada}
-              allow="camera; microphone; fullscreen; speaker; display-capture"
-              className="absolute inset-0 w-full h-full border-0"
-              title="Sala de videollamada"
-            />
+          {puedeEntrar ? (
+            urlSegura ? (
+              <iframe
+                src={urlSegura}
+                allow="camera; microphone; fullscreen; display-capture"
+                className="absolute inset-0 w-full h-full border-0"
+                title="Sala de videollamada"
+              />
+            ) : loadingVideo ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                <svg className="w-8 h-8 animate-spin text-red-600 mb-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <p>Estableciendo conexion segura...</p>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500">
+                <p>No se pudo conectar al servidor de video.</p>
+              </div>
+            )
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
               {finalizada ? (

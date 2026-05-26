@@ -79,6 +79,26 @@ async def obtener_sesion_por_id(
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
 
 
+@router.get("/{id_sesion}/token")
+async def obtener_token_video(
+    id_sesion: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    servicio = SesionService(db)
+    try:
+        return await servicio.generar_token_acceso(current_user.id_usuario, id_sesion)
+    except PermissionError as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(e))
+    except LookupError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+    except RuntimeError as e:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(e))
+
+
+
 @router.post("/{id_sesion}/iniciar", response_model=SesionOut)
 async def iniciar_videollamada(
     id_sesion: UUID,

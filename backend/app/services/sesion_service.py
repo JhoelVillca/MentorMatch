@@ -1,6 +1,9 @@
 import math
+import logging
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -146,6 +149,9 @@ class SesionService:
         if not es_participante:
             raise PermissionError("No tienes acceso a esta sesion.")
 
+        if sesion.estado_sesion == nuevo_estado:
+            return sesion
+
         if nuevo_estado == "en_curso" and sesion.estado_sesion == "programada":
             sesion.estado_sesion = "en_curso"
 
@@ -183,7 +189,6 @@ class SesionService:
 
         sesion, contrato, paquete, mentor, mentee = row
 
-        # --- Verificacion de permisos + determinar identidad ---
         role = await get_user_role_name(self.db, str(user_id))
         mentee_id = await self._get_mentee_id(user_id)
         mentor_id = await self._get_mentor_id(user_id)
@@ -194,38 +199,57 @@ class SesionService:
         if role != "admin" and not es_mentor and not es_mentee:
             raise PermissionError("No tienes acceso a esta sesion.")
 
-        # --- Generar meeting token personalizado si la sesion esta activa ---
-        url_para_participante = sesion.url_videollamada
-
-        if sesion.url_videollamada and sesion.estado_sesion in ("programada", "en_curso"):
-            try:
-                # Extraer el nombre de la sala de la URL (ultima parte del path)
-                room_name = sesion.url_videollamada.rstrip("/").split("/")[-1]
-                nombre_participante = mentor.nombre_completo if es_mentor else mentee.nombre_completo
-
-                token = await crear_meeting_token(
-                    room_name=room_name,
-                    user_name=nombre_participante,
-                    expiracion_dt=sesion.fecha_hora_fin_utc,
-                    is_owner=es_mentor,
-                )
-                # URL con token: Daily.co salta el prejoin y usa el nombre del token
-                url_para_participante = f"{sesion.url_videollamada}?t={token}"
-            except Exception:
-                # Si falla la generacion de token, usar URL base (mostrara prejoin)
-                pass
-
+        # SOLUCIONADO: Ya no bloqueamos la lectura con peticiones externas.
+        # Devolvemos la URL base en crudo.
         return {
             "id_sesion": sesion.id_sesion,
             "id_contrato": contrato.id_contrato,
             "fecha_hora_inicio_utc": sesion.fecha_hora_inicio_utc,
             "fecha_hora_fin_utc": sesion.fecha_hora_fin_utc,
             "estado_sesion": sesion.estado_sesion,
-            "url_videollamada": url_para_participante,
+            "url_videollamada": sesion.url_videollamada,
             "titulo_paquete": paquete.titulo_paquete,
             "mentor_nombre": mentor.nombre_completo,
             "mentee_nombre": mentee.nombre_completo,
         }
+
+    async def generar_token_acceso(self, user_id: UUID, id_sesion: UUID) -> dict:
+        """Genera un token de Daily.co Just-In-Time para el Iframe"""
+        # Reutilizamos logica para validar permisos rapido
+        datos_sesion = await self.obtener_sesion_por_id(user_id, id_sesion)
+        
+        estado = datos_sesion["estado_sesion"]
+        if estado not in ["programada", "en_curso"]:
+            raise ValueError(f"No se pueden generar tokens para sesiones en estado: {estado}")
+
+        url_base = datos_sesion["url_videollamada"]
+        if not url_base:
+            raise LookupError("Esta sesion no tiene una sala de video asignada.")
+
+        # Determinamos quien es quien
+        mentee_id = await self._get_mentee_id(user_id)
+        mentor_id = await self._get_mentor_id(user_id)
+        
+        # Validamos en crudo contra la BD para saber si es owner (mentor)
+        query = select(PaqueteMentor.id_mentor).join(ContratoMentoria, PaqueteMentor.id_paquete == ContratoMentoria.id_paquete).filter(ContratoMentoria.id_contrato == datos_sesion["id_contrato"])
+        res = await self.db.execute(query)
+        id_mentor_real = res.scalar_one_or_none()
+        
+        es_mentor = id_mentor_real == mentor_id
+        nombre_participante = datos_sesion["mentor_nombre"] if es_mentor else datos_sesion["mentee_nombre"]
+        room_name = url_base.rstrip("/").split("/")[-1]
+
+        try:
+            token = await crear_meeting_token(
+                room_name=room_name,
+                user_name=nombre_participante,
+                expiracion_dt=datos_sesion["fecha_hora_fin_utc"],
+                is_owner=es_mentor,
+            )
+            return {"url_con_token": f"{url_base}?t={token}"}
+        except Exception as e:
+            logger.error(f"Fallo critico en API de video al generar token: {e}")
+            raise RuntimeError("El servicio de video esta experimentando problemas. Refresque e intente de nuevo.")
 
     async def listar_sesiones_mentee(self, user_id: UUID):
         mentee = await self._get_mentee_or_raise(user_id)
