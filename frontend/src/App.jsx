@@ -15,6 +15,7 @@ import PaquetesPage from './pages/Paquetes/PaquetesPage';
 import Marketplace from './pages/Marketplace/Marketplace';
 import MisContratos from './pages/MisContratos/MisContratos';
 import AgendarSesion from './pages/AgendarSesion/AgendarSesionPage';
+import SalaVideoPage from './pages/SalaVideo/SalaVideoPage';
 import MentorAvailabilityPanel from './components/MentorAvailabilityPanel';
 import ChatPage from './pages/Chat/ChatPage';
 
@@ -70,6 +71,7 @@ export default function App() {
             {/* Rutas de Chat */}
             <Route element={<ProtectedRoute allowedRoles={['mentor', 'mentee', 'admin']} />}>
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/sesion/:id_sesion" element={<SalaVideoPage />} />
             </Route>
             
           </Route>
