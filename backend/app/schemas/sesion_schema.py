@@ -25,6 +25,11 @@ class SesionOut(BaseModel):
     class Config:
         from_attributes = True
 
+class SesionDetalleOut(SesionOut):
+    titulo_paquete: str
+    mentor_nombre: str
+    mentee_nombre: str
+
 class SesionOcupadaOut(BaseModel):
     fecha_hora_inicio_utc: datetime
     fecha_hora_fin_utc: datetime
