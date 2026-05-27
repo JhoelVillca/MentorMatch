@@ -5,7 +5,8 @@ const getWsUrl = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
   const protocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:';
   const host = backendUrl.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '');
-  return `${protocol}//${host}/chat/ws`;
+  const token = localStorage.getItem('access_token') || '';
+  return `${protocol}//${host}/chat/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
 };
 
 export function useChat() {
