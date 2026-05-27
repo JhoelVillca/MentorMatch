@@ -5,11 +5,15 @@ export const loginAPI = async (email, password) => {
   formData.append('username', email);
   formData.append('password', password);
 
-  await apiClient('/api/auth/login', {
+  const data = await apiClient('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: formData
   });
+
+  if (data && data.access_token) {
+    localStorage.setItem('access_token', data.access_token);
+  }
   return true;
 };
 
