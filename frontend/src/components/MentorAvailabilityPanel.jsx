@@ -355,7 +355,7 @@ export default function MentorAvailabilityPanel() {
       for (const block of newBlocks) {
         const dayStr = DAYS[block.dayIdx];
         const hora_inicio = `${String(block.startH).padStart(2, '0')}:00`;
-        const hora_fin = `${String(block.endH).padStart(2, '0')}:00`;
+        const hora_fin = block.endH === 24 ? '23:59' : `${String(block.endH).padStart(2, '0')}:00`;
         await add({ dia_semana: dayStr, hora_inicio, hora_fin });
       }
 
