@@ -99,7 +99,7 @@ async def iniciar_conversacion(
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    token = websocket.cookies.get("access_token")
+    token = websocket.cookies.get("access_token") or websocket.query_params.get("token")
     if not token:
         await websocket.close(code=1008, reason="Token requerido")
         return
