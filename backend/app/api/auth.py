@@ -37,7 +37,11 @@ async def login(
         max_age=3600,
         path="/"
     )
-    return {"message": "Login exitoso"}
+    return {
+        "message": "Login exitoso",
+        "access_token": token_data["access_token"],
+        "token_type": "bearer",
+    }
 
 
 @router.post("/logout")

@@ -76,14 +76,20 @@ const composeAbortSignal = (externalSignal, timeoutMs) => {
 export async function apiClient(endpoint, customOptions = {}) {
   console.log(`[Telemetria API] Iniciando peticion a: ${endpoint}`);
 
+  const token = localStorage.getItem('access_token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...customOptions.headers,
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const options = {
     credentials: 'include',
     ...customOptions,
     cache: customOptions.cache || 'default',
-    headers: {
-      'Content-Type': 'application/json',
-      ...customOptions.headers,
-    },
+    headers,
   };
 
   for (const interceptor of requestInterceptors) {
@@ -142,6 +148,7 @@ export async function apiClient(endpoint, customOptions = {}) {
 
   if (response.status === 401) {
     console.warn('[Telemetria API] El backend respondio 401. Delegando a React Router.');
+    localStorage.removeItem('access_token');
     throw new Error('Sesion expirada o no iniciada.');
   }
 
