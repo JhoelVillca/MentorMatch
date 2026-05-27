@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from uuid import UUID
-from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad
+from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad, ContratoMentoria, ResenaMentor
 from app.schemas.paquete_schema import PaqueteCreate
 
 class PaqueteService:
@@ -10,6 +10,19 @@ class PaqueteService:
         self.db = db
 
     async def listar_paquetes_disponibles(self):
+        # Subconsulta para obtener la calificacion promedio por mentor, omitiendo reportes
+        subq_promedio = (
+            select(
+                PaqueteMentor.id_mentor,
+                func.round(func.avg(ResenaMentor.calificacion_estrellas), 1).label("promedio")
+            )
+            .join(ContratoMentoria, PaqueteMentor.id_paquete == ContratoMentoria.id_paquete)
+            .join(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
+            .filter(ResenaMentor.reportada == False)
+            .group_by(PaqueteMentor.id_mentor)
+            .subquery()
+        )
+
         query = (
             select(
                 PaqueteMentor.id_paquete,
@@ -18,9 +31,11 @@ class PaqueteService:
                 PaqueteMentor.cantidad_horas_totales,
                 PaqueteMentor.precio_total,
                 PerfilMentor.nombre_completo.label("mentor_nombre"),
-                PerfilMentor.foto_perfil.label("mentor_foto")
+                PerfilMentor.foto_perfil.label("mentor_foto"),
+                subq_promedio.c.promedio.label("calificacion_promedio")
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
             .filter(
                 PaqueteMentor.estado_activo == True,
                 PaqueteMentor.estado_validacion == "aprobado",
@@ -31,6 +46,19 @@ class PaqueteService:
         return res.all()
 
     async def buscar_paquetes(self, q: str | None = None, precio_max: float | None = None, id_habilidad: UUID | None = None):
+        # Subconsulta para obtener la calificacion promedio por mentor, omitiendo reportes
+        subq_promedio = (
+            select(
+                PaqueteMentor.id_mentor,
+                func.round(func.avg(ResenaMentor.calificacion_estrellas), 1).label("promedio")
+            )
+            .join(ContratoMentoria, PaqueteMentor.id_paquete == ContratoMentoria.id_paquete)
+            .join(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
+            .filter(ResenaMentor.reportada == False)
+            .group_by(PaqueteMentor.id_mentor)
+            .subquery()
+        )
+
         query = (
             select(
                 PaqueteMentor.id_paquete,
@@ -39,9 +67,11 @@ class PaqueteService:
                 PaqueteMentor.cantidad_horas_totales,
                 PaqueteMentor.precio_total,
                 PerfilMentor.nombre_completo.label("mentor_nombre"),
-                PerfilMentor.foto_perfil.label("mentor_foto")
+                PerfilMentor.foto_perfil.label("mentor_foto"),
+                subq_promedio.c.promedio.label("calificacion_promedio")
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
         )
 
         if id_habilidad:

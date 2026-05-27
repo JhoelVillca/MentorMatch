@@ -44,6 +44,7 @@ class PaqueteDisponibleOut(BaseModel):
     precio_total: Decimal
     mentor_nombre: str
     mentor_foto: Optional[str] = None
+    calificacion_promedio: Optional[float] = None
 
     class Config:
         from_attributes = True

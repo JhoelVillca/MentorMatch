@@ -5,7 +5,7 @@ import stripe
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.main_models import PaqueteMentor, ContratoMentoria, TransaccionPago, PerfilMentor, PerfilMentee
+from app.models.main_models import PaqueteMentor, ContratoMentoria, TransaccionPago, PerfilMentor, PerfilMentee, ResenaMentor
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +133,14 @@ class ContratoService:
             return []
 
         query = (
-            select(ContratoMentoria, PaqueteMentor.titulo_paquete, PaqueteMentor.id_mentor)
+            select(
+                ContratoMentoria, 
+                PaqueteMentor.titulo_paquete, 
+                PaqueteMentor.id_mentor,
+                ResenaMentor.id_resena
+            )
             .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .outerjoin(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
             .filter(ContratoMentoria.id_mentee == mentee.id_mentee)
         )
         res = await self.db.execute(query)
@@ -147,6 +153,7 @@ class ContratoService:
                 "horas_consumidas": c.ContratoMentoria.horas_consumidas,
                 "fecha": c.ContratoMentoria.fecha_adquisicion,
                 "paquete": c.titulo_paquete,
+                "ya_resenado": c.id_resena is not None,
             }
             for c in res.all()
         ]
