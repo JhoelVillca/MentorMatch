@@ -12,16 +12,23 @@ from app.db.database import get_db
 from app.models.usuarios import Usuario
 from app.repositories.user_repository import get_user_role_name
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
-def get_token(request: Request, token_header: Optional[str] = Depends(oauth2_scheme)) -> str:
-    token = request.cookies.get("access_token") or token_header
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Token no encontrado en cookie ni en cabecera"
-        )
-    return token
+def get_token(request: Request, bearer_token: Optional[str] = Depends(oauth2_scheme)) -> str:
+    # Intento 1: ¿Vino en la cabecera (Tu nuevo parche del frontend)?
+    if bearer_token:
+        return bearer_token
+        
+    # Intento 2: ¿Vino en la Cookie (El sistema antiguo)?
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
+        
+    # Si no hay ninguno de los dos, patada en la puerta
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No autenticado"
+    )
 
 def get_current_user_id(token: str = Depends(get_token)) -> str:
     try:
