@@ -29,6 +29,16 @@ class AvailabilityCreate(BaseModel):
     hora_inicio: time
     hora_fin: time
 
+    @model_validator(mode='before')
+    @classmethod
+    def preprocess_times(cls, data):
+        if isinstance(data, dict):
+            for field in ('hora_inicio', 'hora_fin'):
+                val = data.get(field)
+                if isinstance(val, str) and val.startswith("24:00"):
+                    data[field] = "23:59:59"
+        return data
+
     @field_validator('hora_fin')
     def check_time_order(cls, v, info):
         if 'hora_inicio' in info.data and v <= info.data['hora_inicio']:
