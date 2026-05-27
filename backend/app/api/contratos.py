@@ -6,6 +6,8 @@ from uuid import UUID
 from app.db.database import get_db
 from app.api.deps import get_current_mentee_user_id
 from app.services.contrato_service import ContratoService
+from app.schemas.resena_schema import ResenaCreate, ResenaOut
+from app.services.resena_service import ResenaService
 
 router = APIRouter(prefix="/contratos", tags=["Contratos y Transacciones"])
 
@@ -40,3 +42,24 @@ async def listar_mis_contratos(
 ):
     servicio = ContratoService(db)
     return await servicio.listar_mis_contratos(user_id)
+
+@router.post("/{id_contrato}/resenas", response_model=ResenaOut, status_code=status.HTTP_201_CREATED)
+async def crear_resena(
+    id_contrato: UUID,
+    resena: ResenaCreate,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentee_user_id)
+):
+    servicio = ResenaService(db)
+    try:
+        return await servicio.crear_resena(user_id, id_contrato, resena)
+    except PermissionError as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(e))
+    except LookupError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+    except FileExistsError as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
+    except RuntimeError as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(e))
