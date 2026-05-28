@@ -8,30 +8,15 @@ export default function ChatPage() {
   const location = useLocation();
   const currentUserId = token?.id ? String(token.id) : null;
 
-  const {
-    salas,
-    selectedSalaId,
-    selectSala,
-    messages,
-    sendMessage,
-    loadMoreMessages,
-    hasMore,
-    connectionStatus,
-    onlineUsers,
-  } = useChat();
-
+  const { salas, selectedSalaId, selectSala, messages, sendMessage, loadMoreMessages, hasMore, connectionStatus, onlineUsers } = useChat();
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    if (location.state?.salaId && !selectedSalaId) {
-      selectSala(location.state.salaId);
-    }
+    if (location.state?.salaId && !selectedSalaId) selectSala(location.state.salaId);
   }, [location.state, selectSala, selectedSalaId]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -39,83 +24,66 @@ export default function ChatPage() {
     setInputText('');
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   const selectedSala = salas.find((s) => s.id_sala === selectedSalaId);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-[#0a0a0a] text-gray-200">
-      <div className={`${selectedSalaId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-red-900/20 bg-[#0d0d0d]`}>
-        <div className="p-4 border-b border-red-900/20 font-bold text-white">Mensajes</div>
-        <div className="flex-1 overflow-y-auto">
-          {salas.length === 0 ? (
-            <p className="text-center p-4 text-sm text-gray-500">No tienes conversaciones</p>
-          ) : (
-            salas.map((sala) => {
-              const isContactOnline = onlineUsers.has(sala.contraparte_user_id);
+    <div className="flex h-[calc(100vh-4rem)] bg-[#050505] text-gray-200 overflow-hidden font-sans">
+      {/* Fondo con textura sutil */}
+      <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none" 
+           style={{ backgroundImage: 'radial-gradient(#ef4444 0.5px, transparent 0.5px)', backgroundSize: '20px 20px' }}></div>
 
-              return (
-                <button
-                  key={sala.id_sala}
-                  onClick={() => selectSala(sala.id_sala)}
-                  className={`w-full text-left p-4 border-b border-gray-800/50 hover:bg-[#141414] transition-colors ${selectedSalaId === sala.id_sala ? 'border-l-2 border-l-red-600 bg-[#141414]' : ''}`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isContactOnline ? 'bg-green-500' : 'bg-gray-600'}`} />
-                      <span className="font-semibold text-sm truncate">{sala.nombre_otro}</span>
-                    </div>
-                    {sala.unread_count > 0 && (
-                      <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">{sala.unread_count}</span>
-                    )}
+      {/* Sidebar: Estilo "Command Center" */}
+      <div className={`${selectedSalaId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-red-900/30 bg-[#0d0d0d]/90 backdrop-blur-xl z-10`}>
+        <div className="p-5 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 text-xl tracking-tighter">CHAT CENTRAL</div>
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-red-900">
+          {salas.map((sala) => {
+            const isOnline = onlineUsers.has(sala.contraparte_user_id);
+            return (
+              <button key={sala.id_sala} onClick={() => selectSala(sala.id_sala)}
+                className={`w-full text-left p-4 transition-all hover:bg-red-900/10 border-b border-white/5 ${selectedSalaId === sala.id_sala ? 'bg-red-900/20 border-l-4 border-l-red-600' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-800 to-black flex items-center justify-center font-bold text-red-500 shadow-lg">{sala.nombre_otro.charAt(0)}</div>
+                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0d0d0d] ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-600'}`} />
                   </div>
-                  <p className="text-xs text-gray-500 truncate pl-4">{sala.ultimo_mensaje || 'Inicia la conversacion...'}</p>
-                </button>
-              );
-            })
-          )}
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-sm truncate">{sala.nombre_otro}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{sala.ultimo_mensaje || 'No hay mensajes aún'}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className={`${!selectedSalaId ? 'hidden md:flex' : 'flex'} flex-1 flex-col relative`}> 
+      {/* Chat Area: Estilo "Cyberpunk" */}
+      <div className={`${!selectedSalaId ? 'hidden md:flex' : 'flex'} flex-1 flex-col z-10 bg-black/20`}>
         {selectedSala ? (
           <>
-            <div className="p-4 border-b border-red-900/20 bg-[#0d0d0d] flex items-center gap-3">
-              <button onClick={() => selectSala(null)} className="md:hidden text-gray-400 font-bold px-2">←</button>
-              <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center border border-gray-700">
-                {selectedSala.foto_otro ? (
-                  <img src={selectedSala.foto_otro} alt={selectedSala.nombre_otro} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-gray-400 font-bold">{selectedSala.nombre_otro.charAt(0).toUpperCase()}</span>
-                )}
+            <div className="p-4 border-b border-red-900/30 bg-[#0d0d0d]/80 backdrop-blur-md flex items-center gap-4">
+              <button onClick={() => selectSala(null)} className="md:hidden text-red-500 font-bold">←</button>
+              <div className="w-10 h-10 rounded-lg bg-red-600/10 flex items-center justify-center text-red-500 border border-red-500/20 font-black">
+                {selectedSala.nombre_otro.charAt(0)}
               </div>
-              <div className="flex-1">
+              <div>
                 <h3 className="font-bold text-white">{selectedSala.nombre_otro}</h3>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full transition-colors ${onlineUsers.has(selectedSala.contraparte_user_id) ? 'bg-green-500' : 'bg-gray-600'}`} />
-                  <p className="text-xs text-gray-500">{onlineUsers.has(selectedSala.contraparte_user_id) ? 'En linea' : 'Desconectado'}</p>
-                </div>
+                <span className={`text-[9px] uppercase tracking-widest ${onlineUsers.has(selectedSala.contraparte_user_id) ? 'text-green-500' : 'text-gray-500'}`}>
+                  {onlineUsers.has(selectedSala.contraparte_user_id) ? '● En línea' : '○ Desconectado'}
+                </span>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0a0a]">
-              {hasMore && (
-                <button onClick={loadMoreMessages} className="w-full text-xs text-red-500 hover:text-red-400 py-2 font-semibold transition-colors">
-                  ↑ Cargar mensajes anteriores ↑
-                </button>
-              )}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {hasMore && <button onClick={loadMoreMessages} className="w-full text-xs text-red-500 hover:text-red-400 py-2">Cargar historial...</button>}
               {messages.map((msg) => {
                 const isMine = msg.id_remitente === currentUserId;
                 return (
                   <div key={msg.id_mensaje} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] p-3 text-sm shadow-md ${isMine ? 'bg-red-800 text-white rounded-2xl rounded-tr-sm' : 'bg-[#1a1a1a] border border-gray-800 text-gray-200 rounded-2xl rounded-tl-sm'}`}>
-                      <p className="whitespace-pre-wrap break-words">{msg.contenido_texto}</p>
-                      <p className={`text-[10px] mt-1 text-right ${isMine ? 'text-red-300' : 'text-gray-500'}`}>
+                    <div className={`max-w-[70%] p-3 px-5 rounded-2xl ${isMine ? 'bg-red-700 text-white rounded-br-none shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-[#1a1a1a] border border-white/5 rounded-bl-none'}`}>
+                      <p className="text-sm">{msg.contenido_texto}</p>
+                      <p className={`text-[9px] mt-1 opacity-70 text-right ${isMine ? 'text-red-200' : 'text-gray-400'}`}>
                         {new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -125,32 +93,22 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 bg-[#0d0d0d] border-t border-red-900/20">
-              <div className="flex gap-2">
-                <textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Escribe tu mensaje..."
-                  className="flex-1 bg-[#141414] border border-gray-800 rounded-xl p-3 text-sm text-white resize-none focus:outline-none focus:border-red-700 transition-colors"
-                  rows="1"
+            <div className="p-4 bg-[#0d0d0d] border-t border-red-900/30">
+              <div className="flex gap-2 bg-[#1a1a1a] p-1 rounded-full border border-white/5 shadow-inner">
+                <input value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Escribe algo épico..."
+                  className="flex-1 bg-transparent px-5 py-2 text-sm focus:outline-none text-white"
                 />
-                <button
-                  onClick={handleSend}
-                  disabled={!inputText.trim() || connectionStatus !== 'connected'}
-                  className="bg-red-700 hover:bg-red-600 disabled:bg-gray-800 disabled:text-gray-500 text-white px-6 rounded-xl font-bold transition-all active:scale-95"
-                >
+                <button onClick={handleSend} className="bg-red-600 hover:bg-red-500 text-white px-8 rounded-full font-bold text-xs uppercase tracking-wider transition-all hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] active:scale-95">
                   Enviar
                 </button>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 bg-[#0a0a0a]">
-            <svg className="w-16 h-16 text-gray-800 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <p>Selecciona una conversacion para empezar a chatear</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-700">
+            <div className="text-6xl mb-4">🚀</div>
+            <p className="font-bold text-gray-500">Selecciona un chat para despegar</p>
           </div>
         )}
       </div>

@@ -24,6 +24,9 @@ services:
       - ./backend/.env
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app           # <--- NUEVO: Sincroniza el código del backend
+      - /app/node_modules        # <--- Mantiene los módulos locales intactos
     depends_on:
       db:
         condition: service_healthy
@@ -36,11 +39,12 @@ services:
       - "5173:5173"
     environment:
       - BACKEND_URL=http://backend:8000
+      - CHOKIDAR_USEPOLLING=true # <--- NUEVO: Obligatorio para Windows/Docker
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend:/app          # <--- Sincroniza el código del frontend
+      - /app/node_modules        # <--- Mantiene los módulos locales intactos
     depends_on:
       - backend
 
 volumes:
-  mentormatch_data:
+  mentormatch_data: 

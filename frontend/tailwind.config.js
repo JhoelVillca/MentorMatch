@@ -8,37 +8,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Fondos principales adaptados al diseño Celeste Plomo
+        // Base
         background: '#F8FAFC',
         surface: '#FFFFFF',
         
-        // Paleta Celeste (Acentos principales)
+        // Paleta Celeste
         celeste: {
-          light: '#E0F2FE',  // Celeste claro para fondos suaves o estados hover claro
-          DEFAULT: '#0EA5E9', // Celeste corporativo brillante
-          dark: '#0284C7',    // Celeste oscuro para estados activos/botones hover
+          light: '#E0F2FE',
+          DEFAULT: '#0EA5E9',
+          dark: '#0284C7',
         },
         
-        // Paleta Plomo / Asfalto (Especialmente para superficies y textos en modo oscuro)
+        // Paleta Plomo
         plomo: {
           50: '#F1F5F9',
           100: '#E2E8F0',
-          700: '#334155',     // Plomo corporativo oscuro para texto secundario
-          800: '#1E293B',     // Plomo oscuro profundo
-          900: '#0F172A',     // Plomo casi negro para textos principales claros
-          darkCanvas: '#141414', // Fondo base inmutable para el modo oscuro solicitado
-          darkSurface: '#1E1E1E', // Tarjetas y superficies en modo oscuro
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
+          darkCanvas: '#141414',
+          darkSurface: '#1E1E1E',
         },
 
-        // Mantenemos tus alias anteriores por retrocompatibilidad para que no se rompa nada existente
-        primary: {
-          DEFAULT: '#0EA5E9', // Ahora apunta a tu celeste estrella
-          corporate: '#0284C7',
+        // Mapeo para evitar errores de compilación
+        text: {
+          main: '#0F172A',
+          mainDark: '#F1F5F9',
         },
+        
+        // --- ESTO SOLUCIONA EL ERROR 'text-secondary' ---
         secondary: {
-          DEFAULT: '#0F172A',
-          slate: '#64748B',
-          slateDark: '#475569',
+          DEFAULT: '#64748B', // Un tono gris/plomo estándar
+        },
+        primary: {
+          DEFAULT: '#0EA5E9',
         }
       }
     },
