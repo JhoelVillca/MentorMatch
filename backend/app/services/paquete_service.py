@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, func
 from uuid import UUID
-from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad, ContratoMentoria, ResenaMentor
+from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad, Habilidad, ContratoMentoria, ResenaMentor
 from app.schemas.paquete_schema import PaqueteCreate
 
 class PaqueteService:
@@ -45,7 +45,13 @@ class PaqueteService:
         res = await self.db.execute(query)
         return res.all()
 
-    async def buscar_paquetes(self, q: str | None = None, precio_max: float | None = None, id_habilidad: UUID | None = None):
+    async def buscar_paquetes(
+        self,
+        q: str | None = None,
+        precio_max: float | None = None,
+        id_habilidad: UUID | None = None,
+        nivel_dominio: str | None = None,
+    ):
         # Subconsulta para obtener la calificacion promedio por mentor, omitiendo reportes
         subq_promedio = (
             select(
@@ -68,20 +74,26 @@ class PaqueteService:
                 PaqueteMentor.precio_total,
                 PerfilMentor.nombre_completo.label("mentor_nombre"),
                 PerfilMentor.foto_perfil.label("mentor_foto"),
-                subq_promedio.c.promedio.label("calificacion_promedio")
+                subq_promedio.c.promedio.label("calificacion_promedio"),
+                Habilidad.validada_por_admin,
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+            .join(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
             .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
         )
 
         if id_habilidad:
-            query = query.join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+            query = query.filter(MentorHabilidad.id_habilidad == id_habilidad)
+
+        if nivel_dominio:
+            query = query.filter(MentorHabilidad.nivel == nivel_dominio)
 
         query = query.filter(
             PaqueteMentor.estado_activo == True,
             PaqueteMentor.estado_validacion == "aprobado",
             PerfilMentor.estado_verificacion == "verificado"
-        )
+        ).order_by(Habilidad.validada_por_admin.desc())
 
         if q:
             query = query.filter(
@@ -94,11 +106,10 @@ class PaqueteService:
         if precio_max:
             query = query.filter(PaqueteMentor.precio_total <= precio_max)
 
-        if id_habilidad:
-            query = query.filter(MentorHabilidad.id_habilidad == id_habilidad)
+        query = query.distinct().order_by(Habilidad.validada_por_admin.desc())
 
         res = await self.db.execute(query)
-        return res.all()
+        return [dict(row._mapping) for row in res.all()]
 
     async def crear_paquete(self, user_id: str, paquete: PaqueteCreate):
         res = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))

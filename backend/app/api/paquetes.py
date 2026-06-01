@@ -15,10 +15,11 @@ async def buscar_paquetes(
     q: str | None = Query(None, description="Termino de busqueda general"),
     precio_max: float | None = Query(None, description="Precio maximo dispuesto a pagar"),
     id_habilidad: UUID | None = Query(None, description="Filtrar por id de habilidad especifica"),
+    nivel_dominio: str | None = Query(None, description="Filtrar por nivel de dominio"),
     db: AsyncSession = Depends(get_db)
 ):
     servicio = PaqueteService(db)
-    return await servicio.buscar_paquetes(q, precio_max, id_habilidad)
+    return await servicio.buscar_paquetes(q, precio_max, id_habilidad, nivel_dominio)
 
 @router.get("/disponibles", response_model=List[PaqueteDisponibleOut])
 async def listar_paquetes_disponibles(db: AsyncSession = Depends(get_db)):
