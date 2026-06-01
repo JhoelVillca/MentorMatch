@@ -31,3 +31,7 @@ watchfiles==1.1.1
 websockets==16.0
 asyncpg
 alembic
+pytest
+pytest-asyncio
+httpx
+pytest-mock
