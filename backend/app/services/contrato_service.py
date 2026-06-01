@@ -47,36 +47,79 @@ class ContratoService:
             if not paquete.estado_activo or mentor.estado_verificacion != "verificado":
                 raise ValueError("El paquete no esta disponible para compra")
 
-            res_dup = await self.db.execute(
+            # Busqueda A: Verificar si existe un contrato activo
+            res_activo = await self.db.execute(
                 select(ContratoMentoria).filter(
                     ContratoMentoria.id_mentee == mentee.id_mentee,
                     ContratoMentoria.id_paquete == paquete.id_paquete,
-                    ContratoMentoria.estado_contrato.in_(["pendiente_pago", "activo"]),
+                    ContratoMentoria.estado_contrato == "activo",
                 )
             )
-            if res_dup.scalars().first():
-                raise FileExistsError("Ya existe un contrato activo o en proceso para este paquete")
+            if res_activo.scalars().first():
+                raise FileExistsError("Ya tienes un contrato activo para este paquete")
 
-            nuevo_contrato = ContratoMentoria(
-                id_mentee=mentee.id_mentee,
-                id_paquete=paquete.id_paquete,
-                estado_contrato="pendiente_pago",
-                horas_consumidas=0,
+            # Busqueda B: Verificar si existe un contrato pendiente de pago
+            res_pendiente = await self.db.execute(
+                select(ContratoMentoria).filter(
+                    ContratoMentoria.id_mentee == mentee.id_mentee,
+                    ContratoMentoria.id_paquete == paquete.id_paquete,
+                    ContratoMentoria.estado_contrato == "pendiente_pago",
+                )
             )
-            self.db.add(nuevo_contrato)
-            await self.db.flush()
+            contrato_existente = res_pendiente.scalars().first()
 
-            nueva_trx = TransaccionPago(
-                id_contrato=nuevo_contrato.id_contrato,
-                monto_pagado=paquete.precio_total,
-                moneda="USD",
-                estado_pago="procesando",
-            )
-            self.db.add(nueva_trx)
-            await self.db.flush()
+            if contrato_existente:
+                contrato_id_utilizado = contrato_existente.id_contrato
+                
+                # Cancelar transacciones previas en estado procesando para evitar doble cobro
+                res_trx_previas = await self.db.execute(
+                    select(TransaccionPago)
+                    .filter(
+                        TransaccionPago.id_contrato == contrato_id_utilizado,
+                        TransaccionPago.estado_pago == "procesando"
+                    )
+                    .with_for_update()
+                )
+                for trx_previa in res_trx_previas.scalars().all():
+                    trx_previa.estado_pago = "fallido"
+                
+                # Crear nueva transaccion de pago
+                nueva_trx = TransaccionPago(
+                    id_contrato=contrato_id_utilizado,
+                    monto_pagado=paquete.precio_total,
+                    moneda="USD",
+                    estado_pago="procesando",
+                )
+                self.db.add(nueva_trx)
+                await self.db.flush()
+                
+                contrato_para_refresh = contrato_existente
+            else:
+                # Flujo normal de creacion desde cero
+                nuevo_contrato = ContratoMentoria(
+                    id_mentee=mentee.id_mentee,
+                    id_paquete=paquete.id_paquete,
+                    estado_contrato="pendiente_pago",
+                    horas_consumidas=0,
+                )
+                self.db.add(nuevo_contrato)
+                await self.db.flush()
+                
+                contrato_id_utilizado = nuevo_contrato.id_contrato
+                
+                nueva_trx = TransaccionPago(
+                    id_contrato=contrato_id_utilizado,
+                    monto_pagado=paquete.precio_total,
+                    moneda="USD",
+                    estado_pago="procesando",
+                )
+                self.db.add(nueva_trx)
+                await self.db.flush()
+                
+                contrato_para_refresh = nuevo_contrato
 
             precio_centavos = int(paquete.precio_total * 100)
-            contrato_id = str(nuevo_contrato.id_contrato)
+            contrato_id = str(contrato_id_utilizado)
             trx_id = str(nueva_trx.id_transaccion)
             titulo = paquete.titulo_paquete
             nombre_mentor = mentor.nombre_completo
@@ -111,7 +154,7 @@ class ContratoService:
             checkout_session = await asyncio.to_thread(_crear_checkout)
 
             await self.db.commit()
-            await self.db.refresh(nuevo_contrato)
+            await self.db.refresh(contrato_para_refresh)
 
             logger.info(
                 "Checkout creado — contrato=%s session=%s", contrato_id, checkout_session.id
