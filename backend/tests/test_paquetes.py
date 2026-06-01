@@ -76,7 +76,7 @@ async def test_buscar_paquetes_returns_200(mock_db_session, monkeypatch):
     assert payload[0]["titulo_paquete"] == paquete["titulo_paquete"]
     assert float(payload[0]["precio_total"]) == paquete["precio_total"]
     assert float(payload[0]["calificacion_promedio"]) == paquete["calificacion_promedio"]
-    search_mock.assert_awaited_once_with("python", None, None)
+    search_mock.assert_awaited_once_with("python", None, None, None)
 
 
 @pytest.mark.asyncio

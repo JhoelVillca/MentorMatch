@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
 import { apiClient } from '../../services/apiClient';
 import { iniciarChat } from '../../services/chatService';
 
@@ -11,10 +12,12 @@ export default function Marketplace() {
   const [q, setQ] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [idHabilidad, setIdHabilidad] = useState('');
+  const [nivelDominio, setNivelDominio] = useState('');
   const [toastMsg, setToastMsg] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { token: user } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -46,6 +49,7 @@ export default function Marketplace() {
         if (q) params.append('q', q);
         if (precioMax) params.append('precio_max', precioMax);
         if (idHabilidad) params.append('id_habilidad', idHabilidad);
+        if (nivelDominio) params.append('nivel_dominio', nivelDominio);
 
         const data = await apiClient(`/api/paquetes/buscar?${params.toString()}`, {
           method: 'GET',
@@ -65,7 +69,7 @@ export default function Marketplace() {
       clearTimeout(debounceTimer);
       controller.abort();
     };
-  }, [q, precioMax, idHabilidad]);
+  }, [q, precioMax, idHabilidad, nivelDominio]);
 
   const handleAdquirir = async (idPaquete) => {
     try {
@@ -126,7 +130,7 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
           <input
             type="text"
             placeholder="Buscar por titulo o nombre..."
@@ -162,6 +166,18 @@ export default function Marketplace() {
                 )
             )}
           </select>
+
+            <select
+              value={nivelDominio}
+              onChange={(e) => setNivelDominio(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
+            >
+              <option value="">Todos los niveles</option>
+              <option value="basico">Basico</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzado">Avanzado</option>
+              <option value="experto">Experto</option>
+            </select>
         </div>
       </div>
 
@@ -231,12 +247,21 @@ export default function Marketplace() {
                 >
                   Mensaje
                 </button>
-                <button
-                  onClick={() => handleAdquirir(p.id_paquete)}
-                  className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
-                >
-                  Adquirir
-                </button>
+                {user ? (
+                  <button
+                    onClick={() => handleAdquirir(p.id_paquete)}
+                    className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+                  >
+                    Adquirir
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+                  >
+                    Inicia sesion para agendar
+                  </button>
+                )}
               </div>
             </div>
           ))}
