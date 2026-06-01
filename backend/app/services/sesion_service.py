@@ -18,6 +18,7 @@ from app.models.main_models import (
     Sesion,
 )
 from app.repositories.user_repository import get_user_role_name
+from app.services.auditoria_service import AuditoriaService
 from app.schemas.sesion_schema import AgendarSesionRequest
 
 
@@ -152,6 +153,8 @@ class SesionService:
         if sesion.estado_sesion == nuevo_estado:
             return sesion
 
+        estado_anterior = sesion.estado_sesion
+
         if nuevo_estado == "en_curso" and sesion.estado_sesion == "programada":
             sesion.estado_sesion = "en_curso"
 
@@ -166,6 +169,18 @@ class SesionService:
             raise ValueError(
                 f"Transicion de estado invalida: {sesion.estado_sesion} -> {nuevo_estado}"
             )
+
+        AuditoriaService.registrar_evento(
+            self.db,
+            id_usuario=user_id,
+            entidad_afectada="sesiones",
+            id_entidad=sesion.id_sesion,
+            accion="CAMBIO_ESTADO_SESION",
+            detalles_cambio={
+                "estado_anterior": estado_anterior,
+                "estado_nuevo": sesion.estado_sesion,
+            },
+        )
 
         await self.db.commit()
         await self.db.refresh(sesion)

@@ -213,7 +213,7 @@ class TestResenaService(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(resena.reportada)
 
-        resena_reportada = await self.service.reportar_resena(resena.id_resena)
+        resena_reportada = await self.service.reportar_resena(self.user_mentee.id_usuario, resena.id_resena)
         self.assertTrue(resena_reportada.reportada)
 
     async def test_paquete_service_promedio_estrellas(self):
@@ -249,7 +249,7 @@ class TestResenaService(unittest.IsolatedAsyncioTestCase):
         # 4. Reportar resena (moderacion)
         res = await self.session.execute(select(ResenaMentor).filter(ResenaMentor.id_contrato == self.contrato.id_contrato))
         resena = res.scalars().first()
-        await self.service.reportar_resena(resena.id_resena)
+        await self.service.reportar_resena(self.user_mentee.id_usuario, resena.id_resena)
 
         # 5. Comprobar que vuelve a ser None para nuestro paquete
         paquetes_reportados = await paquete_service.listar_paquetes_disponibles()
