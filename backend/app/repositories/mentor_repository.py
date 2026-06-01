@@ -37,3 +37,13 @@ async def upsert_profile(db: AsyncSession, user_id: UUID, data: ProfileUpdateOrC
     await db.commit()
     await db.refresh(perfil)
     return perfil
+
+
+async def update_foto_perfil(db: AsyncSession, user_id: UUID, foto_url: str) -> Optional[PerfilMentor]:
+    perfil = await get_profile_by_user_id(db, user_id)
+    if not perfil:
+        return None
+    perfil.foto_perfil = foto_url
+    await db.commit()
+    await db.refresh(perfil)
+    return perfil
