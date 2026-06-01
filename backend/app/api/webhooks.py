@@ -47,6 +47,8 @@ async def stripe_webhook(request: Request):
 
     if event.type == "checkout.session.completed":
         await _handle_checkout_completed(event.data.object)
+    elif event.type == "checkout.session.expired":
+        await _handle_checkout_expired(event.data.object)
 
     return {"status": "success"}
 
@@ -79,9 +81,22 @@ async def _handle_checkout_completed(session) -> None:
                     logger.error("Transaccion %s no encontrada", id_transaccion_str)
                     return
 
-                if trx.estado_pago == "completado":
-                    logger.info(
-                        "Webhook duplicado ignorado — transaccion=%s", id_transaccion_str
+                if trx.estado_pago != "procesando":
+                    logger.warning(
+                        "Webhook ignorado porque la transaccion no esta en estado procesando — estado=%s, transaccion=%s",
+                        trx.estado_pago,
+                        id_transaccion_str
+                    )
+                    return
+
+                # Validar montos para evitar alteraciones de precios (Price Manipulation)
+                monto_stripe_usd = getattr(session, "amount_total", 0) / 100
+                if monto_stripe_usd != trx.monto_pagado:
+                    logger.error(
+                        "Alteracion de precio detectada — transaccion=%s monto_db=%s monto_stripe=%s",
+                        id_transaccion_str,
+                        trx.monto_pagado,
+                        monto_stripe_usd
                     )
                     return
 
@@ -108,6 +123,53 @@ async def _handle_checkout_completed(session) -> None:
 
         except Exception as e:
             logger.exception("Error critico procesando webhook: %s", e)
+            raise HTTPException(status_code=500, detail="Error en persistencia")
+
+
+async def _handle_checkout_expired(session) -> None:
+    metadata = getattr(session, "metadata", None) or {}
+    id_transaccion_str = metadata.get("id_transaccion") if isinstance(metadata, dict) else getattr(metadata, "id_transaccion", None)
+
+    if not id_transaccion_str:
+        logger.error(
+            "Webhook de expiracion sin metadata completa — session_id=%s",
+            getattr(session, "id", "unknown")
+        )
+        return
+
+    async with AsyncSessionLocal() as db:
+        try:
+            async with db.begin():
+                res_trx = await db.execute(
+                    select(TransaccionPago)
+                    .filter(TransaccionPago.id_transaccion == UUID(id_transaccion_str))
+                    .with_for_update()
+                )
+                trx = res_trx.scalars().first()
+
+                if not trx:
+                    logger.error(
+                        "Transaccion %s no encontrada en webhook de expiracion", 
+                        id_transaccion_str
+                    )
+                    return
+
+                if trx.estado_pago == "fallido":
+                    logger.info(
+                        "Webhook de expiracion duplicado o ya fallido ignorado — transaccion=%s", 
+                        id_transaccion_str
+                    )
+                    return
+
+                trx.estado_pago = "fallido"
+                logger.info(
+                    "Transaccion %s marcada como fallida por expiracion — session=%s", 
+                    id_transaccion_str, 
+                    getattr(session, "id", "unknown")
+                )
+
+        except Exception as e:
+            logger.exception("Error critico procesando webhook de expiracion: %s", e)
             raise HTTPException(status_code=500, detail="Error en persistencia")
 
 
