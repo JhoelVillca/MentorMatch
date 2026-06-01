@@ -9,6 +9,11 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: UUID) -> Optional[Pe
     result = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
     return result.scalars().first()
 
+
+async def get_profile_by_mentor_id(db: AsyncSession, mentor_id: UUID) -> Optional[PerfilMentor]:
+    result = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_mentor == mentor_id))
+    return result.scalars().first()
+
 async def upsert_profile(db: AsyncSession, user_id: UUID, data: ProfileUpdateOrCreate) -> PerfilMentor:
     perfil = await get_profile_by_user_id(db, user_id)
     

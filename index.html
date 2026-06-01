@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="styless.css" />
+  </head>
+  <body>
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <h2>Mensaje</h2>
+        <div class="mensaje"></div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="content">
+        <div class="menu" id="menu">
+          <div>
+          <div class="option" >1</div>
+          <div class="option" onclick="ejercicio3()">3</div>
+          <div class="option" onclick="ejercicio5()">5</div>
+          </div>
+          <div>
+            <div class="option" onclick="ejercicio2()">2</div>
+            <div class="option" onclick="ejercicio4()">4</div>
+          </div>
+        </div>
+        <div id="principal"></div>
+      </div>
+      <div class="mena" >
+      <div id="men" onclick="menun()"><a style="color: white;">Menu</a></div>
+      <div id="mensaje">
+        <script>document.getElementById('mensaje').innerHTML+=`<a>Ovando Jesús Adrián</a><br><a>111-340</a>`;</script>
+      </div>
+      </div>
+    </div>
+  </body>
+  <script src="script.js"></script>
+</html>

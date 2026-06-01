@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_mentor_user_id, get_current_mentee_user_id
@@ -53,6 +53,17 @@ async def get_mentor_profile(
             url_video_presentacion="",
             foto_perfil=None,  
         )
+    return perfil
+
+
+@router.get("/mentor/{id_mentor}", response_model=ProfileResponse)
+async def get_public_mentor_profile(
+    id_mentor: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    perfil = await profile_service.get_public_mentor_profile(db, id_mentor)
+    if not perfil:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mentor no encontrado")
     return perfil
 
 
