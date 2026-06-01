@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from app.models.main_models import ContratoMentoria, ResenaMentor, PerfilMentee
 from app.schemas.resena_schema import ResenaCreate
+from app.services.auditoria_service import AuditoriaService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,13 +54,27 @@ class ResenaService:
             await self.db.rollback()
             raise RuntimeError(f"Error interno al guardar la resena: {str(e)}")
 
-    async def reportar_resena(self, id_resena: UUID) -> ResenaMentor:
+    async def reportar_resena(self, id_usuario: UUID, id_resena: UUID) -> ResenaMentor:
         res = await self.db.execute(select(ResenaMentor).filter(ResenaMentor.id_resena == id_resena))
         resena = res.scalars().first()
         if not resena:
             raise LookupError("Resena no encontrada.")
         
+        estado_anterior = bool(resena.reportada)
         resena.reportada = True
+
+        AuditoriaService.registrar_evento(
+            self.db,
+            id_usuario=id_usuario,
+            entidad_afectada="resenas_mentor",
+            id_entidad=resena.id_resena,
+            accion="REPORTAR_RESENA",
+            detalles_cambio={
+                "estado_anterior": estado_anterior,
+                "estado_nuevo": True,
+            },
+        )
+
         await self.db.commit()
         await self.db.refresh(resena)
         return resena
