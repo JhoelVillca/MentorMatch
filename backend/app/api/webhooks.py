@@ -2,7 +2,7 @@ import os
 import logging
 import asyncio
 import stripe
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from sqlalchemy.future import select
 from uuid import UUID
 
@@ -24,7 +24,7 @@ def _stripe() -> stripe.StripeClient:
 
 
 @router.post("/stripe")
-async def stripe_webhook(request: Request):
+async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
 
@@ -46,7 +46,7 @@ async def stripe_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Payload corrupto")
 
     if event.type == "checkout.session.completed":
-        await _handle_checkout_completed(event.data.object)
+        background_tasks.add_task(_handle_checkout_completed, event.data.object)
     elif event.type == "checkout.session.expired":
         await _handle_checkout_expired(event.data.object)
 
