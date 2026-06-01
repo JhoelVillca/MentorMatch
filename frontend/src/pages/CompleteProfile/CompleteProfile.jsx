@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../AuthContext';
 import { getProfileAPI, updateProfileAPI } from '../../services/profileService';
-import { Camera, User } from 'lucide-react';
+import { Camera, User, Moon, Sun } from 'lucide-react';
 
 export default function CompleteProfile() {
   const { token } = useAuth();
@@ -18,6 +18,18 @@ export default function CompleteProfile() {
   const [loadError, setLoadError] = useState('');
   const [message, setMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
+
+  // Estado para el tema
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Efecto para sincronizar la clase 'dark' del documento
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // URL de Unsplash para un fondo abstracto y alegre (colores vibrantes, degradados suaves)
   const cheerfulBackgroundUrl = "https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=1920";
@@ -100,10 +112,19 @@ export default function CompleteProfile() {
   return (
     // Contenedor principal para la imagen de fondo de pantalla completa
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
+      className="min-h-screen bg-cover bg-center bg-fixed transition-colors duration-300"
       style={{ backgroundImage: `url(${cheerfulBackgroundUrl})` }}
     >
-      {/* Overlay para contraste (ligeramente claro en modo claro, oscuro en modo oscuro) */}
+      {/* Botón de cambio de tema posicionado en la parte inferior derecha */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-white dark:bg-plomo-800 border border-plomo-200 dark:border-plomo-700 shadow-xl hover:scale-110 transition-all duration-300 text-plomo-900 dark:text-white"
+        aria-label="Cambiar tema"
+      >
+        {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
+      </button>
+
+      {/* Overlay para contraste */}
       <div className="absolute inset-0 bg-white/20 dark:bg-black/30 backdrop-blur-[2px]" />
 
       {/* Wrapper para centrado y espaciado existente */}
@@ -112,10 +133,10 @@ export default function CompleteProfile() {
         {/* El div max-width existente */}
         <div className="w-full max-w-3xl">
           
-          {/* Tarjeta del formulario existente con ligera transparencia y blur para efecto glassmorphism */}
+          {/* Tarjeta del formulario existente */}
           <div className="bg-surface/95 dark:bg-plomo-darkSurface/95 rounded-2xl shadow-xl border border-plomo-100 dark:border-plomo-700/50 overflow-hidden transition-all duration-300 backdrop-blur-sm">
             
-            {/* Encabezado con paleta Celeste Plomo */}
+            {/* Encabezado */}
             <div className="border-b border-plomo-100 dark:border-plomo-700/50 px-6 py-6 bg-plomo-50/50 dark:bg-plomo-800/10">
               <h1 className="text-2xl font-bold text-plomo-900 dark:text-white">Perfil Profesional</h1>
               <p className="text-sm text-plomo-700 dark:text-plomo-100/60 mt-1">

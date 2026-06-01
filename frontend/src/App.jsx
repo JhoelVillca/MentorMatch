@@ -25,15 +25,15 @@ export default function App() {
     return localStorage.getItem('theme') !== 'light';
   });
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+  // useEffect(() => {
+  //   if (darkMode) {
+  //     document.documentElement.classList.add('dark');
+  //     localStorage.setItem('theme', 'dark');
+  //   } else {
+  //     document.documentElement.classList.remove('dark');
+  //     localStorage.setItem('theme', 'light');
+  //   }
+  // }, [darkMode]);
 
   return (
     <AuthProvider>
@@ -102,7 +102,7 @@ export default function App() {
           </div>
 
           {/* ☀️/🌙 INTERRUPTOR GLASSMORPHISM MEJORADO */}
-          <button
+          {/* <button
             onClick={() => setDarkMode(!darkMode)}
             className={`fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-2xl shadow-2xl backdrop-blur-xl transition-all duration-300 hover:scale-110 active:scale-95 group border ${
               darkMode 
@@ -123,7 +123,7 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             )}
-          </button>
+          </button> */}
         </div>
       </BrowserRouter>
     </AuthProvider>

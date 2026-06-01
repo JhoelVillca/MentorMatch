@@ -1,159 +1,178 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../AuthContext';
-import { fetchMenteeProfile } from '../../services/profileService';
+import { useEffect, useState } from 'react';
 import { apiClient } from '../../services/apiClient';
 
-const POLL_INTERVAL_MS = 30_000;
+const PaquetesPage = () => {
+    const [paquetes, setPaquetes] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [editId, setEditId] = useState(null);
+    const [formData, setFormData] = useState({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
 
-export default function MenteeDashboard() {
-  const { token } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [sesiones, setSesiones] = useState([]);
-  const [loadError, setLoadError] = useState('');
-  const [loading, setLoading] = useState(true);
+    const API_URL = '/api/paquetes';
 
-  const cargarSesiones = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await apiClient('/api/sesiones/mentee/me', { method: 'GET' });
-      setSesiones(data);
-    } catch (e) {
-      // fallo silencioso
-    }
-  }, [token]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadData() {
-      if (!token) return;
-      setLoadError('');
-      try {
-        const [profileData, sesionesData] = await Promise.all([
-          fetchMenteeProfile(token),
-          apiClient('/api/sesiones/mentee/me', { method: 'GET' }),
-        ]);
-        if (!cancelled) {
-          setProfile(profileData);
-          setSesiones(sesionesData);
+    const fetchPaquetes = async () => {
+        try {
+            const data = await apiClient(`${API_URL}/me`, { method: 'GET' });
+            setPaquetes(data);
+            setErrorMessage('');
+        } catch (error) {
+            setErrorMessage(error?.message || 'No se pudieron cargar los paquetes.');
         }
-      } catch (e) {
-        if (!cancelled) setLoadError(e.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    loadData();
-    return () => { cancelled = true; };
-  }, [token]);
+    };
 
-  useEffect(() => {
-    const hayPendientes = sesiones.some(
-      (s) => s.estado_sesion === 'programada' || s.estado_sesion === 'en_curso'
-    );
-    if (!hayPendientes) return;
-    const id = setInterval(cargarSesiones, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [sesiones, cargarSesiones]);
+    useEffect(() => { fetchPaquetes(); }, []);
 
-  const tieneNombre = profile?.nombre_completo?.trim();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+        const payload = {
+            titulo_paquete: formData.titulo_paquete,
+            cantidad_horas_totales: parseInt(formData.cantidad_horas_totales, 10),
+            precio_total: parseFloat(formData.precio_total)
+        };
 
-  return (
-    // Contenedor principal con fondo abstracto
-    <div className="min-h-screen bg-cover bg-center bg-fixed p-6 font-['Poppins'] text-white" 
-         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')" }}>
-      
-      {/* Overlay para legibilidad */}
-      <div className="min-h-screen bg-black/40 backdrop-blur-sm p-4 md:p-12">
-        <div className="container mx-auto max-w-5xl">
-          <h1 className="text-center text-4xl font-extrabold mb-10 text-white drop-shadow-lg">
-            Bienvenido, <span className="text-pink-400">{tieneNombre ? profile.nombre_completo : 'Alumno'}</span>
-          </h1>
+        try {
+            if (editId) {
+                await apiClient(`${API_URL}/${editId}`, { method: 'PATCH', body: payload });
+            } else {
+                await apiClient(`${API_URL}/`, { method: 'POST', body: payload });
+            }
+            setIsModalOpen(false);
+            setErrorMessage('');
+            fetchPaquetes();
+        } catch (error) {
+            setErrorMessage(error?.message || 'Operación fallida.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-          {loading && <p className="text-center animate-pulse">Cargando tu espacio...</p>}
-          
-          {!loading && !loadError && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              
-              {/* Tarjeta de Perfil */}
-              <div className="md:col-span-1 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-2xl transition-all hover:bg-white/15">
-                <h2 className="text-2xl font-bold mb-6">Tu Perfil</h2>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-pink-300 font-semibold">Nombre</p>
-                    <p className="text-lg mt-1">{tieneNombre ? profile.nombre_completo : 'No configurado'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-pink-300 font-semibold">Zona horaria</p>
-                    <p className="text-lg mt-1">{profile.zona_horaria_preferida || 'UTC'}</p>
-                  </div>
-                </div>
-                <Link to="/mentee/completar-perfil" 
-                      className="mt-8 block text-center rounded-xl bg-gradient-to-r from-pink-500 to-violet-600 px-6 py-3 font-bold hover:opacity-90 transition-all shadow-lg shadow-pink-500/20">
-                  {tieneNombre ? 'Editar perfil' : 'Completar perfil'}
-                </Link>
-              </div>
+    const handleOpenEdit = (p) => {
+        setEditId(p.id_paquete);
+        setFormData({ titulo_paquete: p.titulo_paquete, cantidad_horas_totales: p.cantidad_horas_totales, precio_total: p.precio_total });
+        setIsModalOpen(true);
+    };
 
-              {/* Tarjeta de Sesiones */}
-              <div className="md:col-span-2 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-2xl">
-                <h2 className="text-2xl font-bold mb-6">Próximas Sesiones</h2>
-                {sesiones.length === 0 ? (
-                  <div className="text-center py-10 border-2 border-dashed border-white/10 rounded-2xl">
-                    <p className="text-gray-300">No tienes sesiones agendadas por ahora.</p>
-                  </div>
-                ) : (
-                  <ul className="space-y-4">
-                    {sesiones.map((s) => (
-                      <SesionCardMentee key={s.id_sesion} sesion={s} />
-                    ))}
-                  </ul>
+    const handleOpenNew = () => {
+        setEditId(null);
+        setFormData({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
+        setIsModalOpen(true);
+    };
+
+    const handleToggleStatus = async (id, estadoActual) => {
+        try {
+            await apiClient(`${API_URL}/${id}/status`, {
+                method: 'PATCH',
+                body: { estado_activo: !estadoActual }
+            });
+            setErrorMessage('');
+            fetchPaquetes();
+        } catch (error) {
+            setErrorMessage(error?.message || 'No se pudo actualizar.');
+        }
+    };
+
+    const getStatusColor = (v) => v === 'aprobado' ? 'text-green-400' : v === 'rechazado' ? 'text-red-400' : 'text-yellow-400';
+
+    return (
+        <div 
+            className="min-h-screen bg-cover bg-center bg-fixed p-6 sm:p-12 text-white"
+            style={{ 
+                backgroundImage: "url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2074&auto=format&fit=crop')",
+            }}
+        >
+            {/* Contenedor Glassmorphism Principal */}
+            <div className="max-w-6xl mx-auto rounded-3xl border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl p-8">
+                
+                {errorMessage && (
+                    <div className="mb-6 rounded-xl border border-red-500/30 bg-red-900/40 px-4 py-3 text-red-200">
+                        {errorMessage}
+                    </div>
                 )}
-              </div>
+
+                <div className="flex justify-between items-center mb-10">
+                    <h1 className="text-4xl font-extrabold tracking-tight">Panel de Paquetes</h1>
+                    <button 
+                        onClick={handleOpenNew}
+                        className="bg-gradient-to-r from-pink-600 to-violet-600 hover:opacity-90 px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:scale-105"
+                    >
+                        + Nuevo Paquete
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paquetes.map((p) => (
+                        <div key={p.id_paquete} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md shadow-lg hover:border-white/20 transition-all">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-xl font-semibold">{p.titulo_paquete}</h3>
+                                <div className={`h-3 w-3 rounded-full ${p.estado_activo ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-gray-500'}`}></div>
+                            </div>
+                            <p className={`text-sm mb-4 font-bold ${getStatusColor(p.estado_validacion)}`}>{p.estado_validacion.toUpperCase()}</p>
+                            <p className="text-white/70 mb-4">{p.cantidad_horas_totales} Horas - <span className="text-pink-400 font-bold">${p.precio_total}</span></p>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => handleToggleStatus(p.id_paquete, p.estado_activo)} 
+                                    className="flex-1 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                                >
+                                    {p.estado_activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                                <button 
+                                    onClick={() => handleOpenEdit(p)} 
+                                    className="flex-1 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                                >
+                                    Editar
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-          )}
+
+            {/* Modal Glassmorphism */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-gray-900/80 border border-white/10 backdrop-blur-xl rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                        <h2 className="text-2xl font-bold mb-6 text-white">{editId ? 'Editar Paquete' : 'Crear Paquete'}</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <input 
+                                type="text" placeholder="Título del paquete" required value={formData.titulo_paquete}
+                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                                onChange={(e) => setFormData({...formData, titulo_paquete: e.target.value})}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <input 
+                                    type="number" placeholder="Horas" required value={formData.cantidad_horas_totales}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                                    onChange={(e) => setFormData({...formData, cantidad_horas_totales: e.target.value})}
+                                />
+                                <input 
+                                    type="number" step="0.01" placeholder="Precio ($)" required value={formData.precio_total}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                                    onChange={(e) => setFormData({...formData, precio_total: e.target.value})}
+                                />
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="submit" disabled={isSubmitting} 
+                                    className="flex-1 bg-gradient-to-r from-pink-600 to-violet-600 py-3 rounded-xl font-bold disabled:opacity-50 transition-all"
+                                >
+                                    {isSubmitting ? 'Guardando...' : 'Guardar'}
+                                </button>
+                                <button 
+                                    type="button" onClick={() => setIsModalOpen(false)} 
+                                    className="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-xl transition-all"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
 
-function SesionCardMentee({ sesion: s }) {
-  const enCurso = s.estado_sesion === 'en_curso';
-  const programada = s.estado_sesion === 'programada';
-
-  return (
-    <li className="bg-black/20 p-5 rounded-2xl border border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-white/5 transition-all">
-      <div>
-        <p className="font-bold text-lg text-pink-300">{s.titulo_paquete}</p>
-        <p className="text-sm text-gray-300">Mentor: <span className="font-semibold text-white">{s.contraparte_nombre}</span></p>
-        <p className="text-xs text-gray-400 mt-1">
-          {new Date(s.fecha_hora_inicio_utc).toLocaleString()} &mdash; <EstadoBadge estado={s.estado_sesion} />
-        </p>
-      </div>
-
-      {enCurso && (
-        <Link to={`/sesion/${s.id_sesion}`} className="relative flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-green-500 hover:bg-green-400 text-white shadow-lg shadow-green-500/30 transition-all hover:scale-105">
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          Unirse a la llamada
-        </Link>
-      )}
-
-      {programada && (
-        <div className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 border border-white/10">
-          Esperando inicio...
-        </div>
-      )}
-    </li>
-  );
-}
-
-function EstadoBadge({ estado }) {
-  const map = {
-    programada: 'text-yellow-300',
-    en_curso: 'text-green-300',
-    finalizada: 'text-blue-300',
-    cancelada: 'text-red-300',
-    ausente: 'text-gray-400',
-  };
-  return <span className={`font-bold ${map[estado] ?? 'text-gray-400'}`}>{estado.replace('_', ' ')}</span>;
-}
+export default PaquetesPage;

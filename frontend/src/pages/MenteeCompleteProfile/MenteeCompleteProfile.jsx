@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { getMenteeProfileAPI, updateMenteeProfileAPI } from '../../services/profileService';
-import { Camera, User } from 'lucide-react';
+import { Camera, User, Sun, Moon } from 'lucide-react';
 
 function buildTimezoneOptions() {
   try {
@@ -18,6 +18,8 @@ function buildTimezoneOptions() {
 
 export default function MenteeCompleteProfile() {
   const { token } = useAuth();
+  
+  // -- Estados Originales --
   const [timezoneOptions, setTimezoneOptions] = useState(buildTimezoneOptions);
   const [formData, setFormData] = useState({
     nombre_completo: '',
@@ -30,6 +32,25 @@ export default function MenteeCompleteProfile() {
   const [message, setMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
 
+  // -- Estado para el modo oscuro --
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Inicializa leyendo de localStorage si existe
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  // -- Efecto para aplicar la clase dark al documento --
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  // -- Lógica original de carga de perfil --
   useEffect(() => {
     let isMounted = true;
     const fetchProfile = async () => {
@@ -85,22 +106,33 @@ export default function MenteeCompleteProfile() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white" />
+      <div className="flex justify-center items-center min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white transition-colors duration-300">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed p-4 sm:p-8 font-['Poppins'] text-white"
-         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')" }}>
+    <div className="min-h-screen bg-cover bg-center bg-fixed p-4 sm:p-8 font-['Poppins'] text-gray-900 dark:text-white transition-colors duration-300"
+         style={{ 
+             backgroundImage: "url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2074&auto=format&fit=crop')",
+         }}>
       
+      {/* Botón de cambio de tema funcional */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 hover:scale-110 transition-all duration-300"
+        aria-label="Alternar modo oscuro"
+      >
+        {isDarkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-gray-900" />}
+      </button>
+
       {/* Contenedor Glassmorphism */}
-      <div className="max-w-2xl mx-auto rounded-3xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl overflow-hidden transition-all duration-300">
+      <div className="max-w-2xl mx-auto rounded-3xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/40 backdrop-blur-2xl shadow-2xl overflow-hidden transition-all duration-300">
         
-        <div className="px-6 py-8 border-b border-white/10 bg-black/10">
-          <h1 className="text-3xl font-extrabold text-white">Completar Perfil</h1>
-          <p className="text-sm text-white/60 mt-2">
+        <div className="px-6 py-8 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Completar Perfil</h1>
+          <p className="text-sm text-gray-600 dark:text-white/60 mt-2">
             Indica tu información personal para organizar tus sesiones de mentoría.
           </p>
         </div>
@@ -108,7 +140,9 @@ export default function MenteeCompleteProfile() {
         <div className="p-6 sm:p-8">
           {message && (
             <div className={`mb-6 p-4 rounded-xl flex items-start text-sm font-medium border ${
-              message.type === 'success' ? 'bg-green-500/20 text-green-100 border-green-500/30' : 'bg-red-500/20 text-red-100 border-red-500/30'
+              message.type === 'success' 
+                ? 'bg-green-500/20 text-green-800 dark:text-green-100 border-green-500/30' 
+                : 'bg-red-500/20 text-red-800 dark:text-red-100 border-red-500/30'
             }`}>
               {message.text}
             </div>
@@ -117,24 +151,24 @@ export default function MenteeCompleteProfile() {
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Avatar Section */}
-            <div className="flex flex-col items-center pb-6 border-b border-white/10">
-              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 bg-black/20 flex items-center justify-center shadow-inner">
+            <div className="flex flex-col items-center pb-6 border-b border-black/10 dark:border-white/10">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex items-center justify-center shadow-inner">
                 {formData.avatar_url && !imageError ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={() => setImageError(true)} />
                 ) : (
-                  <User className="h-16 w-16 text-white/30" />
+                  <User className="h-16 w-16 text-gray-400 dark:text-white/30" />
                 )}
               </div>
               
               <div className="mt-4 w-full max-w-sm">
-                <label htmlFor="avatar_url" className="block text-xs font-semibold text-white/60 text-center uppercase tracking-wider mb-2">
+                <label htmlFor="avatar_url" className="block text-xs font-semibold text-gray-500 dark:text-white/60 text-center uppercase tracking-wider mb-2">
                   Foto de Perfil (URL)
                 </label>
                 <div className="relative">
-                  <Camera className="absolute left-3 top-3 h-5 w-5 text-white/30" />
+                  <Camera className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-white/30" />
                   <input
                     type="url" id="avatar_url" name="avatar_url" value={formData.avatar_url} onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-black/20 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                     placeholder="https://ejemplo.com/tu-foto.jpg"
                   />
                 </div>
@@ -143,22 +177,22 @@ export default function MenteeCompleteProfile() {
 
             {/* Inputs */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Nombre completo</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">Nombre completo</label>
               <input
                 type="text" name="nombre_completo" required value={formData.nombre_completo} onChange={handleChange}
-                className="w-full px-4 py-3 border border-white/10 rounded-xl bg-black/20 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                 placeholder="Ej. María García"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Zona horaria</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">Zona horaria</label>
               <select
                 name="zona_horaria_preferida" value={formData.zona_horaria_preferida} onChange={handleChange}
-                className="w-full px-4 py-3 border border-white/10 rounded-xl bg-black/20 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
               >
                 {timezoneOptions.map((tz) => (
-                  <option key={tz} value={tz} className="bg-gray-900 text-white">
+                  <option key={tz} value={tz} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
                     {tz}
                   </option>
                 ))}
@@ -166,10 +200,10 @@ export default function MenteeCompleteProfile() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Biografía corta</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">Biografía corta</label>
               <textarea
                 name="biografia_corta" rows={4} value={formData.biografia_corta} onChange={handleChange}
-                className="w-full px-4 py-3 border border-white/10 rounded-xl bg-black/20 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all resize-none"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all resize-none"
                 placeholder="Cuéntanos un poco sobre ti..."
               />
             </div>
@@ -177,7 +211,7 @@ export default function MenteeCompleteProfile() {
             <button
               type="submit" disabled={saving}
               className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all active:scale-[0.98] ${
-                saving ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-pink-600 to-violet-600 hover:opacity-90'
+                saving ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-pink-600 to-violet-600 hover:opacity-90'
               }`}
             >
               {saving ? 'Guardando...' : 'Guardar Perfil'}
@@ -187,7 +221,7 @@ export default function MenteeCompleteProfile() {
       </div>
 
       <p className="mt-6 text-center">
-        <Link to="/mentee" className="text-white/60 hover:text-white text-sm font-medium transition-colors underline-offset-4 hover:underline">
+        <Link to="/mentee" className="text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors underline-offset-4 hover:underline">
           Volver al panel
         </Link>
       </p>

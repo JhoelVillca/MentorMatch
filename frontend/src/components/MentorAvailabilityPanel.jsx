@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../services/apiClient';
 
 const API_URL = '/api/disponibilidad/';
@@ -6,10 +6,8 @@ const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', '
 const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const DIA_STR_TO_INT = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6, 'Domingo': 7 };
-const DIA_INT_TO_STR = {};
-Object.entries(DIA_STR_TO_INT).forEach(([k, v]) => { DIA_INT_TO_STR[v] = k; });
 
-/* ── Hook de datos (Mantenido intacto) ───────────────────────── */
+/* ── Hook de datos (Intacto) ───────────────────────── */
 const useAvailability = () => {
   const [availabilities, setAvailabilities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,9 +18,7 @@ const useAvailability = () => {
     catch (err) { setError(err.message); } finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchAll(); }, [fetchAll]);
-  const add = useCallback(async (payload) => { await apiClient(API_URL, { method: 'POST', body: payload }); await fetchAll(); }, [fetchAll]);
-  const remove = useCallback(async (id) => { await apiClient(`${API_URL}${id}`, { method: 'DELETE' }); setAvailabilities(prev => prev.filter(a => a.id !== id)); }, []);
-  return { availabilities, loading, error, setError, add, remove, refresh: fetchAll };
+  return { availabilities, loading, error, setError, refresh: fetchAll };
 };
 
 const buildSavedSet = (availabilities) => {
@@ -36,68 +32,49 @@ const buildSavedSet = (availabilities) => {
   return set;
 };
 
-const groupContiguous = (pendingSet) => {
-  const byDay = {};
-  pendingSet.forEach(key => { const [d, h] = key.split('-').map(Number); if (!byDay[d]) byDay[d] = []; byDay[d].push(h); });
-  const blocks = [];
-  Object.entries(byDay).forEach(([dayIdx, hours]) => {
-    hours.sort((a, b) => a - b);
-    let start = hours[0]; let end = hours[0] + 1;
-    for (let i = 1; i < hours.length; i++) {
-      if (hours[i] === end) end = hours[i] + 1;
-      else { blocks.push({ dayIdx: Number(dayIdx), startH: start, endH: end }); start = hours[i]; end = hours[i] + 1; }
-    }
-    blocks.push({ dayIdx: Number(dayIdx), startH: start, endH: end });
-  });
-  return blocks;
-};
-
-/* ── Componente de Celda Adaptativo ────────────────────────── */
+/* ── Componente de Celda Adaptativo (Glassmorphism) ── */
 const GridCell = React.memo(({ dayIdx, hour, isSaved, isPending, isRemoving, onMouseDown, onMouseEnter }) => {
-  const key = `${dayIdx}-${hour}`;
-
-  // Clases base: Blanco/Gris claro -> Oscuro
-  let bg = 'bg-white dark:bg-[#111] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]';
-  let border = 'border-gray-200 dark:border-[#1e1e1e]';
+  let bg = 'bg-white/5 hover:bg-white/10';
+  let border = 'border-white/5';
 
   if (isSaved && !isRemoving) {
-    bg = 'bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-red-900/40';
-    border = 'border-emerald-200 dark:border-emerald-800/50';
+    bg = 'bg-emerald-500/40 hover:bg-emerald-500/60';
+    border = 'border-emerald-500/20';
   } else if (isPending) {
-    bg = 'bg-emerald-50 dark:bg-emerald-600/40';
-    border = 'border-emerald-300 dark:border-emerald-500/60 border-dashed';
+    bg = 'bg-emerald-500/20';
+    border = 'border-emerald-500/50 border-dashed';
   } else if (isRemoving) {
-    bg = 'bg-red-50 dark:bg-red-900/40';
-    border = 'border-red-300 dark:border-red-700/50 border-dashed';
+    bg = 'bg-red-500/20';
+    border = 'border-red-500/50 border-dashed';
   }
 
   return (
     <td
       onMouseDown={() => onMouseDown(dayIdx, hour)}
       onMouseEnter={() => onMouseEnter(dayIdx, hour)}
-      className={`${bg} ${border} border cursor-pointer select-none transition-colors duration-100 h-7`}
+      className={`${bg} ${border} border cursor-pointer transition-all duration-200 h-8`}
     />
   );
 });
 GridCell.displayName = 'GridCell';
 
-/* ── Grilla Principal ────────────────────────────────────── */
+/* ── Grilla Principal ──────────────────────────────── */
 const WeekGrid = ({ savedSet, pendingSet, removingSet, onDragStart, onDragEnter, onDragEnd }) => {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
+    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md">
       <table className="w-full border-collapse min-w-[600px]" onMouseLeave={onDragEnd}>
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-gray-50 dark:bg-[#0a0a0a] text-[10px] text-gray-500 font-medium w-12 py-2 border-b border-gray-200 dark:border-gray-800">UTC</th>
+            <th className="sticky left-0 z-10 bg-black/50 text-[10px] text-slate-400 font-medium w-12 py-3 border-b border-white/10">UTC</th>
             {DAYS_SHORT.map((d, i) => (
-              <th key={i} className="text-xs text-gray-500 dark:text-gray-400 font-semibold py-2 px-1 border-b border-gray-200 dark:border-gray-800">{d}</th>
+              <th key={i} className="text-xs text-slate-300 font-semibold py-3 px-1 border-b border-white/10">{d}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {HOURS.map(h => (
             <tr key={h}>
-              <td className="sticky left-0 z-10 bg-gray-50 dark:bg-[#0a0a0a] text-[10px] text-gray-500 font-mono text-right pr-2 select-none border-r border-gray-200 dark:border-gray-800">
+              <td className="sticky left-0 z-10 bg-black/50 text-[10px] text-slate-500 font-mono text-right pr-2 select-none border-r border-white/5">
                 {String(h).padStart(2, '0')}:00
               </td>
               {DAYS.map((_, dayIdx) => {
@@ -117,19 +94,17 @@ const WeekGrid = ({ savedSet, pendingSet, removingSet, onDragStart, onDragEnter,
   );
 };
 
-/* ── Panel Principal ────────────────────────────────────── */
+/* ── Panel Principal ──────────────────────────────── */
 export default function MentorAvailabilityPanel() {
-  const { availabilities, loading, error, setError, add, remove, refresh } = useAvailability();
+  const { availabilities } = useAvailability();
   const [viewMode, setViewMode] = useState('grid');
   const [pendingSet, setPendingSet] = useState(new Set());
   const [removingSet, setRemovingSet] = useState(new Set());
-  const [saving, setSaving] = useState(false);
   const [dragMode, setDragMode] = useState(null);
   const [dragDay, setDragDay] = useState(null);
 
   const savedSet = buildSavedSet(availabilities);
 
-  // Funciones de lógica mantenidas...
   const handleDragStart = useCallback((dayIdx, hour) => {
     const key = `${dayIdx}-${hour}`;
     const isSaved = savedSet.has(key);
@@ -147,53 +122,53 @@ export default function MentorAvailabilityPanel() {
     const isSaved = savedSet.has(key);
     if (dragMode === 'add' && !isSaved) setPendingSet(prev => new Set(prev).add(key));
     else if (dragMode === 'deselect') setPendingSet(prev => { const n = new Set(prev); n.delete(key); return n; });
-    else if (dragMode === 'remove' && isSaved) setRemovingSet(prev => new Set(prev).add(key));
+    else if (dragMode === 'remove' && isSaved) setRemovingSet(prev => { const n = new Set(prev); n.add(key); return n; });
     else if (dragMode === 'unremove') setRemovingSet(prev => { const n = new Set(prev); n.delete(key); return n; });
   }, [dragMode, dragDay, savedSet]);
 
   const handleDragEnd = useCallback(() => { setDragMode(null); setDragDay(null); }, []);
-  const handleSave = async () => { /* ... Logica de guardado ... */ };
-  const handleDiscard = () => { setPendingSet(new Set()); setRemovingSet(new Set()); };
   const hasPendingChanges = pendingSet.size > 0 || removingSet.size > 0;
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 space-y-6 text-gray-900 dark:text-white">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold">Disponibilidad semanal</h2>
-          <p className="text-gray-500 text-sm mt-1">Configura tus horarios en <span className="font-semibold text-blue-600 dark:text-blue-300">UTC</span>.</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#050505] via-[#1a0b2e] to-[#4a044e] p-6 md:p-12 text-white font-sans bg-fixed">
+      <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* Toggle View */}
-        <div className="flex bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-lg p-0.5 gap-0.5">
-           <button onClick={() => setViewMode('grid')} className={`px-3 py-1.5 rounded text-xs font-semibold ${viewMode === 'grid' ? 'bg-white dark:bg-red-700 shadow border border-gray-200 dark:border-none' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Grilla</button>
-           <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 rounded text-xs font-semibold ${viewMode === 'list' ? 'bg-white dark:bg-red-700 shadow border border-gray-200 dark:border-none' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Lista</button>
+        {/* Header Glassmorphism */}
+        <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 shadow-2xl">
+          <div>
+            <h2 className="text-2xl font-bold">Disponibilidad semanal</h2>
+            <p className="text-slate-400 text-sm mt-1">Configura tus horarios en <span className="text-purple-400 font-semibold">UTC</span>.</p>
+          </div>
+          <div className="flex bg-black/40 border border-white/10 rounded-xl p-1 gap-1">
+             <button onClick={() => setViewMode('grid')} className={`px-4 py-2 rounded-lg text-xs font-semibold ${viewMode === 'grid' ? 'bg-purple-600' : 'hover:bg-white/5'}`}>Grilla</button>
+             <button onClick={() => setViewMode('list')} className={`px-4 py-2 rounded-lg text-xs font-semibold ${viewMode === 'list' ? 'bg-purple-600' : 'hover:bg-white/5'}`}>Lista</button>
+          </div>
         </div>
-      </div>
 
-      {/* Contenido (Misma estructura, pero colores dinámicos) */}
-      <div className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
-        {viewMode === 'grid' && (
-          <WeekGrid 
-            savedSet={savedSet} pendingSet={pendingSet} removingSet={removingSet}
-            onDragStart={handleDragStart} onDragEnter={handleDragEnter} onDragEnd={handleDragEnd}
-          />
+        {/* Grid Contenido */}
+        <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl">
+          {viewMode === 'grid' && (
+            <WeekGrid 
+              savedSet={savedSet} pendingSet={pendingSet} removingSet={removingSet}
+              onDragStart={handleDragStart} onDragEnter={handleDragEnter} onDragEnd={handleDragEnd}
+            />
+          )}
+        </div>
+
+        {/* Barra de acciones */}
+        {hasPendingChanges && (
+          <div className="flex items-center justify-between bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="text-sm text-slate-300">
+               <span className="font-bold text-emerald-400">{pendingSet.size}h</span> por agregar | 
+               <span className="font-bold text-red-400 ml-3">{removingSet.size}h</span> por eliminar
+            </div>
+            <div className="flex gap-3">
+               <button onClick={() => { setPendingSet(new Set()); setRemovingSet(new Set()); }} className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-white/10 hover:bg-white/5">Descartar</button>
+               <button className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-900/50">Guardar Cambios</button>
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Barra de acciones (igual lógica, estilo mejorado) */}
-      {hasPendingChanges && (
-        <div className="flex items-center justify-between bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-lg">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-             {pendingSet.size}h por agregar | {removingSet.size}h por eliminar
-          </div>
-          <div className="flex gap-2">
-             <button onClick={handleDiscard} className="px-4 py-2 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">Descartar</button>
-             <button onClick={handleSave} className="px-4 py-2 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-700">Guardar</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
