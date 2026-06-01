@@ -66,7 +66,17 @@ class PaqueteService:
         )
 
         query = (
-            select(PaqueteMentor)
+            select(
+                PaqueteMentor.id_paquete,
+                PaqueteMentor.id_mentor,
+                PaqueteMentor.titulo_paquete,
+                PaqueteMentor.cantidad_horas_totales,
+                PaqueteMentor.precio_total,
+                PerfilMentor.nombre_completo.label("mentor_nombre"),
+                PerfilMentor.foto_perfil.label("mentor_foto"),
+                subq_promedio.c.promedio.label("calificacion_promedio"),
+                Habilidad.validada_por_admin,
+            )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
             .join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
             .join(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
@@ -96,8 +106,10 @@ class PaqueteService:
         if precio_max:
             query = query.filter(PaqueteMentor.precio_total <= precio_max)
 
+        query = query.distinct().order_by(Habilidad.validada_por_admin.desc())
+
         res = await self.db.execute(query)
-        return res.scalars().unique().all()
+        return [dict(row._mapping) for row in res.all()]
 
     async def crear_paquete(self, user_id: str, paquete: PaqueteCreate):
         res = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
