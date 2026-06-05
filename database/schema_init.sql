@@ -85,9 +85,13 @@ CREATE TABLE Paquetes_Mentor (
     cantidad_horas_totales INT NOT NULL CHECK (cantidad_horas_totales > 0),
     precio_total DECIMAL(10, 2) NOT NULL CHECK (precio_total >= 0),
     estado_activo BOOLEAN DEFAULT TRUE,
-    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    estado_validacion VARCHAR(20) DEFAULT 'pendiente' CHECK (estado_validacion IN ('pendiente', 'aprobado', 'rechazado')),
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    ventas_totales INT DEFAULT 0 NOT NULL CHECK (ventas_totales >= 0),
+    calificacion_promedio DECIMAL(3, 2) DEFAULT 0.00 NOT NULL CHECK (calificacion_promedio >= 0)
 );
 
+CREATE INDEX idx_paquetes_fecha ON Paquetes_Mentor(fecha_creacion DESC);
 -- 5. ACUERDOS Y TRANSACCIONES FINANCIERAS
 
 CREATE TABLE Contratos_Mentoria (

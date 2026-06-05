@@ -121,6 +121,15 @@ async def _handle_checkout_completed(session) -> None:
                     "Contrato %s activado — session=%s", id_contrato_str, session.id
                 )
 
+                # Incrementar las ventas totales del paquete
+                from sqlalchemy import update
+                from app.models.main_models import PaqueteMentor
+                await db.execute(
+                    update(PaqueteMentor)
+                    .where(PaqueteMentor.id_paquete == contrato.id_paquete)
+                    .values(ventas_totales=PaqueteMentor.ventas_totales + 1)
+                )
+
         except Exception as e:
             logger.exception("Error critico procesando webhook: %s", e)
             raise HTTPException(status_code=500, detail="Error en persistencia")

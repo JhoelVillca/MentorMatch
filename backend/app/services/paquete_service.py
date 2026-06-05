@@ -53,29 +53,6 @@ class PaqueteService:
         nivel_dominio: str | None = None,
         sort_by: str | None = None,
     ):
-        # Subconsulta para obtener la calificacion promedio por mentor, omitiendo reportes
-        subq_promedio = (
-            select(
-                PaqueteMentor.id_mentor,
-                func.round(func.avg(ResenaMentor.calificacion_estrellas), 1).label("promedio")
-            )
-            .join(ContratoMentoria, PaqueteMentor.id_paquete == ContratoMentoria.id_paquete)
-            .join(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
-            .filter(ResenaMentor.reportada == False)
-            .group_by(PaqueteMentor.id_mentor)
-            .subquery()
-        )
-
-        # 2. Subconsulta transaccional para Popularidad
-        subq_ventas = (
-            select(
-                ContratoMentoria.id_paquete,
-                func.count(ContratoMentoria.id_contrato).label("num_ventas")
-            )
-            .group_by(ContratoMentoria.id_paquete)
-            .subquery()
-        )
-
         query = (
             select(
                 PaqueteMentor.id_paquete,
@@ -86,15 +63,13 @@ class PaqueteService:
                 PaqueteMentor.fecha_creacion,
                 PerfilMentor.nombre_completo.label("mentor_nombre"),
                 PerfilMentor.foto_perfil.label("mentor_foto"),
-                subq_promedio.c.promedio.label("calificacion_promedio"),
+                PaqueteMentor.calificacion_promedio,
                 Habilidad.validada_por_admin,
-                func.coalesce(subq_ventas.c.num_ventas, 0).label("ventas_totales")
+                PaqueteMentor.ventas_totales
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
             .outerjoin(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
             .outerjoin(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
-            .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
-            .outerjoin(subq_ventas, PaqueteMentor.id_paquete == subq_ventas.c.id_paquete)
         )
 
         if id_habilidad:
@@ -124,9 +99,9 @@ class PaqueteService:
         if sort_by == "recientes":
             query = query.order_by(PaqueteMentor.fecha_creacion.desc())
         elif sort_by == "calificados":
-            query = query.order_by(subq_promedio.c.promedio.desc().nulls_last())
+            query = query.order_by(PaqueteMentor.calificacion_promedio.desc().nulls_last())
         elif sort_by == "populares":
-            query = query.order_by(desc("ventas_totales"))
+            query = query.order_by(PaqueteMentor.ventas_totales.desc())
         else:
             query = query.order_by(Habilidad.validada_por_admin.desc())
 

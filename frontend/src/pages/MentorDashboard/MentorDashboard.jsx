@@ -7,7 +7,9 @@ export default function MentorDashboard() {
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
-  const [estudiantes, setEstudiantes] = useState([]);
+  const [estudiantesData, setEstudiantesData] = useState({ data: [], total: 0 });
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const [toastMsg, setToastMsg] = useState(null);
 
   useEffect(() => {
@@ -24,11 +26,14 @@ export default function MentorDashboard() {
     apiClient('/api/contratos/solicitudes', { method: 'GET' })
       .then((data) => setSolicitudes(data))
       .catch(console.error);
-
-    apiClient('/api/contratos/mis-estudiantes', { method: 'GET' })
-      .then((data) => setEstudiantes(data))
-      .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    const offset = (page - 1) * limit;
+    apiClient(`/api/contratos/mis-estudiantes?limit=${limit}&offset=${offset}`, { method: 'GET' })
+      .then((res) => setEstudiantesData(res))
+      .catch(console.error);
+  }, [page]);
 
   const responderSolicitud = async (id, accion) => {
     try {
@@ -111,34 +116,58 @@ export default function MentorDashboard() {
       </div>
 
       <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl mt-8">
-        <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
-          Tus Estudiantes Activos
+        <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2 flex justify-between items-center">
+          <span>Tus Estudiantes Activos</span>
+          <span className="text-sm font-normal text-gray-400">Total: {estudiantesData.total}</span>
         </h2>
-        {estudiantes.length === 0 ? (
-          <p className="text-gray-400 text-sm">Aún no tienes reclutas activos.</p>
+        {estudiantesData.data.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aún no tienes reclutas activos en esta página.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-[#141414] text-gray-400">
-                <tr>
-                  <th className="p-3 rounded-tl-lg">Mentee</th>
-                  <th className="p-3">Paquete</th>
-                  <th className="p-3 text-center rounded-tr-lg">Horas Consumidas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estudiantes.map((est) => (
-                  <tr key={est.id_contrato} className="border-b border-gray-800 hover:bg-[#0a0a0a]">
-                    <td className="p-3 font-semibold text-white">{est.mentee_nombre}</td>
-                    <td className="p-3 text-blue-400">{est.titulo_paquete}</td>
-                    <td className="p-3 text-center">
-                      <span className="bg-blue-900/40 text-blue-300 py-1 px-3 rounded-full">{est.horas_consumidas} h</span>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-300">
+                <thead className="bg-[#141414] text-gray-400">
+                  <tr>
+                    <th className="p-3 rounded-tl-lg">Mentee</th>
+                    <th className="p-3">Paquete</th>
+                    <th className="p-3 text-center rounded-tr-lg">Horas Consumidas</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {estudiantesData.data.map((est) => (
+                    <tr key={est.id_contrato} className="border-b border-gray-800 hover:bg-[#0a0a0a]">
+                      <td className="p-3 font-semibold text-white">{est.mentee_nombre}</td>
+                      <td className="p-3 text-blue-400">{est.titulo_paquete}</td>
+                      <td className="p-3 text-center">
+                        <span className="bg-blue-900/40 text-blue-300 py-1 px-3 rounded-full">{est.horas_consumidas} h</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Paginación */}
+            {estudiantesData.total > limit && (
+              <div className="flex justify-between items-center mt-4">
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                >
+                  Anterior
+                </button>
+                <span className="text-gray-400 text-sm">Página {page} de {Math.ceil(estudiantesData.total / limit)}</span>
+                <button 
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= Math.ceil(estudiantesData.total / limit)}
+                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

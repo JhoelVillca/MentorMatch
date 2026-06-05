@@ -112,10 +112,14 @@ async def rechazar_beca(
     except Exception as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
+from fastapi import Query
+
 @router.get("/mis-estudiantes")
 async def listar_mis_estudiantes(
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentor_user_id)
+    user_id: UUID = Depends(get_current_mentor_user_id),
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0)
 ):
     servicio = ContratoService(db)
-    return await servicio.listar_mis_estudiantes(user_id)
+    return await servicio.listar_mis_estudiantes(user_id, limit, offset)

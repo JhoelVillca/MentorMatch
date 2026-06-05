@@ -324,14 +324,37 @@ class ContratoService:
             }
         )
 
+        if accion == "aceptar":
+            from sqlalchemy import update
+            await self.db.execute(
+                update(PaqueteMentor)
+                .where(PaqueteMentor.id_paquete == paquete.id_paquete)
+                .values(ventas_totales=PaqueteMentor.ventas_totales + 1)
+            )
+
         await self.db.commit()
         return {"mensaje": f"Solicitud {accion}da con exito"}
 
-    async def listar_mis_estudiantes(self, user_id: UUID):
+    async def listar_mis_estudiantes(self, user_id: UUID, limit: int = 10, offset: int = 0):
         res_mentor = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
         mentor = res_mentor.scalars().first()
         if not mentor:
-            return []
+            return {"data": [], "total": 0}
+
+        # Query base para filtrar estudiantes activos de este mentor
+        base_query = (
+            select(ContratoMentoria)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .filter(
+                PaqueteMentor.id_mentor == mentor.id_mentor,
+                ContratoMentoria.estado_contrato == "activo"
+            )
+        )
+
+        from sqlalchemy import func
+        # Obtener total para la paginacion
+        res_total = await self.db.execute(select(func.count()).select_from(base_query.subquery()))
+        total = res_total.scalar_one()
 
         query = (
             select(
@@ -347,6 +370,9 @@ class ContratoService:
                 PaqueteMentor.id_mentor == mentor.id_mentor,
                 ContratoMentoria.estado_contrato == "activo"
             )
+            .order_by(ContratoMentoria.fecha_adquisicion.desc())
+            .limit(limit)
+            .offset(offset)
         )
         res = await self.db.execute(query)
-        return [dict(row._mapping) for row in res.all()]
+        return {"data": [dict(row._mapping) for row in res.all()], "total": total}
