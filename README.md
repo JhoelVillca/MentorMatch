@@ -8,11 +8,15 @@
 
 ## 📌 Sprints de Desarrollo
 
-* [Sprint 1: Core Auth & RBAC](https://www.google.com/search?q=%23)
-* [Sprint 2: Agendamiento y Bloqueos Concurrentes](https://www.google.com/search?q=%23)
-* [Sprint 3: WebSockets y Pasarela Stripe](https://www.google.com/search?q=%23)
+* [Sprint 1: Gestión de Usuarios y Arquitectura Base](./Sprints/Sprint1.md)
+* [Sprint 2: Gestión de Productos y Servicios](./Sprints/Sprint2.md)
+* [Sprint 3: Búsqueda, Solicitudes y Flujos de Confirmación](./Sprints/Sprint3.md)
 
---- 
+---
+
+![Alt](https://repobeats.axiom.co/api/embed/1155bd833289482fc6efcafe5937c46ab68a8188.svg "Repobeats analytics image")
+
+---
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136.1-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2.5-61DAFB?style=for-the-badge&logo=react&logoColor=black)

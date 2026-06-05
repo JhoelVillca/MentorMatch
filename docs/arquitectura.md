@@ -5,105 +5,168 @@
 ```text
 MentorMatch/
 │
-├── README.md                          # Documentación raíz (comandos Alembic, variables de entorno y despliegue)
-├── docker-compose.yml                 # Orquestación de contenedores (backend, frontend y Postgres 16)
+├── README.md                          # Documentación principal, enlaces a Sprints y analíticas
+├── CONTRIBUTING.md                    # Guía de contribución para nuevos desarrolladores
+├── docker-compose.yml                 # Orquestación de contenedores (backend, frontend y BD)
 ├── .gitignore                         # Exclusiones de Git (node_modules, venv, .env)
 ├── guia.md                            # Guía de usuario y lineamientos adicionales
+├── LICENSE                            # Archivo de licencia del proyecto
 │
 ├── docs/                              # Especificaciones de diseño y visión
-│   ├── arquitectura.md                # Diseño de sistemas e infraestructura
-│   ├── documentoVision.md             # Requerimientos de negocio
+│   ├── arquitectura.md                # Diseño de sistemas e infraestructura actual
+│   ├── documentoVision.md             # Requerimientos de negocio y visión
 │   └── spec.md                        # SDD: Fuente única de verdad técnica
 │
 ├── database/                          # Scripts de inicialización SQL
-│   └── schema_init.sql                # DDL inicial
+│   └── schema_init.sql                # DDL inicial para el despliegue
 │
 ├── backend/                           # Capa Servidor (FastAPI + SQLAlchemy Async)
-│   ├── main.py                        # Entrypoint: Inicialización de la App y Rutas
-│   ├── requirements.txt               # Manifiesto de dependencias (asyncpg, alembic)
-│   ├── .env.example                   # Plantilla de variables de entorno
+│   ├── main.py                        # Entrypoint: Inicialización de la App y Rutas REST
+│   ├── requirements.txt               # Manifiesto de dependencias principales
+│   ├── requirements-test.txt          # Dependencias para el entorno de testing
+│   ├── Dockerfile                     # Instrucciones de construcción de imagen Docker del backend
+│   ├── pytest.ini                     # Configuración del entorno de pruebas unitarias
 │   ├── alembic.ini                    # Configuración central de migraciones
 │   ├── alembic/                       # Directorio principal de Alembic
 │   │   ├── env.py                     # Configuración asíncrona de migraciones
 │   │   ├── script.py.mako             # Plantilla base para generar nuevas migraciones
-│   │   └── versions/                  # Historial de esquemas (ej. init_async_tables)
+│   │   └── versions/                  # Historial de esquemas generados
+│   │       ├── 2381b61d3b24_init_async_tables.py             # Migración: Creación de tablas iniciales
+│   │       ├── 88d3bbb566e8_add_ventas_totales_and...py      # Migración: Métricas de mentores
+│   │       ├── a1b2c3d4e5f6_add_inactivo_estado_and...py     # Migración: Estados de inactividad
+│   │       ├── a2c3d4e5f6g7_add_estado_validacion_paquetes.py # Migración: Validación de paquetes
+│   │       ├── c3d4e5f6g7h8_add_chat_counters_to_salas.py    # Migración: Contadores de chat
+│   │       └── d4e5f6g7h8i9_add_carta_motivacion_and...py    # Migración: Solicitudes de becas
+│   │
+│   ├── tests/                         # Pruebas automatizadas (Pytest)
+│   │   ├── conftest.py                # Fixtures globales para pruebas
+│   │   ├── test_auditoria.py          # Tests de registros de auditoría
+│   │   ├── test_auth.py               # Tests de autenticación JWT
+│   │   ├── test_idempotencia.py       # Tests de protección contra duplicados (Stripe)
+│   │   ├── test_paquetes.py           # Tests de gestión de servicios/paquetes
+│   │   ├── test_profiles.py           # Tests de CRUD de perfiles
+│   │   ├── test_resenas.py            # Tests del módulo de reseñas
+│   │   ├── test_s3.py                 # Tests de la integración con almacenamiento S3
+│   │   └── test_sesiones.py           # Tests del agendamiento y validación horaria
+│   │
 │   └── app/                           # Código fuente backend
-│       ├── api/                       # Endpoints y controladores REST (Async)
+│       ├── api/                       # Endpoints y controladores REST
 │       │   ├── admin.py               # Gestión RBAC y acciones de administrador
 │       │   ├── auth.py                # Emisión JWT (Login/Signup)
+│       │   ├── chat.py                # Controladores de WebSockets para mensajería
 │       │   ├── contratos.py           # Gestión y formalización de contratos mentor-mentee
 │       │   ├── deps.py                # Inyectores de dependencias (get_db, roles)
-│       │   ├── disponibilidad.py      # Lógica de bloques de tiempo y agendamiento
+│       │   ├── disponibilidad.py      # Lógica de bloques de tiempo
 │       │   ├── paquetes.py            # CRUD de oferta comercial del Mentor
 │       │   ├── profiles.py            # Controladores de perfiles de usuario
-│       │   ├── sesiones.py            # Gestión de sesiones (incluye control de concurrencia de reservas)
-│       │   └── skills.py              # Taxonomía y habilidades
+│       │   ├── resenas.py             # Emisión y listado de valoraciones
+│       │   ├── sesiones.py            # Gestión de agendamientos de videollamadas
+│       │   ├── skills.py              # Taxonomía y habilidades
+│       │   └── webhooks.py            # Recepción de eventos externos (Stripe)
 │       ├── core/                      # Configuraciones base y seguridad
+│       │   ├── daily_client.py        # Integración con API de videollamadas
+│       │   ├── s3_client.py           # Cliente asíncrono para manipulación en S3
 │       │   └── security.py            # Hashing de contraseñas y firma JWT
 │       ├── db/                        # Capa de infraestructura de datos
-│       │   └── database.py            # Inicialización de create_async_engine y AsyncSessionLocal
+│       │   └── database.py            # Inicialización de AsyncSessionLocal
 │       ├── models/                    # Modelos ORM mapeados a SQL
 │       │   ├── associations.py        # Tablas intermedias relacionales
-│       │   ├── main_models.py         # Entidades principales de negocio
+│       │   ├── main_models.py         # Entidades de negocio centrales (Paquetes, Contratos, etc.)
 │       │   └── usuarios.py            # Entidad core de autenticación y roles
 │       ├── repositories/              # Patrón repositorio para acceso a datos
-│       │   ├── mentee_repository.py   # Operaciones CRUD específicas para Mentees
-│       │   ├── mentor_repository.py   # Operaciones CRUD específicas para Mentores
-│       │   └── user_repository.py     # Operaciones CRUD globales de usuarios
-│       ├── schemas/                   # Serialización y validación de datos (Pydantic)
-│       │   ├── admin.py               # DTOs para la vista de administración
-│       │   ├── mentee_profile.py      # DTOs para el perfil de Mentee
-│       │   ├── mentor_profile.py      # DTOs para el perfil de Mentor
-│       │   ├── paquete_schema.py      # DTOs para los paquetes ofrecidos
-│       │   ├── sesion_schema.py       # DTOs para reserva de sesiones
-│       │   ├── skills.py              # DTOs para manejo de habilidades
-│       │   └── user.py                # DTOs de capa base de usuario
-│       └── services/                  # Casos de uso y lógica de negocio pura
-│           ├── auth_service.py        # Lógica central de autenticación y validación
-│           └── profile_service.py     # Orquestación de creación/actualización de perfiles
+│       │   ├── chat_repository.py     # Lógica de base de datos para salas y mensajes
+│       │   ├── mentee_repository.py   # DB CRUD para Mentees
+│       │   ├── mentor_repository.py   # DB CRUD para Mentores
+│       │   └── user_repository.py     # DB CRUD global de usuarios
+│       ├── schemas/                   # DTOs y validación de datos (Pydantic)
+│       │   ├── admin.py               # Serialización de datos de administración
+│       │   ├── chat_schema.py         # Serialización de mensajes
+│       │   ├── mentee_profile.py      # Serialización del perfil de Mentee
+│       │   ├── mentor_profile.py      # Serialización del perfil de Mentor
+│       │   ├── paquete_schema.py      # Validación de servicios
+│       │   ├── resena_schema.py       # Validación de reseñas
+│       │   ├── sesion_schema.py       # Serialización de videollamadas
+│       │   ├── skills.py              # Validación de habilidades
+│       │   ├── upload_schema.py       # Subida de archivos / URLs pre-firmadas
+│       │   └── user.py                # Serialización base de usuario
+│       └── services/                  # Casos de uso y lógica de negocio
+│           ├── admin_service.py       # Reglas de negocio del administrador
+│           ├── auditoria_service.py   # Lógica de trazabilidad
+│           ├── auth_service.py        # Validación estricta de sesión
+│           ├── connection_manager.py  # Gestor de pool de WebSockets
+│           ├── contrato_service.py    # Lógica de compra y becas
+│           ├── paquete_service.py     # Orquestación de oferta comercial
+│           ├── profile_service.py     # Orquestación de onboarding
+│           ├── resena_service.py      # Lógica de promedios de calificación
+│           └── sesion_service.py      # Control concurrencia de reservas
 │
 ├── frontend/                          # Capa Cliente (React + Vite)
 │   ├── package.json                   # Definición de scripts NPM y dependencias
-│   ├── package-lock.json              # Árbol exacto de versiones de dependencias
-│   ├── vite.config.js                 # Configuración de compilación y servidor local Vite
+│   ├── package-lock.json              # Árbol exacto de dependencias
+│   ├── vite.config.js                 # Configuración de servidor local Vite
 │   ├── tailwind.config.js             # Configuración de utilidad CSS Tailwind
-│   ├── postcss.config.js              # Procesador de CSS complementario
-│   ├── eslint.config.js               # Reglas de validación estática de código
-│   ├── index.html                     # Punto de entrada HTML del DOM virtual
-│   ├── README.md                      # Instrucciones de arranque del entorno cliente
-│   ├── public/                        # Archivos estáticos accesibles directamente
-│   │   ├── favicon.svg                # Ícono principal de pestaña
-│   │   └── icons.svg                  # Colección de vectores
-│   └── src/                           # Directorio fuente del cliente
-│       ├── main.jsx                   # Entrypoint de React y montura del árbol
-│       ├── App.jsx                    # Enrutador principal y layout global
-│       ├── index.css                  # Hoja de estilos principal y directivas Tailwind
-│       ├── AuthContext.jsx            # Gestor global de sesión (Context API)
-│       ├── ProtectedRoute.jsx         # Componente interceptor para rutas privadas
-│       ├── assets/                    # Recursos empaquetados en tiempo de construcción
+│   ├── postcss.config.js              # Procesador de CSS
+│   ├── eslint.config.js               # Reglas de código limpio
+│   ├── playwright.config.js           # Entorno de pruebas E2E UI
+│   ├── index.html                     # Punto de entrada HTML
+│   ├── Dockerfile                     # Imagen Docker del frontend
+│   ├── README.md                      # Instrucciones del entorno React
+│   ├── public/                        # Archivos estáticos
+│   │   ├── favicon.svg                # Ícono de pestaña
+│   │   └── icons.svg                  # Vectores complementarios
+│   ├── tests/                         # Pruebas automatizadas (Playwright)
+│   │   └── e2e/auth.spec.js           # End-to-end tests para flujo de Login
+│   │
+│   └── src/                           # Código fuente React
+│       ├── main.jsx                   # Montura principal de la app
+│       ├── App.jsx                    # Enrutador base
+│       ├── index.css                  # Estilos maestros (Tailwind imports)
+│       ├── AuthContext.jsx            # Gestor de JWT a nivel aplicación
+│       ├── ProtectedRoute.jsx         # Componente para bloquear rutas no autorizadas
+│       ├── hooks/                     # Custom Hooks globales
+│       │   ├── useAgendamiento.js     # Lógica central para calcular la disponibilidad horaria
+│       │   └── useChat.js             # Gestor dinámico del estado del WebSocket
+│       ├── assets/                    # Recursos empaquetados por Vite
 │       │   └── [imágenes y SVGs]      # hero.png, react.svg, vite.svg
-│       ├── components/                # Bloques de construcción UI reutilizables
-│       │   ├── MainLayout.jsx         # Estructura maestra visual
-│       │   ├── MentorAvailabilityPanel.jsx # Panel interactivo de calendarios
-│       │   ├── MentorSkillForm.jsx    # Formulario dinámico de competencias
-│       │   └── Navbar.jsx             # Barra de navegación principal
-│       ├── pages/                     # Vistas mapeadas a rutas
-│       │   ├── AdminDashboard/        # Dashboard de administración y reportes
-│       │   ├── AgendarSesion/         # Vista transaccional para agendar
-│       │   ├── CompleteProfile/       # Flujo de onboarding primario
-│       │   ├── Login/                 # Pantalla de acceso de usuarios
-│       │   ├── Marketplace/           # Listado y motor de búsqueda de mentores
-│       │   ├── MenteeCompleteProfile/ # Formulario de datos específicos para aprendices
-│       │   ├── MenteeDashboard/       # Hub central de operaciones del Mentee
-│       │   ├── MentorDashboard/       # Hub central de operaciones del Mentor
-│       │   ├── MisContratos/          # Historial y gestión de servicios
-│       │   ├── Paquetes/              # Configuración de servicios de venta
-│       │   └── Register/              # Formulario de alta de usuario nuevo
-│       └── services/                  # Abstracción de llamadas de red
-│           ├── apiClient.js           # Configuración de Axios/Fetch e interceptores
-│           ├── adminService.js        # Integración con endpoints de Admin
-│           ├── authService.js         # Integración con endpoints de Auth
-│           └── profileService.js      # Integración con endpoints de Perfil
+│       ├── components/                # Componentes reusables UI
+│       │   ├── LoadingSpinner.jsx     # Cargador de red
+│       │   ├── MainLayout.jsx         # Layout maestro de enrutamiento
+│       │   ├── MentorAvailabilityPanel.jsx # Panel interactivo de gestión horaria
+│       │   ├── MentorSkillForm.jsx    # Formulario dinámico de habilidades
+│       │   ├── Navbar.jsx             # Barra de navegación interior (Privada)
+│       │   └── Landing/               # Componentes específicos de la Landing Page
+│       │       ├── Benefits.jsx       # Sección de beneficios
+│       │       ├── CTASection.jsx     # Bloque final Call-To-Action
+│       │       ├── Footer.jsx         # Pie de página corporativo
+│       │       ├── Hero.jsx           # Banner superior de entrada
+│       │       ├── HowItWorks.jsx     # Flujo visual de funcionamiento
+│       │       ├── Navbar.jsx         # Navegación del Landing Page
+│       │       ├── Packages.jsx       # Tarjetas de exhibición de precios
+│       │       └── Testimonials.jsx   # Prueba social y reseñas destacadas
+│       │
+│       ├── pages/                     # Controladores de vista por URL
+│       │   ├── AdminDashboard/        # Dashboard de analíticas y moderación
+│       │   ├── AgendarSesion/         # Lógica visual de selección de turnos
+│       │   ├── Chat/                  # Interfaz gráfica de WebSockets
+│       │   ├── CompleteProfile/       # Onboarding general de usuarios
+│       │   ├── Landing/               # Ensamblador de la Landing Page
+│       │   ├── Login/                 # Ventana de autenticación de usuario
+│       │   ├── Marketplace/           # Catálogo buscador de servicios (Mentores)
+│       │   ├── MenteeCompleteProfile/ # Flujo de registro del estudiante
+│       │   ├── MenteeDashboard/       # Panel de control privado del estudiante
+│       │   ├── MentorDashboard/       # Panel de control privado del mentor
+│       │   ├── MisContratos/          # Historial de servicios activos y consumidos
+│       │   ├── Paquetes/              # Gestión de la oferta económica del mentor
+│       │   ├── PublicProfile/         # Escaparate público con habilidades del mentor
+│       │   ├── Register/              # Ventana de creación de nuevas cuentas
+│       │   └── SalaVideo/             # Contenedor iframe para integraciones (Daily.co)
+│       │
+│       └── services/                  # Capa de transporte al backend (Axios)
+│           ├── apiClient.js           # Instancia Axios con interceptores JWT
+│           ├── adminService.js        # API Call: Funciones de administrador
+│           ├── authService.js         # API Call: Sesiones
+│           ├── chatService.js         # API Call: REST fallback y carga de historial
+│           └── profileService.js      # API Call: Gestión de cuentas
 │
 └── images/                            # Activos visuales de documentación del sistema
     ├── editarperfilmentee.png         # Captura: Vista perfil mentee
@@ -112,7 +175,6 @@ MentorMatch/
     ├── panelAdmin.png                 # Captura: Interfaz de admin
     └── register.png                   # Captura: Formulario de registro visual
 
-```
 
 ## Stack Tecnológico (Actualizado)
 
