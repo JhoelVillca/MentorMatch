@@ -77,11 +77,22 @@ async def get_mensajes_paginated(db: AsyncSession, id_sala: UUID, before_dt: Opt
 async def save_mensaje(db: AsyncSession, id_sala: UUID, id_remitente: UUID, contenido: str, is_mentee: bool) -> MensajeChat:
     mensaje = MensajeChat(id_sala=id_sala, id_remitente=id_remitente, contenido_texto=contenido)
     db.add(mensaje)
+    await db.flush()
     
-    counter_update = {"no_leidos_mentor": SalaChat.no_leidos_mentor + 1} if is_mentee else {"no_leidos_mentee": SalaChat.no_leidos_mentee + 1}
-    counter_update["ultima_actividad"] = func.now()
+    stmt = update(SalaChat).where(SalaChat.id_sala == id_sala)
+
+    if is_mentee:
+        stmt = stmt.values(
+            no_leidos_mentor=SalaChat.no_leidos_mentor + 1,
+            ultima_actividad=func.now()
+        )
+    else:
+        stmt = stmt.values(
+            no_leidos_mentee=SalaChat.no_leidos_mentee + 1,
+            ultima_actividad=func.now()
+        )
     
-    await db.execute(update(SalaChat).where(SalaChat.id_sala == id_sala).values(**counter_update))
+    await db.execute(stmt)
     await db.commit()
     await db.refresh(mensaje)
     return mensaje
