@@ -7,6 +7,7 @@ export default function MentorDashboard() {
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [estudiantes, setEstudiantes] = useState([]);
   const [toastMsg, setToastMsg] = useState(null);
 
   useEffect(() => {
@@ -22,6 +23,10 @@ export default function MentorDashboard() {
 
     apiClient('/api/contratos/solicitudes', { method: 'GET' })
       .then((data) => setSolicitudes(data))
+      .catch(console.error);
+
+    apiClient('/api/contratos/mis-estudiantes', { method: 'GET' })
+      .then((data) => setEstudiantes(data))
       .catch(console.error);
   }, []);
 
@@ -103,6 +108,38 @@ export default function MentorDashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl mt-8">
+        <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
+          Tus Estudiantes Activos
+        </h2>
+        {estudiantes.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aún no tienes reclutas activos.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-[#141414] text-gray-400">
+                <tr>
+                  <th className="p-3 rounded-tl-lg">Mentee</th>
+                  <th className="p-3">Paquete</th>
+                  <th className="p-3 text-center rounded-tr-lg">Horas Consumidas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estudiantes.map((est) => (
+                  <tr key={est.id_contrato} className="border-b border-gray-800 hover:bg-[#0a0a0a]">
+                    <td className="p-3 font-semibold text-white">{est.mentee_nombre}</td>
+                    <td className="p-3 text-blue-400">{est.titulo_paquete}</td>
+                    <td className="p-3 text-center">
+                      <span className="bg-blue-900/40 text-blue-300 py-1 px-3 rounded-full">{est.horas_consumidas} h</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

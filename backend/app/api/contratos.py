@@ -111,3 +111,11 @@ async def rechazar_beca(
         return await servicio.responder_solicitud_beca(user_id, id_contrato, "rechazar")
     except Exception as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
+@router.get("/mis-estudiantes")
+async def listar_mis_estudiantes(
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentor_user_id)
+):
+    servicio = ContratoService(db)
+    return await servicio.listar_mis_estudiantes(user_id)

@@ -21,6 +21,7 @@ const AgendarSesion = lazy(() => import('./pages/AgendarSesion/AgendarSesionPage
 const SalaVideoPage = lazy(() => import('./pages/SalaVideo/SalaVideoPage'));
 const MentorAvailabilityPanel = lazy(() => import('./components/MentorAvailabilityPanel'));
 const ChatPage = lazy(() => import('./pages/Chat/ChatPage'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile/PublicProfile'));
 
 export default function App() {
   // Estado para controlar el modo oscuro de Tailwind de forma creativa
@@ -62,6 +63,9 @@ export default function App() {
                 <Route path="/mentor/paquetes" element={<PaquetesPage />} />
                 <Route path="/mentor/horarios" element={<MentorAvailabilityPanel />} />
               </Route>
+
+              {/* Ruta pública del perfil del mentor */}
+              <Route path="/mentor/perfil/:id" element={<PublicProfile />} />
 
               {/* Rutas de Mentee */}
               <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>

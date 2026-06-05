@@ -326,3 +326,27 @@ class ContratoService:
 
         await self.db.commit()
         return {"mensaje": f"Solicitud {accion}da con exito"}
+
+    async def listar_mis_estudiantes(self, user_id: UUID):
+        res_mentor = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+        mentor = res_mentor.scalars().first()
+        if not mentor:
+            return []
+
+        query = (
+            select(
+                ContratoMentoria.id_contrato,
+                PerfilMentee.nombre_completo.label("mentee_nombre"),
+                PaqueteMentor.titulo_paquete,
+                ContratoMentoria.horas_consumidas,
+                ContratoMentoria.fecha_adquisicion
+            )
+            .join(PerfilMentee, ContratoMentoria.id_mentee == PerfilMentee.id_mentee)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .filter(
+                PaqueteMentor.id_mentor == mentor.id_mentor,
+                ContratoMentoria.estado_contrato == "activo"
+            )
+        )
+        res = await self.db.execute(query)
+        return [dict(row._mapping) for row in res.all()]
