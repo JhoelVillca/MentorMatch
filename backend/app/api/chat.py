@@ -31,15 +31,6 @@ async def get_mensajes(id_sala: UUID, before: Optional[str] = Query(None), limit
     before_dt = datetime.fromisoformat(before) if before else None
     return await get_mensajes_paginated(db, id_sala, before_dt, limit)
 
-@router.patch("/{id_sala}/read")
-async def read_messages(id_sala: UUID, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    auth_data = await verify_sala_participant(db, id_sala, current_user.id_usuario)
-    if not auth_data: raise HTTPException(status.HTTP_403_FORBIDDEN, detail="No perteneces a esta sala.")
-    
-    await mark_as_read(db, id_sala, auth_data["is_mentee"])
-    return {"status": "ok"}
-
-
 @router.patch("/salas/{id_sala}/leer")
 async def marcar_sala_como_leida(id_sala: UUID, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     auth_data = await verify_sala_participant(db, id_sala, current_user.id_usuario)
