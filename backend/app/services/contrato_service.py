@@ -198,6 +198,7 @@ class ContratoService:
                 "fecha": c.ContratoMentoria.fecha_adquisicion,
                 "paquete": c.titulo_paquete,
                 "ya_resenado": c.id_resena is not None,
+            }
             for c in res.all()
         ]
 
