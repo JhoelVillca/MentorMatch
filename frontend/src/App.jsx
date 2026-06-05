@@ -9,6 +9,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 const Login = lazy(() => import('./pages/Login/Login'));
 const Register = lazy(() => import('./pages/Register/Register'));
+const Landing = lazy(() => import('./pages/Landing/Landing'));
 const MentorDashboard = lazy(() => import('./pages/MentorDashboard/MentorDashboard'));
 const CompleteProfile = lazy(() => import('./pages/CompleteProfile/CompleteProfile'));
 const MenteeDashboard = lazy(() => import('./pages/MenteeDashboard/MenteeDashboard'));
@@ -45,11 +46,14 @@ export default function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Rutas sin Navbar (Aisladas) */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
             {/* Rutas con Navbar (Envueltas en MainLayout) */}
             <Route element={<MainLayout />}>
+              {/* Rutas Públicas en MainLayout */}
+              <Route path="/catalog" element={<Marketplace />} />
               
               {/* Rutas de Administrador */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
@@ -71,7 +75,6 @@ export default function App() {
               <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
                 <Route path="/mentee" element={<MenteeDashboard />} />
                 <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
-                <Route path="/mentee/marketplace" element={<Marketplace />} />
                 <Route path="/mentee/agendar" element={<AgendarSesion />} />
                 <Route path="/mentee/contratos" element={<MisContratos />} />
               </Route>
@@ -84,7 +87,7 @@ export default function App() {
               
             </Route>
             
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
 
