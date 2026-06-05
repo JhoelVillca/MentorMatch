@@ -1,5 +1,7 @@
 import jwt
-from uuid import UUID
+import logging
+import asyncio
+from uuid import UUID, uuid4
 from datetime import datetime
 from typing import Optional
 
@@ -29,13 +31,14 @@ async def get_mensajes(id_sala: UUID, before: Optional[str] = Query(None), limit
     before_dt = datetime.fromisoformat(before) if before else None
     return await get_mensajes_paginated(db, id_sala, before_dt, limit)
 
-@router.patch("/{id_sala}/read")
-async def read_messages(id_sala: UUID, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@router.patch("/salas/{id_sala}/leer")
+async def marcar_sala_como_leida(id_sala: UUID, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     auth_data = await verify_sala_participant(db, id_sala, current_user.id_usuario)
     if not auth_data: raise HTTPException(status.HTTP_403_FORBIDDEN, detail="No perteneces a esta sala.")
     
     await mark_as_read(db, id_sala, auth_data["is_mentee"])
     return {"status": "ok"}
+
 
 
 @router.get("/unread-count")
@@ -97,6 +100,16 @@ async def iniciar_conversacion(
 
     raise HTTPException(status_code=400, detail="Debe proveer id_mentor o id_mentee")
 
+
+logger = logging.getLogger(__name__)
+
+async def _save_and_notify_background(sala_id_str: str, user_id_str: str, contenido: str, is_mentee: bool) -> None:
+    try:
+        async with AsyncSessionLocal() as db:
+            await save_mensaje(db, UUID(sala_id_str), UUID(user_id_str), contenido, is_mentee)
+    except Exception as e:
+        logger.error("Error al guardar mensaje en segundo plano: %s", e)
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     token = websocket.cookies.get("access_token") or websocket.query_params.get("token")
@@ -147,22 +160,23 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 async with AsyncSessionLocal() as db:
                     auth_data = await verify_sala_participant(db, UUID(sala_id), UUID(user_id))
-                    if not auth_data: continue
-
-                    mensaje = await save_mensaje(db, UUID(sala_id), UUID(user_id), contenido, auth_data["is_mentee"])
+                
+                if not auth_data: continue
 
                 msg_payload = {
                     "type": "new_message",
-                    "id_mensaje": str(mensaje.id_mensaje),
+                    "id_mensaje": str(uuid4()),
                     "id_sala": sala_id,
                     "id_remitente": user_id,
                     "contenido_texto": contenido,
-                    "fecha_envio": mensaje.fecha_envio.isoformat(),
+                    "fecha_envio": datetime.utcnow().isoformat(),
                     "leido": False
                 }
 
                 await manager.send_personal_message(auth_data["receiver_id"], msg_payload)
                 await manager.send_personal_message(user_id, msg_payload)
+
+                asyncio.create_task(_save_and_notify_background(sala_id, user_id, contenido, auth_data["is_mentee"]))
 
     except WebSocketDisconnect:
         manager.disconnect(user_id, websocket)

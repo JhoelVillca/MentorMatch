@@ -4,20 +4,25 @@ import { AuthProvider } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute'; 
 import MainLayout from './components/MainLayout'; 
 
-import Login from './pages/Login/Login';
-import Register from './pages/Register/Register';
-import MentorDashboard from './pages/MentorDashboard/MentorDashboard';
-import CompleteProfile from './pages/CompleteProfile/CompleteProfile';
-import MenteeDashboard from './pages/MenteeDashboard/MenteeDashboard';
-import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
-import MenteeCompleteProfile from './pages/MenteeCompleteProfile/MenteeCompleteProfile';
-import PaquetesPage from './pages/Paquetes/PaquetesPage'; 
-import Marketplace from './pages/Marketplace/Marketplace';
-import MisContratos from './pages/MisContratos/MisContratos';
-import AgendarSesion from './pages/AgendarSesion/AgendarSesionPage';
-import SalaVideoPage from './pages/SalaVideo/SalaVideoPage';
-import MentorAvailabilityPanel from './components/MentorAvailabilityPanel';
-import ChatPage from './pages/Chat/ChatPage';
+import { lazy, Suspense } from 'react';
+import LoadingSpinner from './components/LoadingSpinner';
+
+const Login = lazy(() => import('./pages/Login/Login'));
+const Register = lazy(() => import('./pages/Register/Register'));
+const Landing = lazy(() => import('./pages/Landing/Landing'));
+const MentorDashboard = lazy(() => import('./pages/MentorDashboard/MentorDashboard'));
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile/CompleteProfile'));
+const MenteeDashboard = lazy(() => import('./pages/MenteeDashboard/MenteeDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard/AdminDashboard'));
+const MenteeCompleteProfile = lazy(() => import('./pages/MenteeCompleteProfile/MenteeCompleteProfile'));
+const PaquetesPage = lazy(() => import('./pages/Paquetes/PaquetesPage'));
+const Marketplace = lazy(() => import('./pages/Marketplace/Marketplace'));
+const MisContratos = lazy(() => import('./pages/MisContratos/MisContratos'));
+const AgendarSesion = lazy(() => import('./pages/AgendarSesion/AgendarSesionPage'));
+const SalaVideoPage = lazy(() => import('./pages/SalaVideo/SalaVideoPage'));
+const MentorAvailabilityPanel = lazy(() => import('./components/MentorAvailabilityPanel'));
+const ChatPage = lazy(() => import('./pages/Chat/ChatPage'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile/PublicProfile'));
 
 export default function App() {
   // Estado para controlar el modo oscuro de Tailwind de forma creativa
@@ -38,46 +43,53 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Rutas sin Navbar (Aisladas) */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Rutas sin Navbar (Aisladas) */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Rutas con Navbar (Envueltas en MainLayout) */}
-          <Route element={<MainLayout />}>
+            {/* Rutas con Navbar (Envueltas en MainLayout) */}
+            <Route element={<MainLayout />}>
+              {/* Rutas Públicas en MainLayout */}
+              <Route path="/catalog" element={<Marketplace />} />
+              
+              {/* Rutas de Administrador */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
+
+              {/* Rutas de Mentor */}
+              <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
+                <Route path="/mentor" element={<MentorDashboard />} />
+                <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
+                <Route path="/mentor/paquetes" element={<PaquetesPage />} />
+                <Route path="/mentor/horarios" element={<MentorAvailabilityPanel />} />
+              </Route>
+
+              {/* Ruta pública del perfil del mentor */}
+              <Route path="/mentor/perfil/:id" element={<PublicProfile />} />
+
+              {/* Rutas de Mentee */}
+              <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
+                <Route path="/mentee" element={<MenteeDashboard />} />
+                <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
+                <Route path="/mentee/agendar" element={<AgendarSesion />} />
+                <Route path="/mentee/contratos" element={<MisContratos />} />
+              </Route>
+
+              {/* Rutas de Chat */}
+              <Route element={<ProtectedRoute allowedRoles={['mentor', 'mentee', 'admin']} />}>
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/sesion/:id_sesion" element={<SalaVideoPage />} />
+              </Route>
+              
+            </Route>
             
-            {/* Rutas de Administrador */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Route>
-
-            {/* Rutas de Mentor */}
-            <Route element={<ProtectedRoute allowedRoles={['mentor', 'admin']} />}>
-              <Route path="/mentor" element={<MentorDashboard />} />
-              <Route path="/mentor/completar-perfil" element={<CompleteProfile />} />
-              <Route path="/mentor/paquetes" element={<PaquetesPage />} />
-              <Route path="/mentor/horarios" element={<MentorAvailabilityPanel />} />
-            </Route>
-
-            {/* Rutas de Mentee */}
-            <Route element={<ProtectedRoute allowedRoles={['mentee', 'admin']} />}>
-              <Route path="/mentee" element={<MenteeDashboard />} />
-              <Route path="/mentee/completar-perfil" element={<MenteeCompleteProfile />} />
-              <Route path="/mentee/marketplace" element={<Marketplace />} />
-              <Route path="/mentee/agendar" element={<AgendarSesion />} />
-              <Route path="/mentee/contratos" element={<MisContratos />} />
-            </Route>
-
-            {/* Rutas de Chat */}
-            <Route element={<ProtectedRoute allowedRoles={['mentor', 'mentee', 'admin']} />}>
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/sesion/:id_sesion" element={<SalaVideoPage />} />
-            </Route>
-            
-          </Route>
-          
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
 
         {/* Interruptor Creativo Flotante Light/Dark */}
         <button

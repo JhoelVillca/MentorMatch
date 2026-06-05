@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric, Index
+from datetime import datetime, timezone
+
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, TIMESTAMP, Time, text, UniqueConstraint, Numeric, Index, JSON, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -44,6 +46,8 @@ class PaqueteMentor(Base):
     estado_activo = Column(Boolean, server_default="true")
     estado_validacion = Column(String(20), server_default=text("'pendiente'"))
     fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    ventas_totales = Column(Integer, server_default="0", nullable=False)
+    calificacion_promedio = Column(Numeric(3, 2), server_default="0.00", nullable=False)
 
 class ContratoMentoria(Base):
     __tablename__ = "contratos_mentoria"
@@ -53,6 +57,7 @@ class ContratoMentoria(Base):
     estado_contrato = Column(String(30), server_default="pendiente_pago")
     horas_consumidas = Column(Integer, server_default="0")
     fecha_adquisicion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    carta_motivacion = Column(Text, nullable=True)
 
 class TransaccionPago(Base):
     __tablename__ = "transacciones_pago"
@@ -136,11 +141,12 @@ class ResenaMentor(Base):
 class AuditoriaAdministrativa(Base):
     __tablename__ = "auditoria_administrativa"
     id_auditoria = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    id_admin = Column(UUID(as_uuid=True), ForeignKey("administradores.id_admin", ondelete="SET NULL"))
-    accion_realizada = Column(String(255), nullable=False)
-    tabla_afectada = Column(String(100), nullable=False)
-    id_registro_afectado = Column(UUID(as_uuid=True))
-    fecha_accion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), nullable=True)
+    entidad_afectada = Column(String(100), nullable=False)
+    id_entidad = Column(String(255), nullable=False)
+    accion = Column(String(255), nullable=False)
+    detalles_cambio = Column(JSON, nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 class SalaChat(Base):
     __tablename__ = "salas_chat"

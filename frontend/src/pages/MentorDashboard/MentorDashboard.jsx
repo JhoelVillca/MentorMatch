@@ -6,15 +6,59 @@ import { apiClient } from '../../services/apiClient';
 export default function MentorDashboard() {
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState(null);
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [estudiantesData, setEstudiantesData] = useState({ data: [], total: 0 });
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const [toastMsg, setToastMsg] = useState(null);
+
+  useEffect(() => {
+    if (!toastMsg) return;
+    const t = setTimeout(() => setToastMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [toastMsg]);
 
   useEffect(() => {
     apiClient('/api/sesiones/mentor/me', { method: 'GET' })
       .then((data) => setSesiones(data))
       .catch((err) => setError(err.message));
+
+    apiClient('/api/contratos/solicitudes', { method: 'GET' })
+      .then((data) => setSolicitudes(data))
+      .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    const offset = (page - 1) * limit;
+    apiClient(`/api/contratos/mis-estudiantes?limit=${limit}&offset=${offset}`, { method: 'GET' })
+      .then((res) => setEstudiantesData(res))
+      .catch(console.error);
+  }, [page]);
+
+  const responderSolicitud = async (id, accion) => {
+    try {
+      await apiClient(`/api/contratos/${id}/${accion}`, { method: 'PATCH' });
+      setSolicitudes(prev => prev.filter(s => s.id_contrato !== id));
+      setToastMsg({ type: 'success', text: `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'} exitosamente.` });
+    } catch (err) {
+      setToastMsg({ type: 'error', text: err.message });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
+      {toastMsg && (
+        <div
+          role="alert"
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
+            toastMsg.type === 'error'
+              ? 'bg-red-800 text-white border border-red-600'
+              : 'bg-green-800 text-white border border-green-600'
+          }`}
+        >
+          {toastMsg.text}
+        </div>
+      )}
       <h1 className="text-white text-center mt-10 text-3xl font-bold mb-8">Mentor Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -22,23 +66,109 @@ export default function MentorDashboard() {
           <MentorSkillForm />
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl h-fit">
-          <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
-            Agenda de Sesiones
-          </h2>
+        <div className="flex flex-col gap-8">
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl h-fit">
+            <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
+              Agenda de Sesiones
+            </h2>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+            {error && <p className="text-red-400 text-sm">{error}</p>}
 
-          {!error && sesiones.length === 0 ? (
-            <p className="text-gray-400 text-sm">Nadie ha agendado sesiones contigo aun.</p>
-          ) : (
-            <ul className="space-y-4">
-              {sesiones.map((s) => (
-                <SesionCardMentor key={s.id_sesion} sesion={s} />
-              ))}
-            </ul>
-          )}
+            {!error && sesiones.length === 0 ? (
+              <p className="text-gray-400 text-sm">Nadie ha agendado sesiones contigo aun.</p>
+            ) : (
+              <ul className="space-y-4">
+                {sesiones.map((s) => (
+                  <SesionCardMentor key={s.id_sesion} sesion={s} />
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl">
+            <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
+              El Panel del Juez (Becas)
+            </h2>
+            {solicitudes.length === 0 ? (
+              <p className="text-gray-400 text-sm">No hay peticiones de caridad hoy.</p>
+            ) : (
+              <ul className="space-y-4">
+                {solicitudes.map((sol) => (
+                  <li key={sol.id_contrato} className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-800 text-white flex flex-col gap-3">
+                    <div>
+                      <p className="font-semibold text-blue-400">{sol.mentee_nombre} <span className="text-xs text-gray-500 font-normal">quiere el paquete "{sol.paquete_titulo}"</span></p>
+                      <p className="text-sm text-gray-300 mt-2 bg-[#141414] p-3 border border-gray-700 rounded-md italic">"{sol.carta_motivacion}"</p>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={() => responderSolicitud(sol.id_contrato, 'aceptar')} className="flex-1 bg-green-700/20 text-green-400 border border-green-700 hover:bg-green-700 hover:text-white py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1">
+                        ✓ Conceder
+                      </button>
+                      <button onClick={() => responderSolicitud(sol.id_contrato, 'rechazar')} className="flex-1 bg-red-700/20 text-red-400 border border-red-700 hover:bg-red-700 hover:text-white py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1">
+                        ✗ Rechazar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl mt-8">
+        <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2 flex justify-between items-center">
+          <span>Tus Estudiantes Activos</span>
+          <span className="text-sm font-normal text-gray-400">Total: {estudiantesData.total}</span>
+        </h2>
+        {estudiantesData.data.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aún no tienes reclutas activos en esta página.</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-300">
+                <thead className="bg-[#141414] text-gray-400">
+                  <tr>
+                    <th className="p-3 rounded-tl-lg">Mentee</th>
+                    <th className="p-3">Paquete</th>
+                    <th className="p-3 text-center rounded-tr-lg">Horas Consumidas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estudiantesData.data.map((est) => (
+                    <tr key={est.id_contrato} className="border-b border-gray-800 hover:bg-[#0a0a0a]">
+                      <td className="p-3 font-semibold text-white">{est.mentee_nombre}</td>
+                      <td className="p-3 text-blue-400">{est.titulo_paquete}</td>
+                      <td className="p-3 text-center">
+                        <span className="bg-blue-900/40 text-blue-300 py-1 px-3 rounded-full">{est.horas_consumidas} h</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Paginación */}
+            {estudiantesData.total > limit && (
+              <div className="flex justify-between items-center mt-4">
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                >
+                  Anterior
+                </button>
+                <span className="text-gray-400 text-sm">Página {page} de {Math.ceil(estudiantesData.total / limit)}</span>
+                <button 
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= Math.ceil(estudiantesData.total / limit)}
+                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

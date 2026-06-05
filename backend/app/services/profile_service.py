@@ -11,6 +11,10 @@ async def get_mentor_profile(db: AsyncSession, user_id: UUID) -> Optional[Perfil
     return await mentor_repository.get_profile_by_user_id(db, user_id)
 
 
+async def get_public_mentor_profile(db: AsyncSession, mentor_id: UUID) -> Optional[PerfilMentor]:
+    return await mentor_repository.get_profile_by_mentor_id(db, mentor_id)
+
+
 async def upsert_mentor_profile(
     db: AsyncSession, user_id: UUID, data: ProfileUpdateOrCreate
 ) -> PerfilMentor:

@@ -2,17 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
-from datetime import datetime, timezone
 from uuid import UUID
+from datetime import datetime
 
 from app.db.database import get_db
 from app.api.deps import get_current_user
-from app.models.main_models import Administrador, AuditoriaAdministrativa, PaqueteMentor
+from app.models.main_models import Administrador, PaqueteMentor
 from app.models.usuarios import Usuario
 from app.repositories.user_repository import get_all_users_with_roles, get_user_role_name
 from app.schemas.user import UserResponse
 from app.schemas.admin import UserStatusUpdate
 from app.schemas.paquete_schema import PaqueteOut, PaqueteValidacion
+from app.services.admin_service import AdminService
 
 # Dia 1 aprendiendo python :v, (esto nunca estubo aqui)
 router = APIRouter(prefix="/admin", tags=["Administracion"])
@@ -62,23 +63,6 @@ async def _get_target_user(db: AsyncSession, user_id: str) -> Usuario:
             detail="Usuario no encontrado.",
         )
     return user
-
-
-async def _registrar_auditoria(
-    db: AsyncSession,
-    id_admin: UUID,
-    accion: str,
-    tabla: str,
-    id_registro: UUID,
-) -> None:
-    entrada = AuditoriaAdministrativa(
-        id_admin=id_admin,
-        accion_realizada=accion,
-        tabla_afectada=tabla,
-        id_registro_afectado=id_registro,
-        fecha_accion=datetime.now(timezone.utc),
-    )
-    db.add(entrada)
 
 
 @router.get("/users", response_model=List[AdminUserResponse])
@@ -197,27 +181,11 @@ async def validar_paquete(
     db: AsyncSession = Depends(get_db),
     auth: tuple = Depends(require_admin),
 ):
-    current_user, admin_record = auth
-    if payload.estado_validacion not in ["aprobado", "rechazado"]:
-         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Estado no valido")
-
-    res = await db.execute(
-        select(PaqueteMentor).filter(PaqueteMentor.id_paquete == paquete_id)
-    )
-    paquete = res.scalars().first()
-    if not paquete:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado")
-
-    paquete.estado_validacion = payload.estado_validacion
-
-    await _registrar_auditoria(
-        db,
-        id_admin=admin_record.id_admin,
-        accion=f"VALIDACION_PAQUETE:{paquete.estado_validacion}",
-        tabla="paquetes_mentor",
-        id_registro=paquete.id_paquete,
-    )
-
-    await db.commit()
-    await db.refresh(paquete)
-    return paquete
+    current_user, _ = auth
+    servicio = AdminService(db)
+    try:
+        return await servicio.validar_paquete(current_user.id_usuario, paquete_id, payload.estado_validacion)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

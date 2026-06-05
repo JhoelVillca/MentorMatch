@@ -23,7 +23,6 @@ __pycache__/
 *.so
 .pytest_cache/
 .coverage
-backend/tests
 
 # Variables de entorno reales
 backend/.env

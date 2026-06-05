@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from uuid import UUID
 
 from app.db.database import get_db
-from app.api.deps import get_current_mentee_user_id
+from app.api.deps import get_current_mentee_user_id, get_current_mentor_user_id
 from app.services.contrato_service import ContratoService
 from app.schemas.resena_schema import ResenaCreate, ResenaOut
 from app.services.resena_service import ResenaService
@@ -63,3 +63,63 @@ async def crear_resena(
         raise HTTPException(status.HTTP_409_CONFLICT, str(e))
     except RuntimeError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(e))
+
+class AplicarBecaReq(BaseModel):
+    id_paquete: UUID
+    carta_motivacion: str
+
+@router.post("/aplicar-beca", status_code=status.HTTP_202_ACCEPTED)
+async def aplicar_beca(
+    req: AplicarBecaReq,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentee_user_id)
+):
+    servicio = ContratoService(db)
+    try:
+        return await servicio.aplicar_beca(user_id, req.id_paquete, req.carta_motivacion)
+    except Exception as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
+@router.get("/solicitudes")
+async def listar_solicitudes_beca(
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentor_user_id)
+):
+    servicio = ContratoService(db)
+    return await servicio.listar_solicitudes_mentor(user_id)
+
+@router.patch("/{id_contrato}/aceptar")
+async def aceptar_beca(
+    id_contrato: UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentor_user_id)
+):
+    servicio = ContratoService(db)
+    try:
+        return await servicio.responder_solicitud_beca(user_id, id_contrato, "aceptar")
+    except Exception as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
+@router.patch("/{id_contrato}/rechazar")
+async def rechazar_beca(
+    id_contrato: UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentor_user_id)
+):
+    servicio = ContratoService(db)
+    try:
+        return await servicio.responder_solicitud_beca(user_id, id_contrato, "rechazar")
+    except Exception as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
+from fastapi import Query
+
+@router.get("/mis-estudiantes")
+async def listar_mis_estudiantes(
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentor_user_id),
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0)
+):
+    servicio = ContratoService(db)
+    return await servicio.listar_mis_estudiantes(user_id, limit, offset)

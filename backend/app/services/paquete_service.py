@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, desc
 from uuid import UUID
-from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad, ContratoMentoria, ResenaMentor
+from app.models.main_models import PaqueteMentor, PerfilMentor, MentorHabilidad, Habilidad, ContratoMentoria, ResenaMentor
 from app.schemas.paquete_schema import PaqueteCreate
 
 class PaqueteService:
@@ -45,20 +45,14 @@ class PaqueteService:
         res = await self.db.execute(query)
         return res.all()
 
-    async def buscar_paquetes(self, q: str | None = None, precio_max: float | None = None, id_habilidad: UUID | None = None):
-        # Subconsulta para obtener la calificacion promedio por mentor, omitiendo reportes
-        subq_promedio = (
-            select(
-                PaqueteMentor.id_mentor,
-                func.round(func.avg(ResenaMentor.calificacion_estrellas), 1).label("promedio")
-            )
-            .join(ContratoMentoria, PaqueteMentor.id_paquete == ContratoMentoria.id_paquete)
-            .join(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
-            .filter(ResenaMentor.reportada == False)
-            .group_by(PaqueteMentor.id_mentor)
-            .subquery()
-        )
-
+    async def buscar_paquetes(
+        self,
+        q: str | None = None,
+        precio_max: float | None = None,
+        id_habilidad: UUID | None = None,
+        nivel_dominio: str | None = None,
+        sort_by: str | None = None,
+    ):
         query = (
             select(
                 PaqueteMentor.id_paquete,
@@ -66,16 +60,23 @@ class PaqueteService:
                 PaqueteMentor.titulo_paquete,
                 PaqueteMentor.cantidad_horas_totales,
                 PaqueteMentor.precio_total,
+                PaqueteMentor.fecha_creacion,
                 PerfilMentor.nombre_completo.label("mentor_nombre"),
                 PerfilMentor.foto_perfil.label("mentor_foto"),
-                subq_promedio.c.promedio.label("calificacion_promedio")
+                PaqueteMentor.calificacion_promedio,
+                Habilidad.validada_por_admin,
+                PaqueteMentor.ventas_totales
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
-            .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
+            .outerjoin(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+            .outerjoin(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
         )
 
         if id_habilidad:
-            query = query.join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+            query = query.filter(MentorHabilidad.id_habilidad == id_habilidad)
+
+        if nivel_dominio:
+            query = query.filter(MentorHabilidad.nivel == nivel_dominio)
 
         query = query.filter(
             PaqueteMentor.estado_activo == True,
@@ -94,11 +95,20 @@ class PaqueteService:
         if precio_max:
             query = query.filter(PaqueteMentor.precio_total <= precio_max)
 
-        if id_habilidad:
-            query = query.filter(MentorHabilidad.id_habilidad == id_habilidad)
+        # AST Dinamico para el ordenamiento
+        if sort_by == "recientes":
+            query = query.order_by(PaqueteMentor.fecha_creacion.desc())
+        elif sort_by == "calificados":
+            query = query.order_by(PaqueteMentor.calificacion_promedio.desc().nulls_last())
+        elif sort_by == "populares":
+            query = query.order_by(PaqueteMentor.ventas_totales.desc())
+        else:
+            query = query.order_by(Habilidad.validada_por_admin.desc())
+
+        query = query.distinct()
 
         res = await self.db.execute(query)
-        return res.all()
+        return [dict(row._mapping) for row in res.all()]
 
     async def crear_paquete(self, user_id: str, paquete: PaqueteCreate):
         res = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))

@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from app.models.main_models import ContratoMentoria, ResenaMentor, PerfilMentee
 from app.schemas.resena_schema import ResenaCreate
+from app.services.auditoria_service import AuditoriaService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,28 @@ class ResenaService:
         self.db.add(nueva_resena)
         
         try:
+            await self.db.flush()
+            
+            # Application Layer: Actualizar calificacion promedio
+            from sqlalchemy import func, update
+            from app.models.main_models import PaqueteMentor
+            
+            subq_promedio = (
+                select(func.round(func.avg(ResenaMentor.calificacion_estrellas), 2))
+                .join(ContratoMentoria, ResenaMentor.id_contrato == ContratoMentoria.id_contrato)
+                .filter(
+                    ContratoMentoria.id_paquete == contrato.id_paquete,
+                    ResenaMentor.reportada == False
+                )
+                .scalar_subquery()
+            )
+            
+            await self.db.execute(
+                update(PaqueteMentor)
+                .where(PaqueteMentor.id_paquete == contrato.id_paquete)
+                .values(calificacion_promedio=func.coalesce(subq_promedio, 0.0))
+            )
+
             await self.db.commit()
             await self.db.refresh(nueva_resena)
             return nueva_resena
@@ -53,13 +76,52 @@ class ResenaService:
             await self.db.rollback()
             raise RuntimeError(f"Error interno al guardar la resena: {str(e)}")
 
-    async def reportar_resena(self, id_resena: UUID) -> ResenaMentor:
+    async def reportar_resena(self, id_usuario: UUID, id_resena: UUID) -> ResenaMentor:
         res = await self.db.execute(select(ResenaMentor).filter(ResenaMentor.id_resena == id_resena))
         resena = res.scalars().first()
         if not resena:
             raise LookupError("Resena no encontrada.")
         
+        estado_anterior = bool(resena.reportada)
         resena.reportada = True
+
+        AuditoriaService.registrar_evento(
+            self.db,
+            id_usuario=id_usuario,
+            entidad_afectada="resenas_mentor",
+            id_entidad=resena.id_resena,
+            accion="REPORTAR_RESENA",
+            detalles_cambio={
+                "estado_anterior": estado_anterior,
+                "estado_nuevo": True,
+            },
+        )
+
+        await self.db.flush()
+        
+        from sqlalchemy import func, update
+        from app.models.main_models import PaqueteMentor, ContratoMentoria
+        
+        res_contrato = await self.db.execute(select(ContratoMentoria.id_paquete).filter(ContratoMentoria.id_contrato == resena.id_contrato))
+        id_paquete = res_contrato.scalar_one_or_none()
+        
+        if id_paquete:
+            subq_promedio = (
+                select(func.round(func.avg(ResenaMentor.calificacion_estrellas), 2))
+                .join(ContratoMentoria, ResenaMentor.id_contrato == ContratoMentoria.id_contrato)
+                .filter(
+                    ContratoMentoria.id_paquete == id_paquete,
+                    ResenaMentor.reportada == False
+                )
+                .scalar_subquery()
+            )
+            
+            await self.db.execute(
+                update(PaqueteMentor)
+                .where(PaqueteMentor.id_paquete == id_paquete)
+                .values(calificacion_promedio=func.coalesce(subq_promedio, 0.0))
+            )
+
         await self.db.commit()
         await self.db.refresh(resena)
         return resena

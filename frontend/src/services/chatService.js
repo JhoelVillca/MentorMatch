@@ -9,7 +9,7 @@ export const getMensajes = (salaId, before = null, limit = 30) => {
 };
 
 export const markAsRead = (salaId) => 
-  apiClient(`/api/chat/${salaId}/read`, { method: 'PATCH' });
+  apiClient(`/api/chat/salas/${salaId}/leer`, { method: 'PATCH' });
 
 
 export const iniciarChat = (id_mentor = null, id_mentee = null) => {

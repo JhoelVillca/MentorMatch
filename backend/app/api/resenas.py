@@ -15,7 +15,8 @@ async def reportar_resena(
     admin_user = Depends(require_admin)
 ):
     servicio = ResenaService(db)
+    current_user, _ = admin_user
     try:
-        return await servicio.reportar_resena(id_resena)
+        return await servicio.reportar_resena(current_user.id_usuario, id_resena)
     except LookupError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))

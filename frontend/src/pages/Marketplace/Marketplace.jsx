@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
 import { apiClient } from '../../services/apiClient';
 import { iniciarChat } from '../../services/chatService';
 
@@ -11,10 +12,15 @@ export default function Marketplace() {
   const [q, setQ] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [idHabilidad, setIdHabilidad] = useState('');
+  const [nivelDominio, setNivelDominio] = useState('');
   const [toastMsg, setToastMsg] = useState(null);
+  const [modalBeca, setModalBeca] = useState({ open: false, id_paquete: null });
+  const [carta, setCarta] = useState('');
+  const [enviandoBeca, setEnviandoBeca] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { token: user } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -46,6 +52,7 @@ export default function Marketplace() {
         if (q) params.append('q', q);
         if (precioMax) params.append('precio_max', precioMax);
         if (idHabilidad) params.append('id_habilidad', idHabilidad);
+        if (nivelDominio) params.append('nivel_dominio', nivelDominio);
 
         const data = await apiClient(`/api/paquetes/buscar?${params.toString()}`, {
           method: 'GET',
@@ -65,7 +72,7 @@ export default function Marketplace() {
       clearTimeout(debounceTimer);
       controller.abort();
     };
-  }, [q, precioMax, idHabilidad]);
+  }, [q, precioMax, idHabilidad, nivelDominio]);
 
   const handleAdquirir = async (idPaquete) => {
     try {
@@ -90,6 +97,24 @@ export default function Marketplace() {
       navigate('/chat', { state: { salaId: res.id_sala } });
     } catch (err) {
       setToastMsg({ type: 'error', text: `Error al iniciar chat: ${err.message}` });
+    }
+  };
+
+  const handleAplicarBeca = async () => {
+    if (!carta.trim()) return;
+    setEnviandoBeca(true);
+    try {
+      await apiClient('/api/contratos/aplicar-beca', {
+        method: 'POST',
+        body: { id_paquete: modalBeca.id_paquete, carta_motivacion: carta }
+      });
+      setToastMsg({ type: 'success', text: 'Solicitud enviada al panel del juez.' });
+      setModalBeca({ open: false, id_paquete: null });
+      setCarta('');
+    } catch (err) {
+      setToastMsg({ type: 'error', text: `Error: ${err.message}` });
+    } finally {
+      setEnviandoBeca(false);
     }
   };
 
@@ -126,7 +151,7 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
           <input
             type="text"
             placeholder="Buscar por titulo o nombre..."
@@ -162,6 +187,18 @@ export default function Marketplace() {
                 )
             )}
           </select>
+
+            <select
+              value={nivelDominio}
+              onChange={(e) => setNivelDominio(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
+            >
+              <option value="">Todos los niveles</option>
+              <option value="basico">Basico</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzado">Avanzado</option>
+              <option value="experto">Experto</option>
+            </select>
         </div>
       </div>
 
@@ -186,20 +223,24 @@ export default function Marketplace() {
               key={p.id_paquete}
               className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg"
             >
-              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800">
+              <div 
+                onClick={() => navigate(`/mentor/perfil/${p.id_mentor}`)}
+                className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800 cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors group"
+                title="Ver perfil del mentor"
+              >
                 {p.mentor_foto ? (
                   <img
                     src={p.mentor_foto}
                     alt={p.mentor_nombre}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700"
+                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700 group-hover:border-blue-500 transition-colors"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700">
+                  <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700 group-hover:border-blue-500 transition-colors">
                     {p.mentor_nombre.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <h3 className="text-lg font-semibold text-white leading-tight">{p.mentor_nombre}</h3>
+                  <h3 className="text-lg font-semibold text-white leading-tight group-hover:text-blue-400 transition-colors">{p.mentor_nombre}</h3>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-[10px] text-green-400 font-bold tracking-wider uppercase border border-green-500/20 bg-green-500/5 px-1.5 py-0.5 rounded">
                       Verificado
@@ -231,15 +272,54 @@ export default function Marketplace() {
                 >
                   Mensaje
                 </button>
-                <button
-                  onClick={() => handleAdquirir(p.id_paquete)}
-                  className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
-                >
-                  Adquirir
-                </button>
+                {user ? (
+                  <div className="flex flex-col gap-2 w-full">
+                    <button
+                      onClick={() => handleAdquirir(p.id_paquete)}
+                      className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-red-900/20"
+                    >
+                      Adquirir
+                    </button>
+                    <button
+                      onClick={() => { setModalBeca({ open: true, id_paquete: p.id_paquete }); setCarta(''); }}
+                      className="w-full bg-transparent border border-blue-600 text-blue-400 hover:bg-blue-900/30 font-bold py-2 rounded-xl transition-all"
+                    >
+                      Solicitar Beca
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+                  >
+                    Inicia sesion para agendar
+                  </button>
+                )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+      
+      {modalBeca.open && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#141414] border border-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Solicitud de Beca</h3>
+            <p className="text-xs text-gray-500 mb-4">Escribe tus motivos. Convence al mentor.</p>
+            <textarea 
+              rows="5"
+              value={carta}
+              onChange={(e) => setCarta(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-gray-800 text-white rounded-xl p-3 focus:border-blue-500 outline-none resize-none transition-colors mb-4"
+              placeholder="Soy estudiante y admiro tu trabajo..."
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setModalBeca({ open: false, id_paquete: null })} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancelar</button>
+              <button onClick={handleAplicarBeca} disabled={enviandoBeca || !carta.trim()} className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl disabled:opacity-50">
+                {enviandoBeca ? 'Enviando...' : 'Enviar Súplica'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
