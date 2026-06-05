@@ -40,6 +40,16 @@ async def read_messages(id_sala: UUID, current_user=Depends(get_current_user), d
     return {"status": "ok"}
 
 
+@router.patch("/salas/{id_sala}/leer")
+async def marcar_sala_como_leida(id_sala: UUID, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    auth_data = await verify_sala_participant(db, id_sala, current_user.id_usuario)
+    if not auth_data: raise HTTPException(status.HTTP_403_FORBIDDEN, detail="No perteneces a esta sala.")
+    
+    await mark_as_read(db, id_sala, auth_data["is_mentee"])
+    return {"status": "ok"}
+
+
+
 @router.get("/unread-count")
 async def get_unread_count(current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     uid = current_user.id_usuario

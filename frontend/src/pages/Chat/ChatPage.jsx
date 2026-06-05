@@ -71,7 +71,9 @@ export default function ChatPage() {
                       <span className="font-semibold text-sm truncate">{sala.nombre_otro}</span>
                     </div>
                     {sala.unread_count > 0 && (
-                      <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">{sala.unread_count}</span>
+                      <div className="bg-red-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                        {sala.unread_count > 99 ? '99+' : sala.unread_count}
+                      </div>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 truncate pl-4">{sala.ultimo_mensaje || 'Inicia la conversacion...'}</p>

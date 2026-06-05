@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSalas, getMensajes, markAsRead } from '../services/chatService';
+import { useAuth } from '../AuthContext';
 
 const getWsUrl = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
@@ -10,6 +11,9 @@ const getWsUrl = () => {
 };
 
 export function useChat() {
+  const { token } = useAuth();
+  const currentUserId = token?.id ? String(token.id) : null;
+
   const [salas, setSalas] = useState([]);
   const [selectedSalaId, setSelectedSalaId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -111,14 +115,30 @@ export function useChat() {
       }
 
       if (data.type === 'new_message') {
-        if (data.id_sala === selectedSalaRef.current) {
+        const esSalaEnFoco = data.id_sala === selectedSalaRef.current;
+        if (esSalaEnFoco) {
           setMessages((prev) => {
             if (prev.some(m => m.id_mensaje === data.id_mensaje)) return prev;
             return [...prev, data];
           });
-          markAsRead(data.id_sala).catch(() => {});
+          if (data.id_remitente !== currentUserId) {
+            markAsRead(data.id_sala).catch(() => {});
+          }
         }
-        refreshSalas(); 
+        setSalas((prevSalas) => {
+          const updated = prevSalas.map((sala) => {
+            if (sala.id_sala === data.id_sala) {
+              return {
+                ...sala,
+                ultimo_mensaje: data.contenido_texto,
+                ultimo_mensaje_fecha: data.fecha_envio,
+                unread_count: esSalaEnFoco ? 0 : (sala.unread_count || 0) + 1,
+              };
+            }
+            return sala;
+          });
+          return [...updated].sort((a, b) => new Date(b.ultimo_mensaje_fecha || 0) - new Date(a.ultimo_mensaje_fecha || 0));
+        });
       }
     };
 
@@ -150,6 +170,11 @@ export function useChat() {
     setMessages([]);
     setHasMore(false);
     if (salaId) {
+      setSalas((prevSalas) =>
+        prevSalas.map((sala) =>
+          sala.id_sala === salaId ? { ...sala, unread_count: 0 } : sala
+        )
+      );
       loadMessages(salaId);
       markAsRead(salaId).catch(() => {});
     }
