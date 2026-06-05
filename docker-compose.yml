@@ -6,7 +6,7 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - mentormatch_data:/var/lib/postgresql/data
       - ./database/schema_init.sql:/docker-entrypoint-initdb.d/init.sql

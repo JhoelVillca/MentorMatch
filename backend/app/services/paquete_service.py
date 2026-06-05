@@ -78,8 +78,8 @@ class PaqueteService:
                 Habilidad.validada_por_admin,
             )
             .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
-            .join(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
-            .join(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
+            .outerjoin(MentorHabilidad, PaqueteMentor.id_mentor == MentorHabilidad.id_mentor)
+            .outerjoin(Habilidad, MentorHabilidad.id_habilidad == Habilidad.id_habilidad)
             .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
         )
 

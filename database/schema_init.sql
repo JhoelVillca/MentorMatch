@@ -94,7 +94,7 @@ CREATE TABLE Contratos_Mentoria (
     id_contrato UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_mentee UUID REFERENCES Perfil_Mentee(id_mentee) ON DELETE RESTRICT,
     id_paquete UUID REFERENCES Paquetes_Mentor(id_paquete) ON DELETE RESTRICT,
-    estado_contrato VARCHAR(30) DEFAULT 'pendiente_pago' CHECK (estado_contrato IN ('pendiente_pago', 'activo', 'completado', 'cancelado')),
+    estado_contrato VARCHAR(30) DEFAULT 'pendiente_pago' CHECK (estado_contrato IN ('pendiente_aprobacion', 'pendiente_pago', 'activo', 'completado', 'cancelado', 'rechazado')),
     fecha_adquisicion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     horas_consumidas INT DEFAULT 0 CHECK (horas_consumidas >= 0)
 );
@@ -144,11 +144,12 @@ CREATE TABLE Resenas_Mentor (
 
 CREATE TABLE Auditoria_Administrativa (
     id_auditoria UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_admin UUID REFERENCES Administradores(id_admin) ON DELETE SET NULL,
-    accion_realizada VARCHAR(255) NOT NULL,
-    tabla_afectada VARCHAR(100) NOT NULL,
-    id_registro_afectado UUID,
-    fecha_accion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    id_usuario UUID REFERENCES Usuarios(id_usuario) ON DELETE SET NULL,
+    entidad_afectada VARCHAR(100) NOT NULL,
+    id_entidad VARCHAR(255) NOT NULL,
+    accion VARCHAR(255) NOT NULL,
+    detalles_cambio JSON NOT NULL,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 8. ÍNDICES ESTRATÉGICOS (B-Trees)
