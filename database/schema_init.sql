@@ -94,7 +94,7 @@ CREATE TABLE Contratos_Mentoria (
     id_contrato UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_mentee UUID REFERENCES Perfil_Mentee(id_mentee) ON DELETE RESTRICT,
     id_paquete UUID REFERENCES Paquetes_Mentor(id_paquete) ON DELETE RESTRICT,
-    estado_contrato VARCHAR(30) DEFAULT 'pendiente_pago' CHECK (estado_contrato IN ('pendiente_pago', 'activo', 'completado', 'cancelado')),
+    estado_contrato VARCHAR(30) DEFAULT 'pendiente_pago' CHECK (estado_contrato IN ('pendiente_aprobacion', 'pendiente_pago', 'activo', 'completado', 'cancelado', 'rechazado')),
     fecha_adquisicion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     horas_consumidas INT DEFAULT 0 CHECK (horas_consumidas >= 0)
 );

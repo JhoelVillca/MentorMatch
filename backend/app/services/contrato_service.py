@@ -243,6 +243,18 @@ class ContratoService:
         await self.db.commit()
         await self.db.refresh(nuevo_contrato)
         
+        AuditoriaService.registrar_evento(
+            self.db,
+            id_usuario=user_id,
+            entidad_afectada="contratos_mentoria",
+            id_entidad=str(nuevo_contrato.id_contrato),
+            accion="BECA_SOLICITADA",
+            detalles_cambio={
+                "estado_nuevo": "pendiente_aprobacion",
+                "id_paquete": str(paquete.id_paquete)
+            }
+        )
+
         return {"mensaje": "Solicitud de beca encolada", "id_contrato": nuevo_contrato.id_contrato}
 
     async def listar_solicitudes_mentor(self, user_id: UUID):

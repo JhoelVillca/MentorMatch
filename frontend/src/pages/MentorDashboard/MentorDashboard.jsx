@@ -7,6 +7,13 @@ export default function MentorDashboard() {
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [toastMsg, setToastMsg] = useState(null);
+
+  useEffect(() => {
+    if (!toastMsg) return;
+    const t = setTimeout(() => setToastMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [toastMsg]);
 
   useEffect(() => {
     apiClient('/api/sesiones/mentor/me', { method: 'GET' })
@@ -22,13 +29,26 @@ export default function MentorDashboard() {
     try {
       await apiClient(`/api/contratos/${id}/${accion}`, { method: 'PATCH' });
       setSolicitudes(prev => prev.filter(s => s.id_contrato !== id));
+      setToastMsg({ type: 'success', text: `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'} exitosamente.` });
     } catch (err) {
-      alert(err.message);
+      setToastMsg({ type: 'error', text: err.message });
     }
   };
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
+      {toastMsg && (
+        <div
+          role="alert"
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
+            toastMsg.type === 'error'
+              ? 'bg-red-800 text-white border border-red-600'
+              : 'bg-green-800 text-white border border-green-600'
+          }`}
+        >
+          {toastMsg.text}
+        </div>
+      )}
       <h1 className="text-white text-center mt-10 text-3xl font-bold mb-8">Mentor Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
