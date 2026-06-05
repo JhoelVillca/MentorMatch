@@ -55,6 +55,7 @@ class ContratoMentoria(Base):
     estado_contrato = Column(String(30), server_default="pendiente_pago")
     horas_consumidas = Column(Integer, server_default="0")
     fecha_adquisicion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    carta_motivacion = Column(Text, nullable=True)
 
 class TransaccionPago(Base):
     __tablename__ = "transacciones_pago"

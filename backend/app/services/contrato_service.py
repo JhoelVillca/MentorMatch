@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.main_models import PaqueteMentor, ContratoMentoria, TransaccionPago, PerfilMentor, PerfilMentee, ResenaMentor
+from app.services.auditoria_service import AuditoriaService
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +198,118 @@ class ContratoService:
                 "fecha": c.ContratoMentoria.fecha_adquisicion,
                 "paquete": c.titulo_paquete,
                 "ya_resenado": c.id_resena is not None,
+            for c in res.all()
+        ]
+
+    async def aplicar_beca(self, user_id: UUID, id_paquete: UUID, carta_motivacion: str):
+        res_mentee = await self.db.execute(select(PerfilMentee).filter(PerfilMentee.id_usuario == user_id))
+        mentee = res_mentee.scalars().first()
+        if not mentee:
+            raise PermissionError("Perfil de mentee incompleto")
+
+        res_paq = await self.db.execute(
+            select(PaqueteMentor, PerfilMentor)
+            .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .filter(PaqueteMentor.id_paquete == id_paquete)
+        )
+        row = res_paq.first()
+        if not row:
+            raise LookupError("Paquete no encontrado")
+        
+        paquete, mentor = row
+
+        if not paquete.estado_activo or mentor.estado_verificacion != "verificado":
+            raise ValueError("El paquete no esta disponible")
+
+        res_existente = await self.db.execute(
+            select(ContratoMentoria).filter(
+                ContratoMentoria.id_mentee == mentee.id_mentee,
+                ContratoMentoria.id_paquete == paquete.id_paquete,
+                ContratoMentoria.estado_contrato.in_(["activo", "pendiente_pago", "pendiente_aprobacion"])
+            )
+        )
+        if res_existente.scalars().first():
+            raise FileExistsError("Ya tienes un proceso activo o pendiente para este paquete")
+
+        nuevo_contrato = ContratoMentoria(
+            id_mentee=mentee.id_mentee,
+            id_paquete=paquete.id_paquete,
+            estado_contrato="pendiente_aprobacion",
+            carta_motivacion=carta_motivacion,
+            horas_consumidas=0
+        )
+        self.db.add(nuevo_contrato)
+        await self.db.commit()
+        await self.db.refresh(nuevo_contrato)
+        
+        return {"mensaje": "Solicitud de beca encolada", "id_contrato": nuevo_contrato.id_contrato}
+
+    async def listar_solicitudes_mentor(self, user_id: UUID):
+        res_mentor = await self.db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+        mentor = res_mentor.scalars().first()
+        if not mentor:
+            return []
+
+        query = (
+            select(ContratoMentoria, PerfilMentee.nombre_completo, PaqueteMentor.titulo_paquete)
+            .join(PerfilMentee, ContratoMentoria.id_mentee == PerfilMentee.id_mentee)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .filter(
+                PaqueteMentor.id_mentor == mentor.id_mentor,
+                ContratoMentoria.estado_contrato == "pendiente_aprobacion"
+            )
+        )
+        res = await self.db.execute(query)
+        
+        return [
+            {
+                "id_contrato": c.ContratoMentoria.id_contrato,
+                "mentee_nombre": c.nombre_completo,
+                "paquete_titulo": c.titulo_paquete,
+                "carta_motivacion": c.ContratoMentoria.carta_motivacion,
+                "fecha_solicitud": c.ContratoMentoria.fecha_adquisicion
             }
             for c in res.all()
         ]
+
+    async def responder_solicitud_beca(self, user_id: UUID, id_contrato: UUID, accion: str):
+        query = (
+            select(ContratoMentoria, PaqueteMentor, PerfilMentor)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .filter(ContratoMentoria.id_contrato == id_contrato)
+            .with_for_update()
+        )
+        res = await self.db.execute(query)
+        row = res.first()
+        
+        if not row:
+            raise LookupError("Solicitud no encontrada")
+            
+        contrato, paquete, mentor = row
+
+        if str(mentor.id_usuario) != str(user_id):
+            raise PermissionError("Brecha de seguridad: Intento de manipular solicitud ajena")
+            
+        if contrato.estado_contrato != "pendiente_aprobacion":
+            raise ValueError("El contrato ya fue procesado o no es una beca")
+
+        estado_anterior = contrato.estado_contrato
+        nuevo_estado = "activo" if accion == "aceptar" else "rechazado"
+        
+        contrato.estado_contrato = nuevo_estado
+
+        AuditoriaService.registrar_evento(
+            self.db,
+            id_usuario=user_id,
+            entidad_afectada="contratos_mentoria",
+            id_entidad=str(contrato.id_contrato),
+            accion=f"BECA_{accion.upper()}",
+            detalles_cambio={
+                "estado_anterior": estado_anterior,
+                "estado_nuevo": nuevo_estado
+            }
+        )
+
+        await self.db.commit()
+        return {"mensaje": f"Solicitud {accion}da con exito"}
