@@ -46,6 +46,8 @@ class PaqueteMentor(Base):
     estado_activo = Column(Boolean, server_default="true")
     estado_validacion = Column(String(20), server_default=text("'pendiente'"))
     fecha_creacion = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    ventas_totales = Column(Integer, server_default="0", nullable=False)
+    calificacion_promedio = Column(Numeric(3, 2), server_default="0.00", nullable=False)
 
 class ContratoMentoria(Base):
     __tablename__ = "contratos_mentoria"

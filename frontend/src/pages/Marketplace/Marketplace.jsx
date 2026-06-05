@@ -223,20 +223,24 @@ export default function Marketplace() {
               key={p.id_paquete}
               className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg"
             >
-              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800">
+              <div 
+                onClick={() => navigate(`/mentor/perfil/${p.id_mentor}`)}
+                className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800 cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors group"
+                title="Ver perfil del mentor"
+              >
                 {p.mentor_foto ? (
                   <img
                     src={p.mentor_foto}
                     alt={p.mentor_nombre}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700"
+                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700 group-hover:border-blue-500 transition-colors"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700">
+                  <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700 group-hover:border-blue-500 transition-colors">
                     {p.mentor_nombre.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <h3 className="text-lg font-semibold text-white leading-tight">{p.mentor_nombre}</h3>
+                  <h3 className="text-lg font-semibold text-white leading-tight group-hover:text-blue-400 transition-colors">{p.mentor_nombre}</h3>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-[10px] text-green-400 font-bold tracking-wider uppercase border border-green-500/20 bg-green-500/5 px-1.5 py-0.5 rounded">
                       Verificado
