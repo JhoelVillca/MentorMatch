@@ -134,8 +134,10 @@ MentorMatch/
 │       │   ├── MentorAvailabilityPanel.jsx # Panel interactivo de gestión horaria
 │       │   ├── MentorSkillForm.jsx    # Formulario dinámico de habilidades
 │       │   ├── Navbar.jsx             # Barra de navegación interior (Privada)
+│       │   ├── ParticlesBackground.jsx # Animación interactiva de partículas para fondos
 │       │   └── Landing/               # Componentes específicos de la Landing Page
 │       │       ├── Benefits.jsx       # Sección de beneficios
+│       │       ├── CatalogPreview.jsx # Vista previa de mentores destacados (Carrusel)
 │       │       ├── CTASection.jsx     # Bloque final Call-To-Action
 │       │       ├── Footer.jsx         # Pie de página corporativo
 │       │       ├── Hero.jsx           # Banner superior de entrada
@@ -174,6 +176,7 @@ MentorMatch/
     ├── loging.png                     # Captura: Login visual
     ├── panelAdmin.png                 # Captura: Interfaz de admin
     └── register.png                   # Captura: Formulario de registro visual
+```
 
 
 ## Stack Tecnológico (Actualizado)
@@ -191,3 +194,30 @@ MentorMatch/
 3. **Seguridad y Concurrencia Transaccional:** Se deben implementar bloqueos explícitos (como `with_for_update`) a nivel base de datos en controladores críticos (ej. `sesiones.py`) para evitar colisiones de usuarios reservando los mismos horarios.
 4. **Código Limpio:** El código que avanza a producción (main branch) debe estar libre de sentencias de depuración como `print()` o `console.log()`.
 
+## Sistema de Diseño y Estilos (Frontend)
+
+El frontend de MentorMatch está diseñado con un enfoque moderno, priorizando una Experiencia de Usuario (UX) premium e interactiva. Las decisiones de estilo y estética se basan en las siguientes tecnologías y convenciones:
+
+1. **Framework Principal (Tailwind CSS):** 
+   Utilizamos **Tailwind CSS** (configurado en `tailwind.config.js`) como base para todo el estilizado. Esto permite un desarrollo rápido mediante clases utilitarias, manteniendo un diseño consistente sin depender de librerías de componentes prefabricados (como Material UI), lo que garantiza un control total sobre la estética y el peso del bundle.
+
+2. **Paleta de Colores (Design System):**
+   - **Primary (`primary-X`):** Tonos azules (ej. `primary-600` basado en `#2563eb`). Es el color base de la marca, usado en botones primarios y acentos principales.
+   - **Accent (`accent-X`):** Tonos turquesa/teal (ej. `accent-500` basado en `#14b8a6`). Se usa para complementar al primario, generando gradientes vibrantes y llamativos (`bg-gradient-to-r from-primary-600 to-accent-500`).
+   - **Neutros (`slate-X`):** Grises azulados para fondos (`bg-slate-50`), textos y bordes sutiles, brindando una lectura agradable y limpia.
+
+3. **Principios de Estética Moderna:**
+   - **Glassmorphism:** Uso de fondos semitransparentes con desenfoque (`backdrop-blur-md`, `bg-white/10`) en barras de navegación, modales y tarjetas superpuestas sobre fondos complejos o gradientes.
+   - **Profundidad y Sombras:** Uso de sombras muy suaves y difusas (`shadow-sm`, sombra configurada `shadow-card`) para despegar los elementos del fondo de manera sutil.
+   - **Bordes y Formas:** Uso intensivo de bordes muy redondeados (`rounded-xl`, `rounded-2xl`, `rounded-3xl`) que transmiten amigabilidad y frescura.
+   - **Microinteracciones:** Todo elemento clicable o interactivo cuenta con transiciones fluidas (`transition-all duration-300`), efectos al pasar el ratón (`hover:`) y ligeros efectos de pulsación (`active:scale-[0.98]`) para que la aplicación se sienta rápida y viva.
+
+4. **Hoja de Estilos Global (`src/index.css`):**
+   Aunque Tailwind es la base, utilizamos la hoja de estilos global para:
+   - Configurar utilidades base usando las directivas `@tailwind`.
+   - Modificar la **Barra de Desplazamiento (Scrollbar)** en navegadores basados en webkit (`::-webkit-scrollbar`) para que el scroll del navegador sea coherente con la estética minimalista del proyecto.
+   - Definir animaciones complejas (keyframes) que Tailwind no cubre por defecto (ej. fade in, escalados personalizados).
+
+5. **Iconografía y Tipografía:**
+   - **Iconografía:** Usamos **Lucide React** de manera exclusiva. Sus trazos limpios e integrables combinan a la perfección con la interfaz moderna.
+   - **Tipografía:** Dependemos de las fuentes modernas del sistema (a través de la familia predeterminada `sans` de Tailwind) como Inter, Roboto o system-ui.
