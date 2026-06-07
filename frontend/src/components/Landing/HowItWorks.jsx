@@ -39,17 +39,54 @@ export default function HowItWorks() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-sm font-semibold text-primary-600 tracking-wider uppercase">
-            Cómo Funciona
+            La Plataforma
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight">
-            De la búsqueda al{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-accent-500">crecimiento</span>
+            ¿Qué es <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-accent-500">MentorMatch?</span>
           </h2>
           <p className="mt-4 text-lg text-slate-500">
-            Cuatro pasos. Cero fricción. Empieza hoy y transforma tu carrera.
+            MentorMatch es el puente entre las personas que desean aprender habilidades específicas y expertos dispuestos a enseñar. Sin cursos masivos ni ataduras: solo enseñanza 1 a 1 de alto impacto.
           </p>
+        </div>
+
+        {/* Roles & Packages explanation */}
+        <div className="grid md:grid-cols-3 gap-6 mb-20">
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center hover:border-primary-200 transition-colors">
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Search className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mentees (Estudiantes)</h3>
+            <p className="text-sm text-slate-500">
+              Personas motivadas por aprender rápido. Buscan confianza, flexibilidad y acceso directo a expertos para dominar nuevas habilidades sin depender de programas largos.
+            </p>
+          </div>
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center hover:border-primary-200 transition-colors">
+            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <CalendarCheck className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Paquetes de Horas</h3>
+            <p className="text-sm text-slate-500">
+              Opciones de aprendizaje flexibles. Adquiere un paquete de horas y agéndalas según tu disponibilidad. El sistema se encarga de evitar colisiones y organizar tus sesiones.
+            </p>
+          </div>
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center hover:border-primary-200 transition-colors">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Rocket className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mentores (Expertos)</h3>
+            <p className="text-sm text-slate-500">
+              Especialistas que buscan visibilidad, monetizar su conocimiento y gestionar fácilmente sus sesiones a través de herramientas como reservas, pagos seguros y videollamadas.
+            </p>
+          </div>
+        </div>
+
+        {/* Steps header */}
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Cómo empezar
+          </h2>
         </div>
 
         {/* Steps */}

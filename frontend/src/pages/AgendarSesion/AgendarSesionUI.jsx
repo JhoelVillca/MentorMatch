@@ -1,405 +1,437 @@
 import { useEffect } from 'react';
 import { DAYS, DAYS_SHORT, HOURS } from '../../utils/timeEngine';
+import { Calendar, Clock, Grid2x2 as Grid, List, CircleAlert as AlertCircle, X, CircleCheck as CheckCircle, Check, CalendarCheck } from 'lucide-react';
 
 const Legend = () => (
-	<div className="flex flex-wrap gap-4 text-xs text-gray-400">
-		<div className="flex items-center gap-1.5">
-			<div className="w-3.5 h-3.5 rounded bg-emerald-900/60 border border-emerald-800/50" />
-			<span>Disponible</span>
-		</div>
-		<div className="flex items-center gap-1.5">
-			<div className="w-3.5 h-3.5 rounded bg-amber-800/50 border border-amber-700/50" />
-			<span>Ocupado</span>
-		</div>
-		<div className="flex items-center gap-1.5">
-			<div className="w-3.5 h-3.5 rounded bg-blue-700/50 border border-blue-500/60" />
-			<span>Tu selección</span>
-		</div>
-		<div className="flex items-center gap-1.5">
-			<div className="w-3.5 h-3.5 rounded bg-[#111] border border-[#1e1e1e]" />
-			<span>No disponible</span>
-		</div>
-	</div>
+  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-600">
+    <div className="flex items-center gap-2" title="El mentor está disponible en este horario">
+      <div className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-200" />
+      <span>Disponible</span>
+    </div>
+    <div className="flex items-center gap-2" title="Este horario ya fue reservado por otra persona">
+      <div className="w-5 h-5 rounded-md bg-amber-100/50 border border-amber-200 flex items-center justify-center">
+        <div className="w-1.5 h-0.5 rounded-sm bg-amber-400/50" />
+      </div>
+      <span>Ocupado</span>
+    </div>
+    <div className="flex items-center gap-2" title="Las horas que estás seleccionando para tu sesión">
+      <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary-600 to-accent-500 shadow-[0_0_8px_rgba(37,99,235,0.3)] border-transparent" />
+      <span>Tu selección</span>
+    </div>
+    <div className="flex items-center gap-2" title="El mentor no atiende en estos horarios">
+      <div className="w-5 h-5 rounded-md bg-slate-50 border border-slate-100 opacity-60" />
+      <span>No disponible</span>
+    </div>
+  </div>
 );
 
 const MenteeGridCell = ({ dayIdx, hour, isAvailable, isOccupied, isSelected, onMouseDown, onMouseEnter }) => {
-	let bg = 'bg-[#111]';
-	let border = 'border-[#1e1e1e]';
-	let cursor = 'cursor-default';
-	let opacity = 'opacity-40';
+  let bg = 'bg-slate-50';
+  let border = 'border-slate-100';
+  let cursor = 'cursor-default';
+  let opacity = 'opacity-40 pointer-events-none';
+  let innerElement = null;
 
-	if (isOccupied) {
-		bg = 'bg-amber-800/50';
-		border = 'border-amber-700/50';
-		cursor = 'cursor-not-allowed';
-		opacity = 'opacity-100';
-	} else if (isSelected) {
-		bg = 'bg-blue-700/50 hover:bg-blue-600/50';
-		border = 'border-blue-500/60';
-		cursor = 'cursor-pointer';
-		opacity = 'opacity-100';
-	} else if (isAvailable) {
-		bg = 'bg-emerald-900/60 hover:bg-emerald-800/60';
-		border = 'border-emerald-800/50';
-		cursor = 'cursor-pointer';
-		opacity = 'opacity-100';
-	}
+  if (isSelected) {
+    bg = 'bg-gradient-to-br from-primary-600 to-accent-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]';
+    border = 'border-transparent';
+    cursor = 'cursor-pointer';
+    opacity = 'opacity-100';
+    innerElement = (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-1 h-1 rounded-full bg-white/70" />
+      </div>
+    );
+  } else if (isOccupied) {
+    bg = 'bg-amber-100/50';
+    border = 'border-amber-200';
+    cursor = 'cursor-not-allowed';
+    opacity = 'opacity-100';
+    innerElement = (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-2 h-0.5 rounded-sm bg-amber-400/60" />
+      </div>
+    );
+  } else if (isAvailable) {
+    bg = 'bg-emerald-50 hover:bg-emerald-100';
+    border = 'border-emerald-200 hover:border-emerald-300';
+    cursor = 'cursor-pointer';
+    opacity = 'opacity-100';
+  }
 
-	return (
-		<td
-			onMouseDown={() => { if (isAvailable && !isOccupied) onMouseDown(dayIdx, hour); }}
-			onMouseEnter={() => { if (isAvailable && !isOccupied) onMouseEnter(dayIdx, hour); }}
-			className={`${bg} ${border} ${cursor} ${opacity} border select-none transition-colors duration-100 h-7`}
-			title={`${DAYS[dayIdx]} ${String(hour).padStart(2, '0')}:00 (hora local)`}
-		/>
-	);
+  let title = 'No disponible';
+  if (isSelected) title = 'Seleccionado';
+  else if (isOccupied) title = 'Ocupado';
+  else if (isAvailable) title = 'Disponible (clic o arrastrar para seleccionar)';
+
+  return (
+    <td
+      onMouseDown={() => { if (isAvailable && !isOccupied) onMouseDown(dayIdx, hour); }}
+      onMouseEnter={() => { if (isAvailable && !isOccupied) onMouseEnter(dayIdx, hour); }}
+      className={`relative ${bg} ${border} ${cursor} ${opacity} border select-none transition-all duration-300 h-8`}
+      title={`${DAYS[dayIdx]} ${String(hour).padStart(2, '0')}:00 - ${title}`}
+    >
+      {innerElement}
+    </td>
+  );
 };
 
 const MenteeWeekGrid = ({ availableSet, occupiedSet, selectedSet, onDragStart, onDragEnter, onDragEnd }) => {
-	useEffect(() => {
-		const handleMouseUp = () => onDragEnd();
-		window.addEventListener('mouseup', handleMouseUp);
-		return () => window.removeEventListener('mouseup', handleMouseUp);
-	}, [onDragEnd]);
+  useEffect(() => {
+    const handleMouseUp = () => onDragEnd();
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [onDragEnd]);
 
-	return (
-		<div className="overflow-x-auto rounded-xl border border-gray-800 bg-[#0a0a0a]">
-			<table className="w-full border-collapse min-w-[600px]" onMouseLeave={onDragEnd}>
-				<thead>
-					<tr>
-						<th className="sticky left-0 z-10 bg-[#0a0a0a] text-[10px] text-gray-600 font-medium w-12 py-2">
-							Hora
-						</th>
-						{DAYS_SHORT.map((day, index) => (
-							<th key={index} className="text-xs text-gray-400 font-semibold py-2 px-1">{day}</th>
-						))}
-					</tr>
-				</thead>
-				<tbody>
-					{HOURS.map((hour) => (
-						<tr key={hour}>
-							<td className="sticky left-0 z-10 bg-[#0a0a0a] text-[10px] text-gray-600 font-mono text-right pr-2 select-none border-r border-[#1e1e1e]">
-								{String(hour).padStart(2, '0')}:00
-							</td>
-							{DAYS.map((_, dayIdx) => {
-								const key = `${dayIdx}-${hour}`;
-								return (
-									<MenteeGridCell
-										key={key}
-										dayIdx={dayIdx}
-										hour={hour}
-										isAvailable={availableSet.has(key)}
-										isOccupied={occupiedSet.has(key)}
-										isSelected={selectedSet.has(key)}
-										onMouseDown={onDragStart}
-										onMouseEnter={onDragEnter}
-									/>
-								);
-							})}
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
-	);
+  return (
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table className="w-full border-collapse min-w-[600px]" onMouseLeave={onDragEnd}>
+        <thead>
+          <tr>
+            <th className="sticky left-0 z-10 bg-white text-[10px] text-slate-400 font-medium w-12 py-2 border-b border-slate-200">
+              Hora
+            </th>
+            {DAYS_SHORT.map((day, index) => (
+              <th key={index} className="text-xs text-slate-500 font-semibold py-2 px-1 border-b border-slate-200">{day}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {HOURS.map((hour) => (
+            <tr key={hour}>
+              <td className="sticky left-0 z-10 bg-white text-[10px] text-slate-400 font-mono text-right pr-2 select-none border-r border-slate-100">
+                {String(hour).padStart(2, '0')}:00
+              </td>
+              {DAYS.map((_, dayIdx) => {
+                const key = `${dayIdx}-${hour}`;
+                return (
+                  <MenteeGridCell
+                    key={key}
+                    dayIdx={dayIdx}
+                    hour={hour}
+                    isAvailable={availableSet.has(key)}
+                    isOccupied={occupiedSet.has(key)}
+                    isSelected={selectedSet.has(key)}
+                    onMouseDown={onDragStart}
+                    onMouseEnter={onDragEnter}
+                  />
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 
+const inputClass = 'w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm';
+const selectClass = 'w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm font-medium';
+
 export default function AgendarSesionUI({
-	contratos,
-	loadingContratos,
-	loadingSlots,
-	submitting,
-	error,
-	success,
-	userTZ,
-	selectedContratoId,
-	setSelectedContratoId,
-	viewMode,
-	setViewMode,
-	availableSet,
-	occupiedSet,
-	selectedCells,
-	handleDragStart,
-	handleDragEnter,
-	handleDragEnd,
-	selectionSummary,
-	selectionError,
-	clearSelection,
-	handleSubmitGrid,
-	slots,
-	selectedSlotId,
-	setSelectedSlotId,
-	horaInicio,
-	setHoraInicio,
-	horaFin,
-	setHoraFin,
-	slotActivo,
-	handleSubmitList,
-	dismissError,
+  contratos,
+  loadingContratos,
+  loadingSlots,
+  submitting,
+  error,
+  success,
+  userTZ,
+  selectedContratoId,
+  setSelectedContratoId,
+  viewMode,
+  setViewMode,
+  availableSet,
+  occupiedSet,
+  selectedCells,
+  handleDragStart,
+  handleDragEnter,
+  handleDragEnd,
+  selectionSummary,
+  selectionError,
+  clearSelection,
+  handleSubmitGrid,
+  slots,
+  selectedSlotId,
+  setSelectedSlotId,
+  horaInicio,
+  setHoraInicio,
+  horaFin,
+  setHoraFin,
+  slotActivo,
+  handleSubmitList,
+  dismissError,
 }) {
-	if (success) {
-		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="bg-[#141414] border border-green-600 rounded-2xl p-10 text-center shadow-[0_0_20px_rgba(22,163,74,0.2)]">
-					<div className="w-14 h-14 rounded-full bg-green-900/40 border border-green-600 flex items-center justify-center mx-auto mb-4">
-						<svg className="w-7 h-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-							<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-						</svg>
-					</div>
-					<h2 className="text-xl font-bold text-white mb-1">Sesión confirmada</h2>
-					<p className="text-gray-400 text-sm">Redirigiendo a tus contratos...</p>
-				</div>
-			</div>
-		);
-	}
+  if (success) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white border border-emerald-100 rounded-3xl p-10 text-center shadow-card-lg max-w-sm w-full mx-auto transform animate-in fade-in zoom-in duration-300">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 border-4 border-white shadow-sm flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-emerald-600" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">¡Sesión confirmada!</h2>
+          <p className="text-slate-500 text-sm font-medium">Todo listo. Te estamos redirigiendo a tus contratos...</p>
+        </div>
+      </div>
+    );
+  }
 
-	return (
-		<div className="min-h-screen py-8 px-4">
-			<div className="max-w-5xl mx-auto">
-				<div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-					<div>
-						<h1 className="text-2xl font-bold text-white">Agendar Sesión</h1>
-						<p className="text-gray-500 text-sm mt-1">
-							Horarios en tu zona:{' '}
-							<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs font-semibold">
-								<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-									<path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-								{userTZ}
-							</span>
-						</p>
-					</div>
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Agendar Sesión</h1>
+          <p className="text-slate-500 font-medium text-sm mt-2 flex items-center gap-2">
+            Mostrando horarios en tu zona local:
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-50 border border-primary-100 text-primary-700 text-xs font-bold tracking-wide">
+              <Clock size={12} />
+              {userTZ}
+            </span>
+          </p>
+        </div>
 
-					<div className="flex bg-[#141414] border border-gray-800 rounded-lg p-0.5 gap-0.5">
-						<button
-							onClick={() => setViewMode('grid')}
-							className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${viewMode === 'grid' ? 'bg-red-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-						>
-							<svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-							</svg>
-							Grilla
-						</button>
-						<button
-							onClick={() => setViewMode('list')}
-							className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${viewMode === 'list' ? 'bg-red-700 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-						>
-							<svg className="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-							</svg>
-							Lista
-						</button>
-					</div>
-				</div>
+        <div className="flex bg-slate-50 border border-slate-200 rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              viewMode === 'grid' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Grid size={14} />Grilla
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              viewMode === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <List size={14} />Lista
+          </button>
+        </div>
+      </div>
 
-				{error && (
-					<div className="mb-6 bg-red-950/50 border border-red-700 rounded-xl p-4 flex gap-3 items-start">
-						<svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-							<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-						</svg>
-						<p className="text-red-300 text-sm">{error}</p>
-						<button onClick={dismissError} className="ml-auto text-red-500 hover:text-red-300">
-							<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-						</button>
-					</div>
-				)}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 items-start shadow-sm">
+          <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-red-700 text-sm flex-1 font-medium">{error}</p>
+          <button onClick={dismissError} className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-100">
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
-				<div className="bg-[#141414] border border-gray-800 rounded-2xl p-6 shadow-lg mb-6">
-					<label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-						Contrato activo
-					</label>
-					{loadingContratos ? (
-						<div className="h-11 bg-[#0d0d0d] rounded-lg animate-pulse" />
-					) : contratos.length === 0 ? (
-						<p className="text-gray-500 text-sm italic">No tienes contratos activos. Ve al marketplace.</p>
-					) : (
-						<select
-							value={selectedContratoId}
-							onChange={(event) => setSelectedContratoId(event.target.value)}
-							className="w-full bg-[#0d0d0d] border border-gray-700 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all"
-						>
-							<option value="">Selecciona un contrato</option>
-							{contratos.map((contrato) => (
-								<option key={contrato.id_contrato} value={contrato.id_contrato}>
-									{contrato.paquete} — {contrato.horas_consumidas}h usadas
-								</option>
-							))}
-						</select>
-					)}
-				</div>
+      {/* Contract Selector */}
+      <div className="bg-white border border-slate-100 rounded-3xl shadow-card p-6 sm:p-8 mb-6">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+          <Calendar size={16} className="text-primary-500" />
+          Selecciona tu contrato activo
+        </label>
+        {loadingContratos ? (
+          <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+        ) : contratos.length === 0 ? (
+          <div className="border border-dashed border-slate-200 bg-slate-50 rounded-xl p-6 text-center">
+            <p className="text-slate-500 text-sm font-medium">No tienes contratos activos con este mentor.</p>
+            <p className="text-slate-400 text-xs mt-1">Ve al marketplace para adquirir un paquete de horas.</p>
+          </div>
+        ) : (
+          <div className="relative">
+            <select
+              value={selectedContratoId}
+              onChange={(event) => setSelectedContratoId(event.target.value)}
+              className={selectClass}
+            >
+              <option value="" disabled>Elige el contrato a utilizar...</option>
+              {contratos.map((contrato) => (
+                <option key={contrato.id_contrato} value={contrato.id_contrato}>
+                  {contrato.paquete} — {contrato.horas_consumidas}h consumidas
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
-				{loadingSlots && <div className="h-[400px] bg-[#0d0d0d] rounded-2xl animate-pulse" />}
+      {loadingSlots && (
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-card p-8 animate-pulse">
+          <div className="h-6 w-1/3 bg-slate-100 rounded mb-6" />
+          <div className="h-[400px] bg-slate-50 rounded-2xl" />
+        </div>
+      )}
 
-				{viewMode === 'grid' && selectedContratoId && !loadingSlots && (
-					<div className="space-y-4">
-						<div className="bg-[#141414] border border-gray-800 rounded-2xl p-5 shadow-lg space-y-4">
-							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-								<p className="text-xs text-gray-500">
-									Selecciona las horas que quieres reservar. Solo bloques contiguos del mismo día.
-								</p>
-								<Legend />
-							</div>
+      {viewMode === 'grid' && selectedContratoId && !loadingSlots && (
+        <div className="space-y-6">
+          <div className="bg-white border border-slate-100 rounded-3xl shadow-card p-6 sm:p-8 space-y-6">
+            
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+              <p className="text-sm font-medium text-slate-600">
+                Pinta sobre la cuadrícula para seleccionar bloques contiguos.
+              </p>
+              <Legend />
+            </div>
 
-							<MenteeWeekGrid
-								availableSet={availableSet}
-								occupiedSet={occupiedSet}
-								selectedSet={selectedCells}
-								onDragStart={handleDragStart}
-								onDragEnter={handleDragEnter}
-								onDragEnd={handleDragEnd}
-							/>
-						</div>
+            <MenteeWeekGrid
+              availableSet={availableSet}
+              occupiedSet={occupiedSet}
+              selectedSet={selectedCells}
+              onDragStart={handleDragStart}
+              onDragEnter={handleDragEnter}
+              onDragEnd={handleDragEnd}
+            />
 
-						{selectedCells.size > 0 && (
-							<div className="bg-[#141414] border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-								{selectionError ? (
-									<div className="flex items-center gap-2 text-amber-400 text-sm">
-										<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-										</svg>
-										{selectionError}
-									</div>
-								) : selectionSummary && (
-									<>
-										<div className="flex items-center justify-between">
-											<div>
-												<p className="text-white font-semibold text-sm">
-													{selectionSummary.dayName} — {selectionSummary.startLocal} a {selectionSummary.endLocal}
-													<span className="text-gray-500 ml-2 font-normal">(hora local)</span>
-												</p>
-												<p className="text-gray-500 text-xs mt-1">
-													Duración: {selectionSummary.duration}h
-												</p>
-											</div>
-											<div className="flex gap-2">
-												<button
-													onClick={clearSelection}
-													disabled={submitting}
-													className="px-4 py-2 rounded-lg text-xs font-semibold border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white transition-all"
-												>
-													Limpiar
-												</button>
-												<button
-													onClick={handleSubmitGrid}
-													disabled={submitting}
-													className="px-5 py-2 rounded-lg text-xs font-semibold bg-red-700 hover:bg-red-600 text-white transition-all disabled:opacity-60 flex items-center gap-2 active:scale-[0.97]"
-												>
-													{submitting ? (
-														<>
-															<svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-																<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-																<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-															</svg>
-															Confirmando...
-														</>
-													) : 'Confirmar Sesión'}
-												</button>
-											</div>
-										</div>
-									</>
-								)}
-							</div>
-						)}
-					</div>
-				)}
+            {/* Selection Summary Footer */}
+            <div className={`transition-all duration-300 transform origin-top ${selectedCells.size > 0 ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 h-0 overflow-hidden'}`}>
+              <div className="bg-primary-50 border border-primary-100 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                
+                {selectionError ? (
+                  <div className="flex items-center gap-3 text-amber-700 text-sm font-medium bg-amber-100/50 p-3 rounded-xl border border-amber-200">
+                    <AlertCircle size={18} className="flex-shrink-0" />
+                    {selectionError}
+                  </div>
+                ) : selectionSummary && (
+                  <>
+                    <div>
+                      <h4 className="text-primary-900 font-extrabold text-base flex items-center gap-2">
+                        {selectionSummary.dayName}
+                        <span className="text-primary-400 font-normal">|</span>
+                        {selectionSummary.startLocal} - {selectionSummary.endLocal}
+                      </h4>
+                      <p className="text-primary-700 text-sm font-medium mt-1">
+                        Duración total: <span className="font-bold">{selectionSummary.duration} horas</span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <button
+                        onClick={clearSelection}
+                        disabled={submitting}
+                        className="px-4 py-2.5 rounded-xl text-sm font-bold border border-primary-200 text-primary-700 bg-white hover:bg-primary-100 transition-all disabled:opacity-50 flex-1 sm:flex-none shadow-sm"
+                      >
+                        Limpiar
+                      </button>
+                      <button
+                        onClick={handleSubmitGrid}
+                        disabled={submitting}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-primary-600 to-accent-500 hover:from-primary-700 hover:to-accent-600 text-white shadow-sm hover:shadow active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                      >
+                        {submitting ? (
+                          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Reservando...</>
+                        ) : (
+                          <><CalendarCheck size={16} />Confirmar Sesión</>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
 
-				{viewMode === 'list' && selectedContratoId && !loadingSlots && (
-					<form onSubmit={handleSubmitList} className="bg-[#141414] border border-gray-800 rounded-2xl p-7 space-y-6 shadow-xl">
-						<div>
-							<label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-								Bloque disponible del mentor
-								<span className="ml-2 normal-case font-normal text-gray-500">(horario en tu zona local)</span>
-							</label>
-							<select
-								value={selectedSlotId}
-								onChange={(event) => { setSelectedSlotId(event.target.value); setHoraInicio(''); setHoraFin(''); }}
-								disabled={slots.length === 0}
-								className="w-full bg-[#0d0d0d] border border-gray-700 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 disabled:opacity-40 transition-all"
-							>
-								<option value="">
-									{slots.length === 0 ? 'Este mentor no tiene horarios configurados' : 'Selecciona un bloque'}
-								</option>
-								{slots.map((slot) => (
-									<option key={slot.id} value={slot.id}>{slot.label}</option>
-								))}
-							</select>
-						</div>
+          </div>
+        </div>
+      )}
 
-						{slotActivo && (
-							<div className="bg-[#0d0d0d] border border-gray-800 rounded-xl p-4 space-y-4">
-								<div className="flex items-center justify-between text-xs text-gray-500">
-									<span>Ventana disponible</span>
-									<span className="text-gray-300 font-mono">{slotActivo.localStart} — {slotActivo.localEnd}</span>
-								</div>
-								<div className="grid grid-cols-2 gap-4">
-									<div>
-										<label className="block text-xs text-gray-400 mb-1.5">Hora de inicio</label>
-										<input
-											type="time"
-											value={horaInicio}
-											min={slotActivo.localStart}
-											max={slotActivo.localEnd}
-											onChange={(event) => setHoraInicio(event.target.value)}
-											className="w-full bg-[#141414] border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all"
-										/>
-									</div>
-									<div>
-										<label className="block text-xs text-gray-400 mb-1.5">Hora de fin</label>
-										<input
-											type="time"
-											value={horaFin}
-											min={horaInicio || slotActivo.localStart}
-											max={slotActivo.localEnd}
-											onChange={(event) => setHoraFin(event.target.value)}
-											className="w-full bg-[#141414] border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all"
-										/>
-									</div>
-								</div>
-								{horaInicio && horaFin && horaInicio < horaFin && (
-									<div className="flex items-center gap-2 text-xs text-green-400">
-										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-										</svg>
-										Duración: {(() => {
-											const [startHours, startMinutes] = horaInicio.split(':').map(Number);
-											const [endHours, endMinutes] = horaFin.split(':').map(Number);
-											const minutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-											return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-										})()}
-									</div>
-								)}
-							</div>
-						)}
+      {viewMode === 'list' && selectedContratoId && !loadingSlots && (
+        <form onSubmit={handleSubmitList} className="bg-white border border-slate-100 rounded-3xl shadow-card p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center">
+              <List size={16} className="text-primary-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Reserva Manual</h3>
+          </div>
 
-						<button
-							type="submit"
-							disabled={submitting || contratos.length === 0 || !slotActivo || !horaInicio || !horaFin}
-							className="w-full bg-red-700 hover:bg-red-600 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all active:scale-[0.98] text-sm"
-						>
-							{submitting ? (
-								<span className="flex items-center justify-center gap-2">
-									<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-									</svg>
-									Confirmando reserva...
-								</span>
-							) : 'Confirmar Sesión'}
-						</button>
-					</form>
-				)}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                Día disponible del mentor
+              </label>
+              <select
+                value={selectedSlotId}
+                onChange={(event) => { setSelectedSlotId(event.target.value); setHoraInicio(''); setHoraFin(''); }}
+                disabled={slots.length === 0}
+                className={selectClass}
+              >
+                <option value="" disabled>
+                  {slots.length === 0 ? 'No hay horarios disponibles' : 'Elige un bloque de horas...'}
+                </option>
+                {slots.map((slot) => (
+                  <option key={slot.id} value={slot.id}>{slot.label}</option>
+                ))}
+              </select>
+            </div>
 
-				{!selectedContratoId && !loadingContratos && contratos.length > 0 && (
-					<div className="border border-dashed border-gray-800 rounded-xl py-16 text-center">
-						<svg className="w-10 h-10 text-gray-700 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-							<path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-						</svg>
-						<p className="text-gray-500 text-sm">Selecciona un contrato para ver la disponibilidad del mentor.</p>
-					</div>
-				)}
-			</div>
-		</div>
-	);
+            {slotActivo && (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-5 animate-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Ventana del mentor</span>
+                  <span className="text-primary-700 bg-primary-50 px-3 py-1 rounded-lg font-mono font-bold text-sm">
+                    {slotActivo.localStart} — {slotActivo.localEnd}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Desde las</label>
+                    <input
+                      type="time"
+                      value={horaInicio}
+                      min={slotActivo.localStart}
+                      max={slotActivo.localEnd}
+                      onChange={(event) => setHoraInicio(event.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Hasta las</label>
+                    <input
+                      type="time"
+                      value={horaFin}
+                      min={horaInicio || slotActivo.localStart}
+                      max={slotActivo.localEnd}
+                      onChange={(event) => setHoraFin(event.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                {horaInicio && horaFin && horaInicio < horaFin && (
+                  <div className="flex items-center gap-2 text-sm text-emerald-700 font-semibold bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100">
+                    <CheckCircle size={16} className="text-emerald-500" />
+                    Duración calculada: {(() => {
+                      const [startHours, startMinutes] = horaInicio.split(':').map(Number);
+                      const [endHours, endMinutes] = horaFin.split(':').map(Number);
+                      const minutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+                      return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end">
+            <button
+              type="submit"
+              disabled={submitting || contratos.length === 0 || !slotActivo || !horaInicio || !horaFin}
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary-600 to-accent-500 hover:from-primary-700 hover:to-accent-600 text-white shadow-sm hover:shadow active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full sm:w-auto"
+            >
+              {submitting ? (
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Reservando...</>
+              ) : (
+                <><CalendarCheck size={18} />Confirmar Reserva</>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {!selectedContratoId && !loadingContratos && contratos.length > 0 && (
+        <div className="border border-dashed border-slate-200 rounded-3xl py-16 text-center bg-white shadow-sm">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar size={28} className="text-primary-400" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-1">Casi listo</h3>
+          <p className="text-slate-500 text-sm font-medium">Selecciona uno de tus contratos activos arriba para ver la disponibilidad.</p>
+        </div>
+      )}
+    </div>
+  );
 }

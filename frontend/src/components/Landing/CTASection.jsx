@@ -33,11 +33,17 @@ export default function CTASection() {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/catalog"
+            to="/register"
             className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl shadow-xl shadow-primary-600/20 hover:shadow-primary-500/30 hover:from-primary-500 hover:to-primary-400 transition-all duration-300"
           >
-            Explorar Mentores
+            Quiero Aprender
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <Link
+            to="/catalog"
+            className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-semibold text-slate-700 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all duration-300"
+          >
+            Ver Catálogo
           </Link>
           <Link
             to="/register"

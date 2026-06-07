@@ -32,27 +32,32 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
-            {['Beneficios', 'Cómo Funciona', 'Testimonios', 'Paquetes'].map((item) => (
+            {[
+              { label: 'Beneficios', id: 'beneficios' },
+              { label: 'Cómo Funciona', id: 'como-funciona' },
+              { label: 'Testimonios', id: 'testimonios' },
+              { label: 'Catálogo', id: 'catalogo' }
+            ].map((item) => (
               <a
-                key={item}
-                href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
+                key={item.id}
+                href={`#${item.id}`}
                 className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-all"
               >
-                {item}
+                {item.label}
               </a>
             ))}
             <div className="ml-4 flex items-center gap-3">
-              <Link
-                to="/catalog"
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Catálogo
-              </Link>
               <Link
                 to="/login"
                 className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
               >
                 Iniciar Sesión
+              </Link>
+              <Link
+                to="/register"
+                className="px-4 py-2 text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-xl transition-all"
+              >
+                Quiero Aprender
               </Link>
               <Link
                 to="/register"
@@ -75,28 +80,33 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/60 shadow-lg">
           <div className="px-4 py-4 space-y-1">
-            {['Beneficios', 'Cómo Funciona', 'Testimonios', 'Paquetes'].map((item) => (
+            {[
+              { label: 'Beneficios', id: 'beneficios' },
+              { label: 'Cómo Funciona', id: 'como-funciona' },
+              { label: 'Testimonios', id: 'testimonios' },
+              { label: 'Catálogo', id: 'catalogo' }
+            ].map((item) => (
               <a
-                key={item}
-                href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
+                key={item.id}
+                href={`#${item.id}`}
                 onClick={() => setMobileOpen(false)}
                 className="block px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-all"
               >
-                {item}
+                {item.label}
               </a>
             ))}
             <div className="pt-3 mt-3 border-t border-slate-200 space-y-2">
-              <Link
-                to="/catalog"
-                className="block px-4 py-2.5 text-sm text-center text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 hover:border-slate-300 transition-all"
-              >
-                Catálogo
-              </Link>
               <Link
                 to="/login"
                 className="block px-4 py-2.5 text-sm text-center text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 hover:border-slate-300 transition-all"
               >
                 Iniciar Sesión
+              </Link>
+              <Link
+                to="/register"
+                className="block px-4 py-2.5 text-sm text-center font-semibold text-primary-700 bg-primary-50 border border-primary-200 rounded-xl"
+              >
+                Quiero Aprender
               </Link>
               <Link
                 to="/register"
