@@ -2,9 +2,41 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../AuthContext";
 import { getAllUsers, softDeleteUser, updateUserStatus, getPaquetesPendientes, validarPaquete } from "../../services/adminService";
-import "./AdminDashboard.css";
+import { Users, Package, CircleCheck as CheckCircle, Circle as XCircle, CircleAlert as AlertCircle } from "lucide-react";
 
 const ESTADOS_VALIDOS = ["activo", "suspendido", "baneado", "inactivo"];
+
+const roleBadge = (roles) => {
+  if (roles.includes("admin")) return "bg-violet-100 text-violet-700 border-violet-200";
+  if (roles.includes("mentor")) return "bg-green-100 text-green-700 border-green-200";
+  return "bg-blue-100 text-blue-700 border-blue-200";
+};
+
+const roleLabel = (roles) => {
+  if (roles.includes("admin")) return "Admin";
+  if (roles.includes("mentor")) return "Mentor";
+  return "Mentee";
+};
+
+const statusBadge = (s) => {
+  switch (s) {
+    case "activo": return "bg-green-50 text-green-700 border-green-200";
+    case "suspendido": return "bg-amber-50 text-amber-700 border-amber-200";
+    case "baneado": return "bg-red-50 text-red-700 border-red-200";
+    default: return "bg-slate-100 text-slate-600 border-slate-200";
+  }
+};
+
+const statusLabel = (s) => {
+  const map = { activo: "Activo", suspendido: "Suspendido", baneado: "Baneado", inactivo: "Inactivo" };
+  return map[s] || s;
+};
+
+const formatDate = (dateString) =>
+  new Date(dateString).toLocaleDateString("es-ES", {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -41,9 +73,7 @@ export default function AdminDashboard() {
     }
   }, [activeTab, logout, navigate]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleValidarPaquete = async (id, estado) => {
     try {
@@ -54,25 +84,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteClick = (userId) => setConfirmDelete(userId);
-
   const handleConfirmDelete = async () => {
     try {
       await softDeleteUser(confirmDelete);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id_usuario === confirmDelete ? { ...u, estado_cuenta: "baneado" } : u
-        )
-      );
+      setUsers(prev => prev.map(u => u.id_usuario === confirmDelete ? { ...u, estado_cuenta: "baneado" } : u));
       setConfirmDelete(null);
     } catch (err) {
       setError(err.message);
     }
-  };
-
-  const handleOpenStatusModal = (user) => {
-    setStatusModal(user);
-    setSelectedEstado(user.estado_cuenta);
   };
 
   const handleConfirmStatus = async () => {
@@ -82,174 +101,197 @@ export default function AdminDashboard() {
     }
     try {
       await updateUserStatus(statusModal.id_usuario, selectedEstado);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id_usuario === statusModal.id_usuario
-            ? { ...u, estado_cuenta: selectedEstado }
-            : u
-        )
-      );
+      setUsers(prev => prev.map(u => u.id_usuario === statusModal.id_usuario ? { ...u, estado_cuenta: selectedEstado } : u));
       setStatusModal(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-  const getRoleBadgeClass = (roles) => {
-    if (roles.includes("admin")) return "badge-admin";
-    if (roles.includes("mentor")) return "badge-mentor";
-    return "badge-mentee";
-  };
-
-  const getRoleLabel = (roles) => {
-    if (roles.includes("admin")) return "Administrador";
-    if (roles.includes("mentor")) return "Mentor";
-    return "Mentee";
-  };
-
-  const getStatusBadgeClass = (s) => {
-    switch (s) {
-      case "activo": return "status-active";
-      case "suspendido": return "status-suspended";
-      case "baneado": return "status-banned";
-      case "inactivo": return "status-unknown";
-      default: return "status-unknown";
-    }
-  };
-
-  const getStatusLabel = (s) => {
-    const map = { activo: "Activo", suspendido: "Suspendido", baneado: "Baneado", inactivo: "Inactivo" };
-    return map[s] || s;
-  };
-
   if (loading) {
     return (
-      <div className="admin-dashboard">
-        <div className="loading-container">
-          <div className="spinner" />
-          <p>Cargando usuarios...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
+        <div className="w-9 h-9 rounded-full border-2 border-slate-200 border-t-primary-600 animate-spin" />
+        <p className="text-sm text-slate-500">Cargando datos...</p>
       </div>
     );
   }
 
   return (
-    <div className="admin-dashboard">
-      <div className="admin-header">
-        <h1>Panel de Administrador</h1>
-        <p>Gestion de usuarios del sistema</p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900">Panel de Administrador</h1>
+        <p className="text-slate-500 mt-1">Gestión de usuarios y validación de paquetes.</p>
       </div>
 
       {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={loadData} className="btn-retry">Reintentar</button>
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between gap-3 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={15} className="flex-shrink-0" />{error}
+          </div>
+          <button onClick={loadData} className="text-xs font-semibold underline underline-offset-2 hover:text-red-900 transition-colors">
+            Reintentar
+          </button>
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
-        <button 
-          onClick={() => setActiveTab("usuarios")} 
-          style={{ padding: "0.5rem 1rem", background: activeTab === "usuarios" ? "#6366f1" : "transparent", color: "white", border: "1px solid #6366f1", borderRadius: "0.375rem", cursor: "pointer" }}>
-          Usuarios
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab("usuarios")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            activeTab === "usuarios"
+              ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+          }`}
+        >
+          <Users size={14} />Usuarios
         </button>
-        <button 
-          onClick={() => setActiveTab("paquetes")} 
-          style={{ padding: "0.5rem 1rem", background: activeTab === "paquetes" ? "#6366f1" : "transparent", color: "white", border: "1px solid #6366f1", borderRadius: "0.375rem", cursor: "pointer" }}>
-          Validacion Paquetes
+        <button
+          onClick={() => setActiveTab("paquetes")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            activeTab === "paquetes"
+              ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+          }`}
+        >
+          <Package size={14} />Validación Paquetes
         </button>
       </div>
 
-      {activeTab === "usuarios" ? (
-        <div className="users-table-container">
-          <table className="users-table">
-            <thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Fecha Registro</th><th>Acciones</th></tr></thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id_usuario}>
-                  <td className="email-cell">{user.email}</td>
-                  <td>{user.roles.join(', ')}</td>
-                  <td><span className={`status-badge status-${user.estado_cuenta}`}>{user.estado_cuenta}</span></td>
-                  <td className="date-cell">{formatDate(user.fecha_creacion)}</td>
-                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                    <button className="btn-delete" style={{ borderColor: "#6366f1", color: "#6366f1" }} onClick={() => { setStatusModal(user); setSelectedEstado(user.estado_cuenta); }}>Estado</button>
-                    <button className="btn-delete" onClick={() => setConfirmDelete(user.id_usuario)}>Banear</button>
-                  </td>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+        {activeTab === "usuarios" ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Rol</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Registro</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="users-table-container">
-          <table className="users-table">
-            <thead><tr><th>Titulo</th><th>Horas</th><th>Precio</th><th>Fecha</th><th>Acciones</th></tr></thead>
-            <tbody>
-              {paquetes.length === 0 ? <tr><td colSpan="5" style={{textAlign:"center", padding:"2rem"}}>No hay paquetes pendientes</td></tr> : paquetes.map(p => (
-                <tr key={p.id_paquete}>
-                  <td className="email-cell">{p.titulo_paquete}</td>
-                  <td>{p.cantidad_horas_totales}</td>
-                  <td>${p.precio_total}</td>
-                  <td className="date-cell">{formatDate(p.fecha_creacion)}</td>
-                  <td className="actions-cell" style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                    <button className="btn-delete" style={{ borderColor: "#059669", color: "#059669" }} onClick={() => handleValidarPaquete(p.id_paquete, "aprobado")}>Aprobar</button>
-                    <button className="btn-delete" onClick={() => handleValidarPaquete(p.id_paquete, "rechazado")}>Rechazar</button>
-                  </td>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {users.map(user => (
+                  <tr key={user.id_usuario} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${roleBadge(user.roles)}`}>
+                        {roleLabel(user.roles)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusBadge(user.estado_cuenta)}`}>
+                        {statusLabel(user.estado_cuenta)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 text-xs">{formatDate(user.fecha_creacion)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => { setStatusModal(user); setSelectedEstado(user.estado_cuenta); }}
+                          className="px-3 py-1.5 text-xs font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+                        >
+                          Estado
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(user.id_usuario)}
+                          className="px-3 py-1.5 text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          Banear
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Título</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Horas</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Precio</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {paquetes.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center text-slate-400 py-12 text-sm">No hay paquetes pendientes.</td>
+                  </tr>
+                ) : paquetes.map(p => (
+                  <tr key={p.id_paquete} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">{p.titulo_paquete}</td>
+                    <td className="px-6 py-4 text-slate-600">{p.cantidad_horas_totales}h</td>
+                    <td className="px-6 py-4 text-slate-600">${p.precio_total}</td>
+                    <td className="px-6 py-4 text-slate-500 text-xs">{formatDate(p.fecha_creacion)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleValidarPaquete(p.id_paquete, "aprobado")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-green-200 text-green-700 hover:bg-green-50 rounded-lg transition-all"
+                        >
+                          <CheckCircle size={12} />Aprobar
+                        </button>
+                        <button
+                          onClick={() => handleValidarPaquete(p.id_paquete, "rechazado")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <XCircle size={12} />Rechazar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-      {/* Modals para confirmDelete y statusModal van aqui como en el original */}
       {confirmDelete && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Confirmar baneo</h2>
-            <p>El usuario quedara baneado. Esta accion queda registrada en auditoria.</p>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="btn-confirm" onClick={handleConfirmDelete}>Banear</button>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-card-lg border border-slate-100 p-6 max-w-sm w-full">
+            <h2 className="text-base font-bold text-slate-900 mb-2">Confirmar baneo</h2>
+            <p className="text-sm text-slate-500 mb-5">El usuario quedará baneado. Esta acción queda registrada en auditoría.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
+                Cancelar
+              </button>
+              <button onClick={handleConfirmDelete} className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all">
+                Banear
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {statusModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Cambiar estado de {statusModal.email}</h2>
-            <p>Estado actual: <strong>{getStatusLabel(statusModal.estado_cuenta)}</strong></p>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-card-lg border border-slate-100 p-6 max-w-sm w-full">
+            <h2 className="text-base font-bold text-slate-900 mb-1">Cambiar estado</h2>
+            <p className="text-sm text-slate-500 mb-4">{statusModal.email}</p>
             <select
               value={selectedEstado}
               onChange={(e) => setSelectedEstado(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                borderRadius: "0.375rem",
-                background: "#0a0a0a",
-                color: "white",
-                border: "1px solid #374151",
-                marginBottom: "1rem",
-              }}
+              className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all mb-5"
             >
               {ESTADOS_VALIDOS.map((e) => (
-                <option key={e} value={e}>{getStatusLabel(e)}</option>
+                <option key={e} value={e}>{statusLabel(e)}</option>
               ))}
             </select>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setStatusModal(null)}>Cancelar</button>
-              <button className="btn-confirm" onClick={handleConfirmStatus}>Aplicar</button>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setStatusModal(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
+                Cancelar
+              </button>
+              <button onClick={handleConfirmStatus} className="px-4 py-2 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-all">
+                Aplicar
+              </button>
             </div>
           </div>
         </div>

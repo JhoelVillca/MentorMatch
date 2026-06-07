@@ -1,146 +1,275 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../services/apiClient';
+import { Plus, Package, ToggleLeft, ToggleRight, Pencil, CircleCheck as CheckCircle, Circle as XCircle, Clock, X, DollarSign, Hash } from 'lucide-react';
 
 const PaquetesPage = () => {
-    const [paquetes, setPaquetes] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [editId, setEditId] = useState(null);
-    
-    const [formData, setFormData] = useState({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
+  const [paquetes, setPaquetes] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
 
-    const API_URL = '/api/paquetes';
+  const fetchPaquetes = async () => {
+    try {
+      const data = await apiClient('/api/paquetes/me', { method: 'GET' });
+      setPaquetes(data);
+      setErrorMessage('');
+    } catch (error) {
+      setErrorMessage(error?.message || 'No se pudieron cargar los paquetes.');
+    }
+  };
 
-    const fetchPaquetes = async () => {
-        try {
-            const data = await apiClient(`${API_URL}/me`, { method: 'GET' });
-            setPaquetes(data);
-            setErrorMessage('');
-        } catch (error) {
-            setErrorMessage(error?.message || 'No se pudieron cargar los paquetes.');
-        }
+  useEffect(() => { fetchPaquetes(); }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const payload = {
+      titulo_paquete: formData.titulo_paquete,
+      cantidad_horas_totales: parseInt(formData.cantidad_horas_totales, 10),
+      precio_total: parseFloat(formData.precio_total)
     };
+    try {
+      if (editId) {
+        await apiClient(`/api/paquetes/${editId}`, { method: 'PATCH', body: payload });
+      } else {
+        await apiClient('/api/paquetes/', { method: 'POST', body: payload });
+      }
+      setIsModalOpen(false);
+      setErrorMessage('');
+      fetchPaquetes();
+    } catch (error) {
+      setErrorMessage(error?.message || 'Operación fallida.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    useEffect(() => { fetchPaquetes(); }, []);
+  const handleOpenEdit = (p) => {
+    setEditId(p.id_paquete);
+    setFormData({ titulo_paquete: p.titulo_paquete, cantidad_horas_totales: p.cantidad_horas_totales, precio_total: p.precio_total });
+    setIsModalOpen(true);
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        
-        const payload = {
-            titulo_paquete: formData.titulo_paquete,
-            cantidad_horas_totales: parseInt(formData.cantidad_horas_totales, 10),
-            precio_total: parseFloat(formData.precio_total)
-        };
+  const handleOpenNew = () => {
+    setEditId(null);
+    setFormData({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
+    setIsModalOpen(true);
+    setErrorMessage('');
+  };
 
-        try {
-            if (editId) {
-                await apiClient(`${API_URL}/${editId}`, { method: 'PATCH', body: payload });
-            } else {
-                await apiClient(`${API_URL}/`, { method: 'POST', body: payload });
-            }
-            
-            setIsModalOpen(false);
-            setErrorMessage('');
-            fetchPaquetes();
-        } catch (error) {
-            setErrorMessage(error?.message || 'Operacion fallida.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const handleToggleStatus = async (id, estadoActual) => {
+    try {
+      await apiClient(`/api/paquetes/${id}/status`, { method: 'PATCH', body: { estado_activo: !estadoActual } });
+      fetchPaquetes();
+    } catch (error) {
+      setErrorMessage(error?.message || 'No se pudo actualizar.');
+    }
+  };
 
-    const handleOpenEdit = (p) => {
-        setEditId(p.id_paquete);
-        setFormData({ titulo_paquete: p.titulo_paquete, cantidad_horas_totales: p.cantidad_horas_totales, precio_total: p.precio_total });
-        setIsModalOpen(true);
-    };
+  const validacionConfig = {
+    aprobado: { label: 'Aprobado', icon: CheckCircle, class: 'text-green-700 bg-green-50 border-green-200' },
+    rechazado: { label: 'Rechazado', icon: XCircle, class: 'text-red-700 bg-red-50 border-red-200' },
+    pendiente: { label: 'En revisión', icon: Clock, class: 'text-amber-700 bg-amber-50 border-amber-200' },
+  };
 
-    const handleOpenNew = () => {
-        setEditId(null);
-        setFormData({ titulo_paquete: '', cantidad_horas_totales: '', precio_total: '' });
-        setIsModalOpen(true);
-    };
+  const inputClass = 'w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400 transition-all placeholder:text-slate-400';
 
-    const handleToggleStatus = async (id, estadoActual) => {
-        try {
-            await apiClient(`${API_URL}/${id}/status`, {
-                method: 'PATCH',
-                body: { estado_activo: !estadoActual }
-            });
-            setErrorMessage('');
-            fetchPaquetes();
-        } catch (error) {
-            setErrorMessage(error?.message || 'No se pudo actualizar.');
-        }
-    };
+  const activeCount = paquetes.filter(p => p.estado_activo).length;
 
-    const getStatusColor = (v) => v === 'aprobado' ? 'text-green-400' : v === 'rechazado' ? 'text-red-400' : 'text-yellow-400';
-
-    return (
-        <div className="p-8 min-h-screen text-white">
-            {errorMessage && (
-                <div className="mb-6 rounded-xl border border-red-900/40 bg-red-950/40 px-4 py-3 text-red-200">
-                    {errorMessage}
-                </div>
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8 animate-in">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Mis Paquetes</h1>
+          <p className="text-slate-500 mt-1">
+            Gestiona tu oferta de mentoría.
+            {paquetes.length > 0 && (
+              <span className="ml-2 text-xs text-slate-400">{activeCount}/{paquetes.length} activos</span>
             )}
-
-            <div className="flex justify-between items-center mb-10">
-                <h1 className="text-3xl font-bold text-red-400">Panel de Paquetes</h1>
-                <button onClick={handleOpenNew}
-                    className="bg-red-700 hover:bg-red-600 px-6 py-3 rounded-xl font-bold transition-all"
-                >
-                    + Nuevo
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paquetes.map((p) => (
-                    <div key={p.id_paquete} className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 shadow-xl hover:border-red-700/50 transition-colors">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xl font-semibold">{p.titulo_paquete}</h3>
-                            <div className={`h-3 w-3 rounded-full ${p.estado_activo ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                        </div>
-                        <p className={`text-sm mb-4 font-bold ${getStatusColor(p.estado_validacion)}`}>{p.estado_validacion.toUpperCase()}</p>
-                        <p className="text-gray-400 mb-4">{p.cantidad_horas_totales} Horas - <span className="text-red-400 font-bold">${p.precio_total}</span></p>
-                        <div className="flex gap-2">
-                            <button onClick={() => handleToggleStatus(p.id_paquete, p.estado_activo)} className="flex-1 py-2 bg-red-900/30 rounded-lg hover:bg-red-700/50 transition-colors">{p.estado_activo ? 'Desactivar' : 'Activar'}</button>
-                            <button onClick={() => handleOpenEdit(p)} className="flex-1 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors">Editar</button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-[#141414] border border-red-900/30 rounded-2xl p-8 max-w-md w-full">
-                        <h2 className="text-2xl font-bold mb-6">{editId ? 'Editar Paquete' : 'Crear Paquete'}</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <input type="text" placeholder="Titulo" required value={formData.titulo_paquete}
-                                className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg p-3 text-white outline-none focus:border-red-600"
-                                onChange={(e) => setFormData({...formData, titulo_paquete: e.target.value})}
-                            />
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="number" placeholder="Horas" required value={formData.cantidad_horas_totales}
-                                    className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg p-3 text-white outline-none focus:border-red-600"
-                                    onChange={(e) => setFormData({...formData, cantidad_horas_totales: e.target.value})}
-                                />
-                                <input type="number" step="0.01" placeholder="Precio" required value={formData.precio_total}
-                                    className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg p-3 text-white outline-none focus:border-red-600"
-                                    onChange={(e) => setFormData({...formData, precio_total: e.target.value})}
-                                />
-                            </div>
-                            <div className="flex gap-3 mt-6">
-                                <button type="submit" disabled={isSubmitting} className="flex-1 bg-red-700 py-3 rounded-lg font-bold disabled:opacity-50">{isSubmitting ? 'Guardando...' : 'Guardar'}</button>
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+          </p>
         </div>
-    );
+        <button
+          onClick={handleOpenNew}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-primary-600/20 transition-all active:scale-95"
+        >
+          <Plus size={16} />Nuevo paquete
+        </button>
+      </div>
+
+      {errorMessage && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 animate-in">{errorMessage}</div>
+      )}
+
+      {paquetes.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm animate-in">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+            <Package size={28} className="text-slate-300" />
+          </div>
+          <p className="text-slate-700 font-semibold">Sin paquetes creados aún.</p>
+          <p className="text-slate-400 text-sm mt-1">Crea tu primer paquete para comenzar a enseñar.</p>
+          <button
+            onClick={handleOpenNew}
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+          >
+            <Plus size={15} />Crear mi primer paquete
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {paquetes.map((p, i) => {
+            const val = validacionConfig[p.estado_validacion] || validacionConfig.pendiente;
+            const ValIcon = val.icon;
+            return (
+              <div
+                key={p.id_paquete}
+                className={`animate-in bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group ${
+                  p.estado_activo ? 'border-slate-100 hover:border-slate-200' : 'border-slate-100 opacity-75 hover:opacity-90'
+                }`}
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                {/* Top color accent strip */}
+                <div className={`h-1 w-full ${
+                  p.estado_validacion === 'aprobado'
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                    : p.estado_validacion === 'rechazado'
+                    ? 'bg-gradient-to-r from-red-400 to-red-500'
+                    : 'bg-gradient-to-r from-amber-300 to-amber-400'
+                }`} />
+
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-base font-semibold text-slate-900 leading-tight flex-1 mr-2">{p.titulo_paquete}</h3>
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 ${p.estado_activo ? 'bg-green-500 shadow-sm shadow-green-300' : 'bg-slate-300'}`} title={p.estado_activo ? 'Activo' : 'Inactivo'} />
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border ${val.class}`}>
+                      <ValIcon size={11} />{val.label}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Hash size={12} className="text-slate-400" />
+                        <span className="text-xs text-slate-500">Horas</span>
+                      </div>
+                      <p className="text-lg font-bold text-slate-900">{p.cantidad_horas_totales}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <DollarSign size={12} className="text-slate-400" />
+                        <span className="text-xs text-slate-500">Precio</span>
+                      </div>
+                      <p className="text-lg font-bold text-slate-900">${p.precio_total}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleStatus(p.id_paquete, p.estado_activo)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-all active:scale-95 ${
+                        p.estado_activo
+                          ? 'border-green-200 text-green-700 hover:bg-green-50'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {p.estado_activo
+                        ? <><ToggleRight size={14} className="text-green-600" />Desactivar</>
+                        : <><ToggleLeft size={14} />Activar</>
+                      }
+                    </button>
+                    <button
+                      onClick={() => handleOpenEdit(p)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition-all active:scale-95"
+                    >
+                      <Pencil size={12} />Editar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
+          <div className="modal-pop bg-white rounded-2xl shadow-xl border border-slate-100 p-7 max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">{editId ? 'Editar paquete' : 'Nuevo paquete'}</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{editId ? 'Modifica los detalles de tu paquete.' : 'Define tu oferta de mentoría.'}</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors p-1 hover:bg-slate-50 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Título del paquete</label>
+                <input
+                  type="text"
+                  placeholder="Ej: Mentoría en React Avanzado"
+                  required
+                  value={formData.titulo_paquete}
+                  onChange={e => setFormData({...formData, titulo_paquete: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Horas totales</label>
+                  <div className="relative">
+                    <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="number"
+                      placeholder="10"
+                      required
+                      min="1"
+                      value={formData.cantidad_horas_totales}
+                      onChange={e => setFormData({...formData, cantidad_horas_totales: e.target.value})}
+                      className={inputClass + ' pl-9'}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Precio (USD)</label>
+                  <div className="relative">
+                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="150"
+                      required
+                      min="0"
+                      value={formData.precio_total}
+                      onChange={e => setFormData({...formData, precio_total: e.target.value})}
+                      className={inputClass + ' pl-9'}
+                    />
+                  </div>
+                </div>
+              </div>
+              {errorMessage && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-100">{errorMessage}</p>}
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold disabled:opacity-60 transition-all shadow-sm active:scale-[0.98]">
+                  {isSubmitting ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default PaquetesPage;

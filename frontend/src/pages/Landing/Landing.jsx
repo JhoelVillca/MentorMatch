@@ -3,7 +3,7 @@ import Hero from '../../components/Landing/Hero';
 import Benefits from '../../components/Landing/Benefits';
 import HowItWorks from '../../components/Landing/HowItWorks';
 import Testimonials from '../../components/Landing/Testimonials';
-import Packages from '../../components/Landing/Packages';
+import CatalogPreview from '../../components/Landing/CatalogPreview';
 import CTASection from '../../components/Landing/CTASection';
 import Footer from '../../components/Landing/Footer';
 
@@ -15,7 +15,7 @@ export default function Landing() {
       <Benefits />
       <HowItWorks />
       <Testimonials />
-      <Packages />
+      <CatalogPreview />
       <CTASection />
       <Footer />
     </div>

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerAPI } from '../../services/authService';
+import { GraduationCap, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import ParticlesBackground from '../../components/ParticlesBackground';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rol, setRol] = useState('Mentee');
-  
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -35,125 +35,130 @@ export default function Register() {
   };
 
   return (
-    // Fondo adaptativo Celeste Plomo alineado con Login
-    <div className="min-h-screen bg-background dark:bg-plomo-darkCanvas font-['Poppins'] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
-      
-      {/* Efectos de Luces de Fondo */}
-      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-celeste/20 dark:bg-celeste/10 blur-[80px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] rounded-full bg-plomo-700/20 dark:bg-plomo-800/30 blur-[80px] pointer-events-none" />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-plomo-900 dark:text-white tracking-tight">
-          Crea tu cuenta en MentorMatch
-        </h2>
-        <p className="mt-2 text-center text-sm text-plomo-700 dark:text-plomo-100/70">
-          O{' '}
-          <Link to="/login" className="font-semibold text-celeste hover:text-celeste-dark transition-colors">
-            inicia sesión si ya tienes cuenta
-          </Link>
-        </p>
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* Left decorative */}
+      <div className="hidden lg:flex lg:w-1/2 bg-primary-600 items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-800" />
+        <ParticlesBackground id="particles-left" particleColor="#ffffff" lineColor="#e0f2fe" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="relative z-10 text-white text-center max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
+            <GraduationCap className="text-white" size={32} />
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Únete a MentorMatch</h2>
+          <p className="text-primary-100 text-lg leading-relaxed">
+            Miles de profesionales ya están acelerando su carrera con mentoría personalizada.
+          </p>
+          <div className="grid grid-cols-3 gap-6 mt-10">
+            {[['2,500+', 'Mentores'], ['15K+', 'Sesiones'], ['4.9', 'Calificación']].map(([v, l]) => (
+              <div key={l}>
+                <div className="text-2xl font-bold">{v}</div>
+                <div className="text-primary-200 text-sm mt-0.5">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="bg-surface dark:bg-plomo-darkSurface py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-plomo-100 dark:border-plomo-700/50 backdrop-blur-sm transition-all duration-300">
-          
+      {/* Right form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <ParticlesBackground id="particles-right" particleColor="#3b82f6" lineColor="#93c5fd" />
+        </div>
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-white/50 relative z-10">
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
+              <GraduationCap className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold text-slate-900">Mentor<span className="text-primary-600">Match</span></span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900">Crear cuenta</h1>
+            <p className="text-slate-500 mt-1">
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                Inicia sesión
+              </Link>
+            </p>
+          </div>
+
           {errorMsg && (
-            <div className="mb-6 bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-4 rounded-md">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-500 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-                    {errorMsg}
-                  </p>
-                </div>
-              </div>
+            <div className="mb-5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+              {errorMsg}
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleRegister}>
+          <form onSubmit={handleRegister} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
                 Correo electrónico
               </label>
-              <div className="mt-1">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   id="email"
-                  name="email"
                   type="email"
-                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
                   placeholder="ejemplo@correo.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
                 Contraseña
               </label>
-              <div className="mt-1">
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   id="password"
-                  name="password"
                   type="password"
-                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
-                  placeholder="••••••••"
+                  placeholder="Min. 8 caracteres, 1 mayúscula, 1 número"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="rol" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
-                ¿Qué buscas en MentorMatch?
-              </label>
-              <div className="mt-1">
-                <select
-                  id="rol"
-                  name="rol"
-                  value={rol}
-                  onChange={(e) => setRol(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2.5 text-base border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm rounded-lg shadow-sm transition-all duration-200"
-                >
-                  <option value="Mentee" className="bg-surface dark:bg-plomo-darkSurface text-plomo-900 dark:text-white">Quiero aprender (Mentee)</option>
-                  <option value="Mentor" className="bg-surface dark:bg-plomo-darkSurface text-plomo-900 dark:text-white">Quiero enseñar (Mentor)</option>
-                </select>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">¿Qué buscas?</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[['Mentee', 'Quiero aprender'], ['Mentor', 'Quiero enseñar']].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRol(value)}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      rol === value
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <User size={15} />
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-semibold text-white transition-all duration-200 ${
-                  loading 
-                    ? 'bg-celeste/60 cursor-not-allowed' 
-                    : 'bg-celeste hover:bg-celeste-dark active:scale-[0.98]'
-                }`}
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Procesando...
-                  </span>
-                ) : (
-                  'Crear Cuenta'
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <>Crear cuenta <ArrowRight size={16} /></>
+              )}
+            </button>
           </form>
         </div>
       </div>

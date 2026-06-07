@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { apiClient } from '../../services/apiClient';
 import { iniciarChat } from '../../services/chatService';
+import { Search, ListFilter as Filter, Star, MessageSquare, ShoppingCart, GraduationCap, CircleAlert as AlertCircle, X, SlidersHorizontal } from 'lucide-react';
 
 export default function Marketplace() {
   const [paquetes, setPaquetes] = useState([]);
@@ -17,6 +18,7 @@ export default function Marketplace() {
   const [modalBeca, setModalBeca] = useState({ open: false, id_paquete: null });
   const [carta, setCarta] = useState('');
   const [enviandoBeca, setEnviandoBeca] = useState(false);
+  const [filtersVisible, setFiltersVisible] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +28,7 @@ export default function Marketplace() {
     const params = new URLSearchParams(location.search);
     if (params.get('canceled') === 'true') {
       setToastMsg({ type: 'warn', text: 'Pago cancelado. Puedes intentarlo de nuevo.' });
-      window.history.replaceState({}, '', '/mentee/marketplace');
+      window.history.replaceState({}, '', '/catalog');
     }
   }, [location.search]);
 
@@ -39,12 +41,11 @@ export default function Marketplace() {
   useEffect(() => {
     apiClient('/api/skills/categories', { method: 'GET' })
       .then(setCategorias)
-      .catch((err) => console.error('Error cargando taxonomias:', err));
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-
     const fetchMarketplace = async () => {
       setLoading(true);
       try {
@@ -53,11 +54,7 @@ export default function Marketplace() {
         if (precioMax) params.append('precio_max', precioMax);
         if (idHabilidad) params.append('id_habilidad', idHabilidad);
         if (nivelDominio) params.append('nivel_dominio', nivelDominio);
-
-        const data = await apiClient(`/api/paquetes/buscar?${params.toString()}`, {
-          method: 'GET',
-          signal: controller.signal,
-        });
+        const data = await apiClient(`/api/paquetes/buscar?${params.toString()}`, { method: 'GET', signal: controller.signal });
         setPaquetes(data);
         setError(null);
       } catch (err) {
@@ -66,28 +63,17 @@ export default function Marketplace() {
         setLoading(false);
       }
     };
-
-    const debounceTimer = setTimeout(fetchMarketplace, 400);
-    return () => {
-      clearTimeout(debounceTimer);
-      controller.abort();
-    };
+    const timer = setTimeout(fetchMarketplace, 400);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [q, precioMax, idHabilidad, nivelDominio]);
 
   const handleAdquirir = async (idPaquete) => {
     try {
-      const res = await apiClient('/api/contratos/adquirir', {
-        method: 'POST',
-        body: { id_paquete: idPaquete },
-      });
-
-      if (res.url_pago) {
-        window.location.href = res.url_pago;
-      } else {
-        navigate('/mentee/contratos');
-      }
+      const res = await apiClient('/api/contratos/adquirir', { method: 'POST', body: { id_paquete: idPaquete } });
+      if (res.url_pago) window.location.href = res.url_pago;
+      else navigate('/mentee/contratos');
     } catch (err) {
-      setToastMsg({ type: 'error', text: `Error: ${err.message}` });
+      setToastMsg({ type: 'error', text: err.message });
     }
   };
 
@@ -96,7 +82,7 @@ export default function Marketplace() {
       const res = await iniciarChat(idMentor, null);
       navigate('/chat', { state: { salaId: res.id_sala } });
     } catch (err) {
-      setToastMsg({ type: 'error', text: `Error al iniciar chat: ${err.message}` });
+      setToastMsg({ type: 'error', text: err.message });
     }
   };
 
@@ -104,219 +90,258 @@ export default function Marketplace() {
     if (!carta.trim()) return;
     setEnviandoBeca(true);
     try {
-      await apiClient('/api/contratos/aplicar-beca', {
-        method: 'POST',
-        body: { id_paquete: modalBeca.id_paquete, carta_motivacion: carta }
-      });
-      setToastMsg({ type: 'success', text: 'Solicitud enviada al panel del juez.' });
+      await apiClient('/api/contratos/aplicar-beca', { method: 'POST', body: { id_paquete: modalBeca.id_paquete, carta_motivacion: carta } });
+      setToastMsg({ type: 'success', text: 'Solicitud enviada.' });
       setModalBeca({ open: false, id_paquete: null });
       setCarta('');
     } catch (err) {
-      setToastMsg({ type: 'error', text: `Error: ${err.message}` });
+      setToastMsg({ type: 'error', text: err.message });
     } finally {
       setEnviandoBeca(false);
     }
   };
 
-  return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+  const hasFilters = q || precioMax || idHabilidad || nivelDominio;
 
+  const selectClass = 'w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400 transition-all';
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Toast */}
       {toastMsg && (
-        <div
-          role="alert"
-          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
-            toastMsg.type === 'error'
-              ? 'bg-red-800 text-white border border-red-600'
-              : 'bg-yellow-800 text-white border border-yellow-600'
-          }`}
-        >
+        <div className={`toast-enter fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border flex items-center gap-2.5 ${
+          toastMsg.type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+        }`}>
           {toastMsg.text}
+          <button onClick={() => setToastMsg(null)} className="ml-1 text-current/50 hover:text-current transition-colors">
+            <X size={13} />
+          </button>
         </div>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Escaparate de Mentores</h1>
-        <p className="text-gray-400 mb-6">Encuentra al experto ideal filtrando por atributos clave.</p>
-
-        {/* Banner de entorno de pruebas */}
-        <div className="mb-6 bg-amber-950/40 border border-amber-700/50 rounded-xl p-4 flex items-start gap-3">
-          <span className="text-amber-400 text-lg mt-0.5">⚠️</span>
-          <div className="text-sm leading-relaxed">
-            <p className="text-amber-300 font-semibold mb-1">Entorno de desarrollo — Pagos en modo prueba</p>
-            <p className="text-amber-200/70">
-              Para probar la compra, usa la tarjeta de prueba de Stripe:{' '}
-              <code className="bg-amber-900/50 text-amber-200 px-2 py-0.5 rounded font-mono text-xs">4242 4242 4242 4242</code>.
-              Fecha de expiración: cualquier fecha futura. CVC: cualquier número de 3 dígitos, y el correo cualquier correo.
-            </p>
+      {/* Header */}
+      <div className="mb-8 animate-in">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Catálogo de Mentores</h1>
+            <p className="text-slate-500 mt-1">Encuentra al experto ideal para tu crecimiento profesional.</p>
           </div>
+          {paquetes.length > 0 && (
+            <span className="hidden sm:block text-xs text-slate-500 bg-white border border-slate-100 rounded-full px-3 py-1.5 shadow-sm font-medium">
+              {paquetes.length} mentores
+            </span>
+          )}
         </div>
+      </div>
 
-        <div className="bg-[#141414] border border-gray-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="Buscar por titulo o nombre..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
-          />
+      {/* Dev notice */}
+      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 animate-in" style={{ animationDelay: '40ms' }}>
+        <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-semibold text-amber-800 mb-0.5">Pagos en modo prueba</p>
+          <p className="text-amber-700 text-xs">
+            Usa la tarjeta{' '}
+            <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">4242 4242 4242 4242</code>
+            {' '}con cualquier fecha futura y CVC.
+          </p>
+        </div>
+      </div>
 
-          <input
-            type="number"
-            placeholder="Precio maximo (USD)"
-            value={precioMax}
-            onChange={(e) => setPrecioMax(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
-          />
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-8 overflow-hidden animate-in" style={{ animationDelay: '80ms' }}>
+        <button
+          onClick={() => setFiltersVisible(!filtersVisible)}
+          className="w-full flex items-center gap-2 px-5 py-4 hover:bg-slate-50 transition-colors"
+        >
+          <SlidersHorizontal size={15} className="text-slate-400" />
+          <span className="text-sm font-medium text-slate-700">Filtros</span>
+          {hasFilters && (
+            <span className="ml-1 w-1.5 h-1.5 rounded-full bg-primary-500" />
+          )}
+          <span className={`ml-auto text-slate-400 transition-transform duration-200 ${filtersVisible ? 'rotate-180' : ''}`}>
+            ▾
+          </span>
+        </button>
 
-          <select
-            value={idHabilidad}
-            onChange={(e) => setIdHabilidad(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
-          >
-            <option value="">Todas las habilidades</option>
-            {categorias.map(
-              (cat) =>
-                cat.habilidades?.length > 0 && (
-                  <optgroup key={cat.id_categoria} label={cat.nombre_categoria}>
-                    {cat.habilidades.map((hab) => (
-                      <option key={hab.id_habilidad} value={hab.id_habilidad}>
-                        {hab.nombre_habilidad}
-                      </option>
-                    ))}
-                  </optgroup>
-                )
-            )}
-          </select>
-
-            <select
-              value={nivelDominio}
-              onChange={(e) => setNivelDominio(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition-colors"
-            >
+        <div className={`overflow-hidden transition-all duration-300 ${filtersVisible ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 border-t border-slate-50">
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+              <input
+                type="text"
+                placeholder="Buscar por título o nombre..."
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400 transition-all placeholder:text-slate-400"
+              />
+            </div>
+            <input
+              type="number"
+              placeholder="Precio máximo (USD)"
+              value={precioMax}
+              onChange={e => setPrecioMax(e.target.value)}
+              className={selectClass + ' mt-3'}
+            />
+            <select value={idHabilidad} onChange={e => setIdHabilidad(e.target.value)} className={selectClass + ' mt-3'}>
+              <option value="">Todas las habilidades</option>
+              {categorias.map(cat => cat.habilidades?.length > 0 && (
+                <optgroup key={cat.id_categoria} label={cat.nombre_categoria}>
+                  {cat.habilidades.map(hab => (
+                    <option key={hab.id_habilidad} value={hab.id_habilidad}>{hab.nombre_habilidad}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <select value={nivelDominio} onChange={e => setNivelDominio(e.target.value)} className={selectClass + ' mt-3'}>
               <option value="">Todos los niveles</option>
-              <option value="basico">Basico</option>
+              <option value="basico">Básico</option>
               <option value="intermedio">Intermedio</option>
               <option value="avanzado">Avanzado</option>
               <option value="experto">Experto</option>
             </select>
+          </div>
         </div>
       </div>
 
       {error ? (
-        <div className="bg-red-900/30 border border-red-500 text-red-200 p-4 rounded-lg">
-          Excepcion capturada: {error}
-        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 animate-in">Error: {error}</div>
       ) : loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-red-600"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden h-64 animate-in" style={{ animationDelay: `${i * 50}ms` }}>
+              <div className="shimmer h-full w-full" />
+            </div>
+          ))}
         </div>
       ) : paquetes.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
-          <p className="text-gray-400">
-            No se encontraron conjuntos de datos que coincidan con la métrica solicitada.
-          </p>
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 animate-in">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+            <GraduationCap size={28} className="text-slate-300" />
+          </div>
+          <p className="text-slate-700 font-semibold">No se encontraron mentores</p>
+          <p className="text-slate-400 text-sm mt-1">Intenta ajustar los filtros de búsqueda.</p>
+          {hasFilters && (
+            <button
+              onClick={() => { setQ(''); setPrecioMax(''); setIdHabilidad(''); setNivelDominio(''); }}
+              className="mt-4 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            >
+              Limpiar filtros
+            </button>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paquetes.map((p) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {paquetes.map((p, i) => (
             <div
               key={p.id_paquete}
-              className="bg-[#141414] border border-red-900/30 rounded-2xl p-6 flex flex-col justify-between hover:border-red-600/50 transition-colors shadow-lg"
+              className="animate-in bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden group"
+              style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div 
+              {/* Mentor header */}
+              <div
                 onClick={() => navigate(`/mentor/perfil/${p.id_mentor}`)}
-                className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800 cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors group"
-                title="Ver perfil del mentor"
+                className="flex items-center gap-3 p-5 border-b border-slate-50 cursor-pointer hover:bg-slate-50/70 transition-colors"
               >
                 {p.mentor_foto ? (
-                  <img
-                    src={p.mentor_foto}
-                    alt={p.mentor_nombre}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-700 group-hover:border-blue-500 transition-colors"
-                  />
+                  <img src={p.mentor_foto} alt={p.mentor_nombre} className="w-11 h-11 rounded-full object-cover border-2 border-slate-100 ring-2 ring-white" />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xl border-2 border-gray-700 group-hover:border-blue-500 transition-colors">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary-200 to-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm border-2 border-primary-50 ring-2 ring-white">
                     {p.mentor_nombre.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div>
-                  <h3 className="text-lg font-semibold text-white leading-tight group-hover:text-blue-400 transition-colors">{p.mentor_nombre}</h3>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[10px] text-green-400 font-bold tracking-wider uppercase border border-green-500/20 bg-green-500/5 px-1.5 py-0.5 rounded">
-                      Verificado
-                    </span>
-                    <div className="flex items-center gap-0.5 text-yellow-500 font-bold text-xs">
-                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span>{p.calificacion_promedio ? `${p.calificacion_promedio}` : 'Nuevo'}</span>
-                    </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-primary-700 transition-colors">{p.mentor_nombre}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-green-700 font-semibold bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full">Verificado</span>
+                    {p.calificacion_promedio && (
+                      <div className="flex items-center gap-0.5 text-amber-500 text-xs font-semibold">
+                        <Star size={11} className="fill-current" />
+                        {p.calificacion_promedio}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="mb-6 flex-1">
-                <h4 className="text-xl font-bold text-red-400 mb-2">{p.titulo_paquete}</h4>
-                <div className="flex justify-between items-end mt-4">
-                  <span className="text-gray-400 bg-[#0a0a0a] px-3 py-1 rounded-md text-sm border border-gray-800">
-                    {p.cantidad_horas_totales} Horas
-                  </span>
-                  <span className="text-2xl font-bold text-white">${p.precio_total}</span>
-                </div>
-              </div>
+              <div className="p-5 flex-1 flex flex-col">
+                <h3 className="text-base font-semibold text-slate-900 mb-3 leading-snug">{p.titulo_paquete}</h3>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleContactar(p.id_mentor)}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md"
-                >
-                  Mensaje
-                </button>
-                {user ? (
-                  <div className="flex flex-col gap-2 w-full">
-                    <button
-                      onClick={() => handleAdquirir(p.id_paquete)}
-                      className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-red-900/20"
-                    >
-                      Adquirir
-                    </button>
-                    <button
-                      onClick={() => { setModalBeca({ open: true, id_paquete: p.id_paquete }); setCarta(''); }}
-                      className="w-full bg-transparent border border-blue-600 text-blue-400 hover:bg-blue-900/30 font-bold py-2 rounded-xl transition-all"
-                    >
-                      Solicitar Beca
-                    </button>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg">
+                    <Star size={11} className="text-slate-400" />
+                    {p.cantidad_horas_totales} {p.cantidad_horas_totales === 1 ? 'hora' : 'horas'}
                   </div>
-                ) : (
+                  <div>
+                    <span className="text-xl font-bold text-slate-900">${p.precio_total}</span>
+                    <span className="text-xs text-slate-400 ml-1">USD</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto space-y-2">
                   <button
-                    onClick={() => navigate('/login')}
-                    className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-red-900/20"
+                    onClick={() => handleContactar(p.id_mentor)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-sm font-medium rounded-xl transition-all"
                   >
-                    Inicia sesion para agendar
+                    <MessageSquare size={14} />Mensaje
                   </button>
-                )}
+                  {user ? (
+                    <>
+                      <button
+                        onClick={() => handleAdquirir(p.id_paquete)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-primary-600/20 active:scale-[0.98]"
+                      >
+                        <ShoppingCart size={14} />Adquirir
+                      </button>
+                      <button
+                        onClick={() => { setModalBeca({ open: true, id_paquete: p.id_paquete }); setCarta(''); }}
+                        className="w-full py-2 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl transition-all"
+                      >
+                        Solicitar beca
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => navigate('/login')}
+                      className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-primary-600/20"
+                    >
+                      Inicia sesión para adquirir
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
-      
+
+      {/* Scholarship modal */}
       {modalBeca.open && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
-          <div className="bg-[#141414] border border-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-2">Solicitud de Beca</h3>
-            <p className="text-xs text-gray-500 mb-4">Escribe tus motivos. Convence al mentor.</p>
-            <textarea 
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 fade-in">
+          <div className="modal-pop bg-white rounded-2xl shadow-xl border border-slate-100 p-6 w-full max-w-md">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Solicitud de Beca</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Escribe tus motivos para recibir este paquete gratuitamente.</p>
+              </div>
+              <button onClick={() => setModalBeca({ open: false, id_paquete: null })} className="text-slate-400 hover:text-slate-700 transition-colors p-1">
+                <X size={18} />
+              </button>
+            </div>
+            <textarea
               rows="5"
               value={carta}
-              onChange={(e) => setCarta(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-gray-800 text-white rounded-xl p-3 focus:border-blue-500 outline-none resize-none transition-colors mb-4"
-              placeholder="Soy estudiante y admiro tu trabajo..."
+              onChange={e => setCarta(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400 resize-none transition-all mb-4 placeholder:text-slate-400"
+              placeholder="Soy estudiante y..."
             />
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setModalBeca({ open: false, id_paquete: null })} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancelar</button>
-              <button onClick={handleAplicarBeca} disabled={enviandoBeca || !carta.trim()} className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl disabled:opacity-50">
-                {enviandoBeca ? 'Enviando...' : 'Enviar Súplica'}
+              <button onClick={() => setModalBeca({ open: false, id_paquete: null })} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
+              <button
+                onClick={handleAplicarBeca}
+                disabled={enviandoBeca || !carta.trim()}
+                className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-all shadow-sm"
+              >
+                {enviandoBeca ? 'Enviando...' : 'Enviar solicitud'}
               </button>
             </div>
           </div>

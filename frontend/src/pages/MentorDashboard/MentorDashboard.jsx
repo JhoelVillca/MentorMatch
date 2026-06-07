@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MentorSkillForm from '../../components/MentorSkillForm';
 import { apiClient } from '../../services/apiClient';
+import { Video, Users, BookOpen, ChevronLeft, ChevronRight, CircleCheck as CheckCircle, Circle as XCircle, TrendingUp, Clock } from 'lucide-react';
 
 export default function MentorDashboard() {
   const [sesiones, setSesiones] = useState([]);
@@ -9,8 +10,9 @@ export default function MentorDashboard() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [estudiantesData, setEstudiantesData] = useState({ data: [], total: 0 });
   const [page, setPage] = useState(1);
-  const limit = 10;
   const [toastMsg, setToastMsg] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const limit = 10;
 
   useEffect(() => {
     if (!toastMsg) return;
@@ -19,19 +21,20 @@ export default function MentorDashboard() {
   }, [toastMsg]);
 
   useEffect(() => {
-    apiClient('/api/sesiones/mentor/me', { method: 'GET' })
-      .then((data) => setSesiones(data))
-      .catch((err) => setError(err.message));
-
-    apiClient('/api/contratos/solicitudes', { method: 'GET' })
-      .then((data) => setSolicitudes(data))
-      .catch(console.error);
+    Promise.all([
+      apiClient('/api/sesiones/mentor/me', { method: 'GET' }).catch(() => []),
+      apiClient('/api/contratos/solicitudes', { method: 'GET' }).catch(() => []),
+    ]).then(([s, sol]) => {
+      setSesiones(s);
+      setSolicitudes(sol);
+      setLoaded(true);
+    }).catch(err => setError(err.message));
   }, []);
 
   useEffect(() => {
     const offset = (page - 1) * limit;
     apiClient(`/api/contratos/mis-estudiantes?limit=${limit}&offset=${offset}`, { method: 'GET' })
-      .then((res) => setEstudiantesData(res))
+      .then(res => setEstudiantesData(res))
       .catch(console.error);
   }, [page]);
 
@@ -39,131 +42,224 @@ export default function MentorDashboard() {
     try {
       await apiClient(`/api/contratos/${id}/${accion}`, { method: 'PATCH' });
       setSolicitudes(prev => prev.filter(s => s.id_contrato !== id));
-      setToastMsg({ type: 'success', text: `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'} exitosamente.` });
+      setToastMsg({ type: 'success', text: `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.` });
     } catch (err) {
       setToastMsg({ type: 'error', text: err.message });
     }
   };
 
+  const stats = [
+    { label: 'Sesiones activas', value: sesiones.filter(s => s.estado_sesion === 'en_curso' || s.estado_sesion === 'programada').length, icon: Video, color: 'text-blue-600 bg-blue-50', border: 'border-blue-100' },
+    { label: 'Estudiantes', value: estudiantesData.total, icon: Users, color: 'text-emerald-600 bg-emerald-50', border: 'border-emerald-100' },
+    { label: 'Solicitudes', value: solicitudes.length, icon: BookOpen, color: 'text-amber-600 bg-amber-50', border: 'border-amber-100' },
+  ];
+
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Toast */}
       {toastMsg && (
-        <div
-          role="alert"
-          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl transition-all ${
-            toastMsg.type === 'error'
-              ? 'bg-red-800 text-white border border-red-600'
-              : 'bg-green-800 text-white border border-green-600'
-          }`}
-        >
+        <div className={`toast-enter fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border flex items-center gap-2.5 ${
+          toastMsg.type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
+        }`}>
+          {toastMsg.type === 'success' ? <CheckCircle size={15} /> : null}
           {toastMsg.text}
         </div>
       )}
-      <h1 className="text-white text-center mt-10 text-3xl font-bold mb-8">Mentor Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <MentorSkillForm />
-        </div>
-
-        <div className="flex flex-col gap-8">
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl h-fit">
-            <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
-              Agenda de Sesiones
-            </h2>
-
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-
-            {!error && sesiones.length === 0 ? (
-              <p className="text-gray-400 text-sm">Nadie ha agendado sesiones contigo aun.</p>
-            ) : (
-              <ul className="space-y-4">
-                {sesiones.map((s) => (
-                  <SesionCardMentor key={s.id_sesion} sesion={s} />
-                ))}
-              </ul>
-            )}
+      {/* Header */}
+      <div className="mb-8 animate-in">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Panel del Mentor</h1>
+            <p className="text-slate-500 mt-1">Gestiona tus sesiones, habilidades y estudiantes.</p>
           </div>
-
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl">
-            <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">
-              El Panel del Juez (Becas)
-            </h2>
-            {solicitudes.length === 0 ? (
-              <p className="text-gray-400 text-sm">No hay peticiones de caridad hoy.</p>
-            ) : (
-              <ul className="space-y-4">
-                {solicitudes.map((sol) => (
-                  <li key={sol.id_contrato} className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-800 text-white flex flex-col gap-3">
-                    <div>
-                      <p className="font-semibold text-blue-400">{sol.mentee_nombre} <span className="text-xs text-gray-500 font-normal">quiere el paquete "{sol.paquete_titulo}"</span></p>
-                      <p className="text-sm text-gray-300 mt-2 bg-[#141414] p-3 border border-gray-700 rounded-md italic">"{sol.carta_motivacion}"</p>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button onClick={() => responderSolicitud(sol.id_contrato, 'aceptar')} className="flex-1 bg-green-700/20 text-green-400 border border-green-700 hover:bg-green-700 hover:text-white py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1">
-                        ✓ Conceder
-                      </button>
-                      <button onClick={() => responderSolicitud(sol.id_contrato, 'rechazar')} className="flex-1 bg-red-700/20 text-red-400 border border-red-700 hover:bg-red-700 hover:text-white py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1">
-                        ✗ Rechazar
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-100 rounded-full px-3 py-1.5 shadow-sm">
+            <TrendingUp size={12} className="text-emerald-500" />
+            <span>Todo al día</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 p-6 rounded-2xl shadow-xl mt-8">
-        <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2 flex justify-between items-center">
-          <span>Tus Estudiantes Activos</span>
-          <span className="text-sm font-normal text-gray-400">Total: {estudiantesData.total}</span>
-        </h2>
+      {/* Stat cards */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {stats.map(({ label, value, icon: Icon, color, border }, i) => (
+          <div
+            key={label}
+            className={`animate-in bg-white rounded-2xl border ${border} p-4 flex items-center gap-3 shadow-sm`}
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
+            <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
+              <Icon size={18} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-slate-900 count-up" style={{ animationDelay: `${i * 80 + 100}ms` }}>{value}</p>
+              <p className="text-xs text-slate-500">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 animate-in">{error}</div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Skills form */}
+        <div className="lg:col-span-1 animate-in" style={{ animationDelay: '120ms' }}>
+          <MentorSkillForm />
+        </div>
+
+        {/* Sessions */}
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 animate-in" style={{ animationDelay: '160ms' }}>
+          <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Video size={13} className="text-blue-600" />
+            </div>
+            Agenda de sesiones
+          </h2>
+          {sesiones.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+                <Video size={22} className="text-slate-300" />
+              </div>
+              <p className="text-sm text-slate-500">Sin sesiones programadas.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {sesiones.map((s, i) => (
+                <div key={s.id_sesion} className="slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+                  <SesionCardMentor sesion={s} />
+                </div>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Scholarship requests */}
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 animate-in" style={{ animationDelay: '200ms' }}>
+          <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center">
+              <BookOpen size={13} className="text-amber-600" />
+            </div>
+            Solicitudes de beca
+            {solicitudes.length > 0 && (
+              <span className="ml-auto text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{solicitudes.length}</span>
+            )}
+          </h2>
+          {solicitudes.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+                <BookOpen size={22} className="text-slate-300" />
+              </div>
+              <p className="text-sm text-slate-500">Sin solicitudes pendientes.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {solicitudes.map((sol, i) => (
+                <li
+                  key={sol.id_contrato}
+                  className="slide-up bg-slate-50 rounded-xl p-4 border border-slate-100 hover:border-slate-200 transition-colors"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <p className="text-sm font-semibold text-slate-800">{sol.mentee_nombre}</p>
+                  <p className="text-xs text-slate-500 mb-2">Paquete: {sol.paquete_titulo}</p>
+                  <blockquote className="text-xs text-slate-600 italic border-l-2 border-amber-300 pl-3 mb-3 leading-relaxed">
+                    "{sol.carta_motivacion}"
+                  </blockquote>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => responderSolicitud(sol.id_contrato, 'aceptar')}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 text-xs font-semibold transition-all active:scale-95"
+                    >
+                      <CheckCircle size={13} />Conceder
+                    </button>
+                    <button
+                      onClick={() => responderSolicitud(sol.id_contrato, 'rechazar')}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 text-xs font-semibold transition-all active:scale-95"
+                    >
+                      <XCircle size={13} />Rechazar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Students table */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-in" style={{ animationDelay: '240ms' }}>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Users size={13} className="text-emerald-600" />
+            </div>
+            Estudiantes activos
+          </h2>
+          <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-medium">{estudiantesData.total} total</span>
+        </div>
+
         {estudiantesData.data.length === 0 ? (
-          <p className="text-gray-400 text-sm">Aún no tienes reclutas activos en esta página.</p>
+          <div className="text-center py-12">
+            <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+              <Users size={22} className="text-slate-300" />
+            </div>
+            <p className="text-sm text-slate-500">Aún no tienes estudiantes activos.</p>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-gray-300">
-                <thead className="bg-[#141414] text-gray-400">
-                  <tr>
-                    <th className="p-3 rounded-tl-lg">Mentee</th>
-                    <th className="p-3">Paquete</th>
-                    <th className="p-3 text-center rounded-tr-lg">Horas Consumidas</th>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Mentee</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Paquete</th>
+                    <th className="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Horas usadas</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {estudiantesData.data.map((est) => (
-                    <tr key={est.id_contrato} className="border-b border-gray-800 hover:bg-[#0a0a0a]">
-                      <td className="p-3 font-semibold text-white">{est.mentee_nombre}</td>
-                      <td className="p-3 text-blue-400">{est.titulo_paquete}</td>
-                      <td className="p-3 text-center">
-                        <span className="bg-blue-900/40 text-blue-300 py-1 px-3 rounded-full">{est.horas_consumidas} h</span>
+                <tbody className="divide-y divide-slate-50">
+                  {estudiantesData.data.map((est, i) => (
+                    <tr
+                      key={est.id_contrato}
+                      className="hover:bg-slate-50/70 transition-colors group slide-up"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xs font-bold flex-shrink-0">
+                            {est.mentee_nombre.charAt(0)}
+                          </div>
+                          <span className="font-medium text-slate-900">{est.mentee_nombre}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">{est.titulo_paquete}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="bg-primary-50 text-primary-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-primary-100">
+                          {est.horas_consumidas}h
+                        </span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            
-            {/* Paginación */}
+
             {estudiantesData.total > limit && (
-              <div className="flex justify-between items-center mt-4">
-                <button 
+              <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg disabled:opacity-40 transition-all"
                 >
-                  Anterior
+                  <ChevronLeft size={14} />Anterior
                 </button>
-                <span className="text-gray-400 text-sm">Página {page} de {Math.ceil(estudiantesData.total / limit)}</span>
-                <button 
+                <span className="text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-full">Página {page} de {Math.ceil(estudiantesData.total / limit)}</span>
+                <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= Math.ceil(estudiantesData.total / limit)}
-                  className="bg-gray-800 text-white px-4 py-2 rounded disabled:opacity-50 transition-colors hover:bg-gray-700"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg disabled:opacity-40 transition-all"
                 >
-                  Siguiente
+                  Siguiente<ChevronRight size={14} />
                 </button>
               </div>
             )}
@@ -179,31 +275,26 @@ function SesionCardMentor({ sesion: s }) {
   const programada = s.estado_sesion === 'programada';
 
   return (
-    <li className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-800 text-white space-y-3">
-      <div>
-        <p className="font-semibold text-blue-400">{s.titulo_paquete}</p>
-        <p className="text-sm text-gray-300">Alumno: {s.contraparte_nombre}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          {new Date(s.fecha_hora_inicio_utc).toLocaleString()} &mdash;{' '}
-          <EstadoBadge estado={s.estado_sesion} />
-        </p>
+    <li className={`rounded-xl border p-4 transition-all ${
+      enCurso ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-100'
+    }`}>
+      <div className="flex items-start justify-between mb-1">
+        <p className="text-sm font-semibold text-slate-800">{s.titulo_paquete}</p>
+        <EstadoBadge estado={s.estado_sesion} />
       </div>
-
+      <p className="text-xs text-slate-500 mb-1">Alumno: {s.contraparte_nombre}</p>
+      <p className="text-xs text-slate-400 mb-3 flex items-center gap-1">
+        <Clock size={11} />
+        {new Date(s.fecha_hora_inicio_utc).toLocaleString()}
+      </p>
       {(programada || enCurso) && (
         <Link
           to={`/sesion/${s.id_sesion}`}
-          className={`
-            w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
-            text-sm font-bold transition-all active:scale-[0.98]
-            ${enCurso
-              ? 'bg-green-700 hover:bg-green-600 text-white'
-              : 'bg-blue-700 hover:bg-blue-600 text-white'
-            }
-          `}
+          className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+            enCurso ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm'
+          }`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
+          <Video size={13} />
           {enCurso ? 'Continuar llamada' : 'Iniciar llamada'}
         </Link>
       )}
@@ -212,23 +303,15 @@ function SesionCardMentor({ sesion: s }) {
 }
 
 function EstadoBadge({ estado }) {
-  const map = {
-    programada: 'text-yellow-400',
-    en_curso: 'text-green-400',
-    finalizada: 'text-blue-400',
-    cancelada: 'text-red-400',
-    ausente: 'text-gray-500',
+  const config = {
+    programada: { label: 'Programada', class: 'text-amber-700 bg-amber-50 border-amber-200' },
+    en_curso: { label: 'En curso', class: 'text-green-700 bg-green-100 border-green-200' },
+    finalizada: { label: 'Finalizada', class: 'text-blue-700 bg-blue-50 border-blue-200' },
+    cancelada: { label: 'Cancelada', class: 'text-red-700 bg-red-50 border-red-200' },
+    ausente: { label: 'Ausente', class: 'text-slate-500 bg-slate-100 border-slate-200' },
   };
-  const labels = {
-    programada: 'Programada',
-    en_curso: 'En curso',
-    finalizada: 'Finalizada',
-    cancelada: 'Cancelada',
-    ausente: 'Ausente',
-  };
+  const c = config[estado] || { label: estado, class: 'text-slate-500 bg-slate-50 border-slate-200' };
   return (
-    <span className={`font-semibold ${map[estado] ?? 'text-gray-400'}`}>
-      {labels[estado] ?? estado}
-    </span>
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${c.class}`}>{c.label}</span>
   );
 }

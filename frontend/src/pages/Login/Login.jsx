@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../AuthContext'; 
-import { loginAPI } from '../../services/authService'; 
+import { useAuth } from '../../AuthContext';
+import { loginAPI } from '../../services/authService';
+import { GraduationCap, Mail, Lock, ArrowRight } from 'lucide-react';
+import ParticlesBackground from '../../components/ParticlesBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -36,84 +38,102 @@ export default function Login() {
   };
 
   return (
-    // Fondo adaptativo: Gris claro en Light, Plomo Profundo Asfalto en Dark
-    <div className="min-h-screen bg-background dark:bg-plomo-darkCanvas font-['Poppins'] flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
-      
-      {/* Efecto de Luces de Fondo Creativas (Celeste y Plomo corporativo) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-celeste/20 dark:bg-celeste/10 blur-[80px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] rounded-full bg-plomo-700/20 dark:bg-plomo-800/30 blur-[80px] pointer-events-none" />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-plomo-900 dark:text-white tracking-tight">
-          MentorMatch
-        </h2>
-        <p className="mt-2 text-center text-sm text-plomo-700 dark:text-plomo-100/70">
-          O{' '}
-          <Link to="/register" className="font-semibold text-celeste hover:text-celeste-dark transition-colors">
-            crea una cuenta nueva si eres nuevo
-          </Link>
-        </p>
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* Left panel — decorative */}
+      <div className="hidden lg:flex lg:w-1/2 bg-primary-600 items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-800" />
+        <ParticlesBackground id="particles-left" particleColor="#ffffff" lineColor="#e0f2fe" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="relative z-10 text-white text-center max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
+            <GraduationCap className="text-white" size={32} />
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Bienvenido de vuelta</h2>
+          <p className="text-primary-100 text-lg leading-relaxed">
+            Conecta con tus mentores, gestiona tus sesiones y sigue creciendo profesionalmente.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        {/* Tarjeta de Formulario Adaptativa */}
-        <div className="bg-surface dark:bg-plomo-darkSurface py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-plomo-100 dark:border-plomo-700/50 backdrop-blur-sm transition-all duration-300">
-          
-          <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <ParticlesBackground id="particles-right" particleColor="#3b82f6" lineColor="#93c5fd" />
+        </div>
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-white/50 relative z-10">
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
+              <GraduationCap className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold text-slate-900">Mentor<span className="text-primary-600">Match</span></span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900">Iniciar sesión</h1>
+            <p className="text-slate-500 mt-1">
+              ¿Nuevo aquí?{' '}
+              <Link to="/register" className="font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                Crea una cuenta
+              </Link>
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
-                Correo Electrónico
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
+                Correo electrónico
               </label>
-              <div className="mt-1">
-                <input 
-                  type="email" 
-                  placeholder="ejemplo@correo.com" 
-                  id="username"
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  required 
-                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="ejemplo@correo.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-plomo-700 dark:text-plomo-100">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
                 Contraseña
               </label>
-              <div className="mt-1">
-                <input 
-                  type="password" 
-                  placeholder="••••••••" 
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
                   id="password"
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  required 
-                  className="appearance-none block w-full px-3 py-2.5 border border-plomo-100 dark:border-plomo-700 bg-background dark:bg-plomo-darkCanvas text-plomo-900 dark:text-white rounded-lg shadow-sm placeholder-plomo-700/40 dark:placeholder-plomo-100/30 focus:outline-none focus:ring-2 focus:ring-celeste focus:border-transparent sm:text-sm transition-all duration-200"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
 
-            <div>
-              <button 
-                type="submit" 
-                disabled={loading}
-                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-semibold text-white transition-all duration-200 ${
-                  loading 
-                    ? 'bg-celeste/60 cursor-not-allowed' 
-                    : 'bg-celeste hover:bg-celeste-dark active:scale-[0.98]'
-                }`}
-              >
-                {loading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
-              </button>
-            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                {typeof error === 'object' ? JSON.stringify(error) : error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <>Iniciar sesión <ArrowRight size={16} /></>
+              )}
+            </button>
           </form>
-          
-          {error && (
-            <div className="mt-5 bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-3 rounded text-red-700 dark:text-red-400 text-center text-sm font-medium transition-all">
-              {typeof error === 'object' ? JSON.stringify(error) : error}
-            </div>
-          )}
         </div>
       </div>
     </div>

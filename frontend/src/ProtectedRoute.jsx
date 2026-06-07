@@ -2,23 +2,16 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const AuthLoader = () => (
-  <div className="min-h-screen bg-[#080710] flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+  <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="w-9 h-9 rounded-full border-2 border-slate-200 border-t-primary-600 animate-spin" />
   </div>
 );
 
-
-// para desifrar el rol, pero esta vez desde el token, no desde el localStorage, para evitar problemas de disque zincronizacion -_-
 export default function ProtectedRoute({ allowedRoles }) {
   const { token, userRole, loading } = useAuth();
 
   if (loading) return <AuthLoader />;
-
   if (!token) return <Navigate to="/login" replace />;
-
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/login" replace />;
-  }
 
   return <Outlet />;
 }
