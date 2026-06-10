@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../AuthContext';
 import { getProfileAPI, updateProfileAPI } from '../../services/profileService';
 import { Camera, User, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react';
+import AvatarUploader from '../../components/AvatarUploader';
 
 const inputClass = 'w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
 
@@ -102,35 +103,17 @@ export default function CompleteProfile() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="flex flex-col items-center pb-6 border-b border-slate-100">
-            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center">
-              {formData.avatar_url && !imageError ? (
-                <img
-                  src={formData.avatar_url}
-                  alt="Vista previa del avatar"
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <User className="h-10 w-10 text-slate-300" />
-              )}
-            </div>
-            <div className="mt-4 w-full max-w-sm">
-              <label className="block text-xs font-medium text-slate-600 text-center mb-1.5">
-                Foto de Perfil (URL)
-              </label>
-              <div className="relative">
-                <Camera className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                <input
-                  type="url"
-                  name="avatar_url"
-                  value={formData.avatar_url}
-                  onChange={handleChange}
-                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="https://ejemplo.com/tu-foto.jpg"
-                />
-              </div>
-            </div>
+          <div className="mb-6 flex flex-col items-center">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Foto de Perfil
+            </label>
+            <AvatarUploader 
+              role="mentor" 
+              currentAvatar={formData.avatar_url} 
+              onUploadSuccess={(nuevaUrl) => {
+                setFormData(prev => ({ ...prev, avatar_url: nuevaUrl }));
+              }}
+            />
           </div>
 
           <div>

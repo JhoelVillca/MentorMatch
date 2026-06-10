@@ -38,6 +38,7 @@ Marketplace bidireccional de e-learning que conecta mentees con mentores verific
 * **Backend:** Python 3.11.x, FastAPI, SQLAlchemy (Asyncpg), Alembic, Pydantic, JWT, Bcrypt.
 * **Frontend:** Node.js 20.x, React 19, Vite, TailwindCSS 4.
 * **Base de Datos:** PostgreSQL 16.x.
+* **Almacenamiento (Media):** MinIO (S3-compatible) para subida y persistencia de imágenes y avatares.
 * **SaaS e Integraciones:** Stripe (Pagos), Daily.co (WebRTC Video).
 
 ## 🌍 Entornos y Deploy
@@ -72,7 +73,7 @@ Si necesitas debuggear procesos directo en el host. Requiere **Python 3.11.x** y
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+source venv\Scripts\activate  # En Linux: venv/bin/activate
 pip install -r requirements.txt
 alembic upgrade head
 uvicorn main:app --reload --host 0.0.0.0 --port 8000

@@ -129,6 +129,7 @@ MentorMatch/
 │       ├── assets/                    # Recursos empaquetados por Vite
 │       │   └── [imágenes y SVGs]      # hero.png, react.svg, vite.svg
 │       ├── components/                # Componentes reusables UI
+│       │   ├── AvatarUploader.jsx     # Gestor de subida de fotos (MinIO/S3)
 │       │   ├── LoadingSpinner.jsx     # Cargador de red
 │       │   ├── MainLayout.jsx         # Layout maestro de enrutamiento
 │       │   ├── MentorAvailabilityPanel.jsx # Panel interactivo de gestión horaria
@@ -183,9 +184,10 @@ MentorMatch/
 
 * **Backend:** Python 3, FastAPI (Async), SQLAlchemy (Async), Alembic (Migraciones), JWT.
 * **Base de Datos:** PostgreSQL 16 accedida exclusivamente mediante `asyncpg`.
+* **Almacenamiento Multimedia:** MinIO (compatible S3) para gestionar de manera independiente imágenes y archivos.
 * **Frontend:** React 19, Vite, Tailwind CSS, React Router.
 
-**Infraestructura:** Docker & Docker Compose para levantar en conjunto API y BD.
+**Infraestructura:** Docker & Docker Compose para orquestar la API, BD y la bodega de MinIO local.
 
 ## Principios Arquitectónicos Clave
 
