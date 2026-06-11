@@ -169,7 +169,9 @@ export async function apiClient(endpoint, customOptions = {}) {
       status: response.status,
       cache: options.cache,
     });
-    throw new Error(data.detail || 'Fallo de red en el servidor.');
+    const err = new Error(data.detail || 'Fallo de red en el servidor.');
+    err.status = response.status;
+    throw err;
   }
 
   return data;

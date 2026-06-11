@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_mentor_user_id, get_current_mentee_user_id
+from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.schemas.mentor_profile import ProfileUpdateOrCreate, ProfileResponse
 from app.schemas.mentee_profile import MenteeProfileUpsert, MenteeProfileResponse, MenteeProfileOut
@@ -19,16 +19,17 @@ router = APIRouter(prefix="/profiles", tags=["Perfiles"])
 @router.get("/mentee/me", response_model=MenteeProfileResponse)
 async def get_mentee_profile(
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentee_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     perfil = await profile_service.get_mentee_profile(db, user_id)
     if not perfil:
-        # Añadimos foto_perfil=None para que el Schema de Pydantic no lance error
+        alt = await profile_service.get_mentor_profile(db, user_id)
         return MenteeProfileResponse(
-            nombre_completo="",
-            zona_horaria_preferida="UTC",
-            biografia_corta=None,
-            foto_perfil=None,  
+            nombre_completo=alt.nombre_completo if alt else "",
+            zona_horaria_preferida=alt.zona_horaria_preferida if alt else "UTC",
+            biografia_corta=alt.biografia_profesional[:4000] if alt and alt.biografia_profesional else None,
+            foto_perfil=alt.foto_perfil if alt else None,  
         )
     return perfil
 
@@ -37,26 +38,28 @@ async def get_mentee_profile(
 async def update_mentee_profile(
     profile_data: MenteeProfileUpsert,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentee_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     return await profile_service.upsert_mentee_profile(db, user_id, profile_data)
 
 
 @router.get("/mentor/me", response_model=ProfileResponse)
 async def get_mentor_profile(
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentor_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     perfil = await profile_service.get_mentor_profile(db, user_id)
     if not perfil:
-        # Añadimos foto_perfil=None para mantener la consistencia con el nuevo Schema
+        alt = await profile_service.get_mentee_profile(db, user_id)
         return ProfileResponse(
-            nombre_completo="",
-            biografia_profesional="",
-            zona_horaria_preferida="UTC",
+            nombre_completo=alt.nombre_completo if alt else "",
+            biografia_profesional=alt.biografia_corta if alt and alt.biografia_corta else "",
+            zona_horaria_preferida=alt.zona_horaria_preferida if alt else "UTC",
             url_linkedin="",
             url_video_presentacion="",
-            foto_perfil=None,  
+            foto_perfil=alt.foto_perfil if alt else None,  
         )
     return perfil
 
@@ -76,16 +79,18 @@ async def get_public_mentor_profile(
 async def update_mentor_profile(
     profile_data: ProfileUpdateOrCreate,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentor_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     return await profile_service.upsert_mentor_profile(db, user_id, profile_data)
 
 
 @router.get("/mentor/me/upload-url", response_model=PresignedUploadResponse)
 async def get_mentor_upload_url(
     ext: str = Query(default="jpg", regex="^(jpg|jpeg|png|webp)$"),
-    user_id: UUID = Depends(get_current_mentor_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     try:
         result = await asyncio.to_thread(generate_presigned_post, str(user_id), ext)
         return result
@@ -96,8 +101,9 @@ async def get_mentor_upload_url(
 @router.get("/mentee/me/upload-url", response_model=PresignedUploadResponse)
 async def get_mentee_upload_url(
     ext: str = Query(default="jpg", regex="^(jpg|jpeg|png|webp)$"),
-    user_id: UUID = Depends(get_current_mentee_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     try:
         result = await asyncio.to_thread(generate_presigned_post, str(user_id), ext)
         return result
@@ -109,8 +115,9 @@ async def get_mentee_upload_url(
 async def update_mentor_foto(
     payload: FotoPerfilUpdate,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentor_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     if not (payload.foto_url.startswith("https://") or payload.foto_url.startswith("http://")):
         raise HTTPException(status_code=422, detail="URL de foto invalida")
 
@@ -121,6 +128,12 @@ async def update_mentor_foto(
     perfil = await mentor_repository.update_foto_perfil(db, user_id, payload.foto_url)
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentor no encontrado")
+
+    try:
+        await mentee_repository.update_foto_perfil(db, user_id, payload.foto_url)
+    except Exception:
+        pass
+
     return perfil
 
 
@@ -128,8 +141,9 @@ async def update_mentor_foto(
 async def update_mentee_foto(
     payload: FotoPerfilUpdate,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_mentee_user_id),
+    current_user = Depends(get_current_user),
 ):
+    user_id = current_user.id_usuario
     if not (payload.foto_url.startswith("https://") or payload.foto_url.startswith("http://")):
         raise HTTPException(status_code=422, detail="URL de foto invalida")
 
@@ -140,4 +154,10 @@ async def update_mentee_foto(
     perfil = await mentee_repository.update_foto_perfil(db, user_id, payload.foto_url)
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentee no encontrado")
+
+    try:
+        await mentor_repository.update_foto_perfil(db, user_id, payload.foto_url)
+    except Exception:
+        pass
+
     return perfil
