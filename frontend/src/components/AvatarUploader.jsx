@@ -64,9 +64,15 @@ const AvatarUploader = ({ role, currentAvatar, onUploadSuccess }) => {
         throw new Error('Fallo al subir el archivo a la nube');
       }
 
-      const finalImageUrl = `${upload_url}/${object_key}`; 
+      let finalImageUrl;
+      
+      if (fields && Object.keys(fields).length > 0) {
+        finalImageUrl = `${upload_url}/${object_key}`; 
+      } else {
+        finalImageUrl = upload_url.split('?')[0];
+      }
 
-      await apiClient(`${basePath}/foto`, {
+      await apiClient(`${basePath}/foto`, { 
         method: 'PATCH',
         body: { foto_url: finalImageUrl }
       });
