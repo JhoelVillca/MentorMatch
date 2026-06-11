@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MentorSkillForm from '../../components/MentorSkillForm';
 import { apiClient } from '../../services/apiClient';
 import { Video, Users, BookOpen, ChevronLeft, ChevronRight, CircleCheck as CheckCircle, Circle as XCircle, TrendingUp, Clock } from 'lucide-react';
 
 export default function MentorDashboard() {
+  const navigate = useNavigate();
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
@@ -22,14 +23,20 @@ export default function MentorDashboard() {
 
   useEffect(() => {
     Promise.all([
-      apiClient('/api/sesiones/mentor/me', { method: 'GET' }).catch(() => []),
-      apiClient('/api/contratos/solicitudes', { method: 'GET' }).catch(() => []),
+      apiClient('/api/sesiones/mentor/me', { method: 'GET' }),
+      apiClient('/api/contratos/solicitudes', { method: 'GET' }),
     ]).then(([s, sol]) => {
       setSesiones(s);
       setSolicitudes(sol);
       setLoaded(true);
-    }).catch(err => setError(err.message));
-  }, []);
+    }).catch(err => {
+      if (err.status === 403) {
+        navigate('/mentor/completar-perfil');
+      } else {
+        setError(err.message);
+      }
+    });
+  }, [navigate]);
 
   useEffect(() => {
     const offset = (page - 1) * limit;

@@ -5,6 +5,7 @@ import { Plus, CircleCheck as CheckCircle } from 'lucide-react';
 
 export default function MentorSkillForm() {
   const [categories, setCategories] = useState([]);
+  const [misHabilidades, setMisHabilidades] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [level, setLevel] = useState('Basico');
@@ -12,7 +13,17 @@ export default function MentorSkillForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const loadSkills = async () => {
+    try {
+      const data = await apiClient('/api/profiles/mentor/me', { method: 'GET' });
+      setMisHabilidades(data.habilidades || []);
+    } catch (error) {
+      console.error("Error al cargar habilidades:", error);
+    }
+  };
+
   useEffect(() => {
+    loadSkills();
     apiClient('/api/skills/categories', { method: 'GET' })
       .then(data => setCategories(data))
       .catch(() => setMessage({ text: 'No se pudieron cargar las habilidades.', type: 'error' }));
@@ -32,6 +43,7 @@ export default function MentorSkillForm() {
         method: 'POST',
         body: { id_habilidad: selectedSkill, anios_experiencia: parseInt(yearsOfExperience), nivel: level }
       });
+      await loadSkills();
       setMessage({ text: data.detail || 'Habilidad guardada.', type: 'success' });
       setSelectedSkill('');
       setYearsOfExperience('');
@@ -117,6 +129,38 @@ export default function MentorSkillForm() {
           )}
         </button>
       </form>
+
+      <div className="mt-8 pt-6 border-t border-slate-100">
+        <h3 className="text-sm font-semibold text-slate-800 mb-4">Habilidades en mi perfil</h3>
+        
+        <div className="flex flex-wrap gap-2.5">
+          {misHabilidades.map((h, index) => {
+            const nombre = h.habilidad?.nombre_habilidad || 'Desconocida';
+            const validada = h.habilidad?.validada_por_admin;
+            
+            return (
+              <div key={index} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-sm font-semibold text-slate-700">{nombre}</span>
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-100">
+                  {h.nivel}
+                </span>
+                <span className="text-xs font-medium text-slate-400">
+                  {h.anios_experiencia} años
+                </span>
+                {validada && (
+                  <CheckCircle size={14} className="text-green-500 ml-1" title="Validada por administración" />
+                )}
+              </div>
+            );
+          })}
+
+          {misHabilidades.length === 0 && (
+            <p className="text-sm text-slate-400 w-full text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              Aún no has agregado habilidades a tu perfil.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

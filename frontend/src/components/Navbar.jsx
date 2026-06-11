@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import {
   GraduationCap, LayoutDashboard, MessageSquare, Package, Clock,
-  User, BookOpen, Calendar, FileText, LogOut, Menu, X
+  User, BookOpen, Calendar, FileText, LogOut, Menu, X, RefreshCcw
 } from 'lucide-react';
 
 const DEMO_ROLES = [
@@ -13,13 +13,12 @@ const DEMO_ROLES = [
 ];
 
 export default function Navbar() {
-  const { token, logout } = useAuth();
+  const { token, userRole, switchRole, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const userRole = token ? token.role : null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -40,6 +39,17 @@ export default function Navbar() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const handleLogout = () => { logout(); navigate('/login'); };
+
+  // El enrutador logico del switch
+  const handleSwitchRole = () => {
+    if (userRole === 'mentor') {
+      switchRole('mentee');
+      navigate('/mentee');
+    } else if (userRole === 'mentee') {
+      switchRole('mentor');
+      navigate('/mentor');
+    }
+  };
 
   const mentorLinks = [
     { to: '/mentor', label: 'Panel', icon: LayoutDashboard },
@@ -120,6 +130,18 @@ export default function Navbar() {
                   );
                 })}
                 <div className="w-px h-5 bg-slate-200 mx-2" />
+                
+                {/* BOTON DE CAMBIO DE ROL ESCRITORIO */}
+                {(userRole === 'mentor' || userRole === 'mentee') && (
+                  <button
+                    onClick={handleSwitchRole}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all duration-150"
+                  >
+                    <RefreshCcw size={15} />
+                    {userRole === 'mentor' ? 'Modo Alumno' : 'Modo Mentor'}
+                  </button>
+                )}
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
@@ -174,7 +196,19 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
-                <div className="pt-2 mt-2 border-t border-slate-100">
+                <div className="pt-2 mt-2 border-t border-slate-100 space-y-1">
+                  
+                  {/* BOTON DE CAMBIO DE ROL MOBILE */}
+                  {(userRole === 'mentor' || userRole === 'mentee') && (
+                    <button
+                      onClick={() => { handleSwitchRole(); setMobileOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                    >
+                      <RefreshCcw size={16} />
+                      {userRole === 'mentor' ? 'Cambiar a modo Alumno' : 'Cambiar a modo Mentor'}
+                    </button>
+                  )}
+
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all"

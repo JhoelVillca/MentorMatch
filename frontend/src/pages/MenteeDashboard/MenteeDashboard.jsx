@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { fetchMenteeProfile } from '../../services/profileService';
 import { apiClient } from '../../services/apiClient';
@@ -8,6 +8,7 @@ import { User, Clock, Calendar, BookOpen, ArrowRight, Video, Sparkles, TrendingU
 const POLL_INTERVAL_MS = 30_000;
 
 export default function MenteeDashboard() {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [sesiones, setSesiones] = useState([]);
@@ -37,6 +38,10 @@ export default function MenteeDashboard() {
           setSesiones(sesionesData);
         }
       } catch (e) {
+        if (e.status === 403) {
+          navigate('/mentee/completar-perfil');
+          return;
+        }
         if (!cancelled) setLoadError(e.message);
       } finally {
         if (!cancelled) setLoading(false);
@@ -44,7 +49,7 @@ export default function MenteeDashboard() {
     }
     loadData();
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, navigate]);
 
   useEffect(() => {
     const hayPendientes = sesiones.some(s => s.estado_sesion === 'programada' || s.estado_sesion === 'en_curso');

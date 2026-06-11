@@ -38,8 +38,7 @@ class PaqueteService:
             .outerjoin(subq_promedio, PaqueteMentor.id_mentor == subq_promedio.c.id_mentor)
             .filter(
                 PaqueteMentor.estado_activo == True,
-                PaqueteMentor.estado_validacion == "aprobado",
-                PerfilMentor.estado_verificacion == "verificado"
+                PaqueteMentor.estado_validacion == "aprobado"
             )
         )
         res = await self.db.execute(query)
@@ -80,8 +79,7 @@ class PaqueteService:
 
         query = query.filter(
             PaqueteMentor.estado_activo == True,
-            PaqueteMentor.estado_validacion == "aprobado",
-            PerfilMentor.estado_verificacion == "verificado"
+            PaqueteMentor.estado_validacion == "aprobado"
         )
 
         if q:

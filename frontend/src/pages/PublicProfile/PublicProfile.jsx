@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { ShieldCheck, User } from 'lucide-react';
+import { ShieldCheck, User, CheckCircle, Globe, PlayCircle, ExternalLink } from 'lucide-react';
 
 export default function PublicProfile() {
   const { id } = useParams();
@@ -48,29 +48,82 @@ export default function PublicProfile() {
             {perfil.biografia_profesional && (
               <p className="text-sm text-slate-600 leading-relaxed mt-2">{perfil.biografia_profesional}</p>
             )}
+
+            {/* Seccion de Redes y Presentacion */}
+            {(perfil.url_linkedin || perfil.url_video_presentacion) && (
+              <div className="mt-6 flex flex-wrap gap-4">
+                {perfil.url_linkedin && (
+                  <a
+                    href={perfil.url_linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#0077b5] text-white text-sm font-semibold rounded-xl hover:bg-[#005e93] transition-colors shadow-sm"
+                  >
+                    <Globe size={18} />
+                    Perfil de LinkedIn
+                    <ExternalLink size={14} className="ml-1 opacity-70" />
+                  </a>
+                )}
+
+                {perfil.url_video_presentacion && (
+                  <a
+                    href={perfil.url_video_presentacion}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-900 transition-colors shadow-sm"
+                  >
+                    <PlayCircle size={18} />
+                    Video de Presentacion
+                    <ExternalLink size={14} className="ml-1 opacity-70" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {perfil.habilidades?.length > 0 && (
-          <div className="mt-7 pt-6 border-t border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Habilidades</h3>
-            <div className="flex flex-wrap gap-2">
-              {perfil.habilidades.map((h, i) => (
-                <span
-                  key={i}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${
-                    h.validada_por_admin
-                      ? 'bg-green-50 text-green-700 border-green-200'
-                      : 'bg-slate-100 text-slate-600 border-slate-200'
+        <div className="mt-8">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Habilidades Destacadas</h2>
+          <div className="flex flex-wrap gap-3">
+            
+            {perfil.habilidades?.map((h, i) => {
+              const nombre = h.habilidad?.nombre_habilidad || 'Habilidad';
+              const validada = h.habilidad?.validada_por_admin === true;
+
+              return (
+                <div 
+                  key={i} 
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
+                    validada 
+                      ? 'bg-green-50 border-green-200 shadow-sm shadow-green-100/50' 
+                      : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  {h.nombre_habilidad}
-                  {h.validada_por_admin && <ShieldCheck size={11} />}
-                </span>
-              ))}
-            </div>
+                  {validada && <CheckCircle size={16} className="text-green-600" />}
+                  
+                  <span className={`text-sm font-bold ${validada ? 'text-green-800' : 'text-slate-700'}`}>
+                    {nombre}
+                  </span>
+                  
+                  <div className="w-px h-4 bg-slate-200 mx-1" />
+                  
+                  <span className={`text-xs font-semibold ${validada ? 'text-green-600' : 'text-slate-500'}`}>
+                    {h.nivel}
+                  </span>
+                  
+                  <span className={`text-xs ${validada ? 'text-green-500' : 'text-slate-400'}`}>
+                    • {h.anios_experiencia} años
+                  </span>
+                </div>
+              );
+            })}
+
+            {(!perfil.habilidades || perfil.habilidades.length === 0) && (
+              <p className="text-slate-500 text-sm italic">Este mentor aún no ha destacado sus habilidades específicas.</p>
+            )}
+            
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

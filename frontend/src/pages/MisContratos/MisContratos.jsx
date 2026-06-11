@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import { FileText, Star, CircleCheck as CheckCircle, Clock, Package, Calendar, X } from 'lucide-react';
 
@@ -13,6 +13,7 @@ export default function MisContratos() {
   const [contratosResenados, setContratosResenados] = useState(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -31,8 +32,11 @@ export default function MisContratos() {
   useEffect(() => {
     apiClient('/api/contratos/me', { method: 'GET' })
       .then(setContratos)
-      .catch(err => setError(err.message));
-  }, []);
+      .catch(err => {
+        if (err.status === 403) navigate('/mentee/completar-perfil');
+        else setError(err.message);
+      });
+  }, [navigate]);
 
   const estadoConfig = {
     activo: { label: 'Activo', class: 'bg-green-50 text-green-700 border-green-200', dot: 'bg-green-500' },

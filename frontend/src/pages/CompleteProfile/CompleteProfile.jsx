@@ -4,16 +4,37 @@ import { getProfileAPI, updateProfileAPI } from '../../services/profileService';
 import { Camera, User, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react';
 import AvatarUploader from '../../components/AvatarUploader';
 
+function buildTimezoneOptions() {
+  try {
+    if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
+      return Intl.supportedValuesOf('timeZone').slice().sort();
+    }
+  } catch {
+  }
+  return [
+    'UTC',
+    'America/Asuncion',
+    'America/La_Paz',
+    'America/Bogota',
+    'America/Lima',
+    'America/Santiago',
+    'America/Buenos_Aires',
+    'Europe/Madrid',
+  ];
+}
+
 const inputClass = 'w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
 
 export default function CompleteProfile() {
   const { token } = useAuth();
+  const [timezoneOptions, setTimezoneOptions] = useState(buildTimezoneOptions);
   const [formData, setFormData] = useState({
     nombre_completo: '',
     biografia_profesional: '',
     url_linkedin: '',
     url_video_presentacion: '',
-    avatar_url: ''
+    avatar_url: '',
+    zona_horaria_preferida: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -29,12 +50,15 @@ export default function CompleteProfile() {
       try {
         const data = await getProfileAPI(token);
         if (isMounted) {
+          const tz = data.zona_horaria_preferida || Intl.DateTimeFormat().resolvedOptions().timeZone;
+          setTimezoneOptions((prev) => (prev.includes(tz) ? prev : [tz, ...prev]));
           setFormData({
             nombre_completo: data.nombre_completo || '',
             biografia_profesional: data.biografia_profesional || '',
             url_linkedin: data.url_linkedin || '',
             url_video_presentacion: data.url_video_presentacion || '',
-            avatar_url: data.avatar_url || ''
+            avatar_url: data.avatar_url || '',
+            zona_horaria_preferida: tz
           });
           setImageError(false);
         }
@@ -127,6 +151,20 @@ export default function CompleteProfile() {
               className={inputClass}
               placeholder="Ej. Juan Pérez"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Zona horaria</label>
+            <select
+              name="zona_horaria_preferida"
+              value={formData.zona_horaria_preferida}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              {timezoneOptions.map((tz) => (
+                <option key={tz} value={tz}>{tz}</option>
+              ))}
+            </select>
           </div>
 
           <div>

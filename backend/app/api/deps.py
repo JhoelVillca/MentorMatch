@@ -61,14 +61,27 @@ async def get_current_user(token: str = Depends(get_token), db: AsyncSession = D
         
     return user
 
+from app.models.main_models import PerfilMentor, PerfilMentee
+
 async def get_current_mentor_user_id(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> str:
     role = await get_user_role_name(db, str(current_user.id_usuario))
-    if role not in ["mentor", "admin"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+    if role == "admin":
+        return current_user.id_usuario
+        
+    result = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == current_user.id_usuario))
+    if not result.scalars().first():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado: Necesitas perfil de Mentor")
+        
     return current_user.id_usuario
 
-async def get_current_mentee_user_id(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_current_mentee_user_id(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> str:
+
     role = await get_user_role_name(db, str(current_user.id_usuario))
-    if role not in ["mentee", "admin"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+    if role == "admin":
+        return current_user.id_usuario
+        
+    result = await db.execute(select(PerfilMentee).filter(PerfilMentee.id_usuario == current_user.id_usuario))
+    if not result.scalars().first():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado: Necesitas perfil de Alumno")
+        
     return current_user.id_usuario

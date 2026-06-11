@@ -25,6 +25,7 @@ class PerfilMentor(Base):
     id_mentor = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), unique=True)
     nombre_completo = Column(String(255), nullable=False)
+    zona_horaria_preferida = Column(String(50), server_default="UTC", nullable=False)
     biografia_profesional = Column(Text)
     estado_verificacion = Column(String(20), server_default="pendiente") # pendiente, verificado, rechazado
     url_linkedin = Column(String(500))
