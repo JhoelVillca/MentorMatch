@@ -2,9 +2,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-_endpoint_url = os.getenv("AWS_ENDPOINT_URL")
-if _endpoint_url and os.getenv("ENVIRONMENT") == "production":
-    raise RuntimeError("AWS_ENDPOINT_URL no debe estar configurada en produccion")
+from botocore.config import Config
 
 def generate_presigned_post(user_id: str, file_extension: str = "jpg") -> dict:
     bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
@@ -21,28 +19,29 @@ def generate_presigned_post(user_id: str, file_extension: str = "jpg") -> dict:
         aws_access_key_id=aws_access_key,
         aws_secret_access_key=aws_secret_key,
         region_name=aws_region,
-        endpoint_url=endpoint_url
+        endpoint_url=endpoint_url,
+        config=Config(signature_version="s3v4")
     )
 
     key = f"perfiles/{user_id}/foto.{file_extension}"
+    content_type = "image/jpeg" if file_extension in ["jpg", "jpeg"] else f"image/{file_extension}"
 
     try:
-        data = client.generate_presigned_post(
-            Bucket=bucket_name,
-            Key=key,
-            Fields={"Content-Type": "image/*"},
-            Conditions=[
-                ["content-length-range", 1024, 5 * 1024 * 1024],
-                ["starts-with", "$Content-Type", "image/"],
-            ],
+        url = client.generate_presigned_url(
+            ClientMethod="put_object",
+            Params={
+                "Bucket": bucket_name,
+                "Key": key,
+                "ContentType": content_type
+            },
             ExpiresIn=60
         )
     except ClientError as e:
         raise RuntimeError(f"S3 error: {str(e)}")
 
     return {
-        "upload_url": data["url"],
-        "fields": data["fields"],
+        "upload_url": url,
+        "fields": {},
         "object_key": key,
         "expires_in": 60
     }
@@ -51,6 +50,12 @@ def get_public_url(object_key: str) -> str:
     bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
     aws_region = os.getenv("AWS_REGION", "us-east-1")
     endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    
     if endpoint_url:
+        if "supabase.co" in endpoint_url:
+            public_endpoint = endpoint_url.replace("/storage/v1/s3", "/storage/v1/object/public")
+            return f"{public_endpoint}/{bucket_name}/{object_key}"
+            
         return f"{endpoint_url}/{bucket_name}/{object_key}"
+        
     return f"https://{bucket_name}.s3.{aws_region}.amazonaws.com/{object_key}"
