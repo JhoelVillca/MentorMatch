@@ -2,10 +2,6 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-_endpoint_url = os.getenv("AWS_ENDPOINT_URL")
-if _endpoint_url and os.getenv("ENVIRONMENT") == "production":
-    raise RuntimeError("AWS_ENDPOINT_URL no debe estar configurada en produccion")
-
 def generate_presigned_post(user_id: str, file_extension: str = "jpg") -> dict:
     bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
     if not bucket_name:
