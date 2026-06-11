@@ -69,7 +69,8 @@ const AvatarUploader = ({ role, currentAvatar, onUploadSuccess }) => {
       if (fields && Object.keys(fields).length > 0) {
         finalImageUrl = `${upload_url}/${object_key}`; 
       } else {
-        finalImageUrl = upload_url.split('?')[0];
+        let cleanUrl = upload_url.split('?')[0];
+        finalImageUrl = cleanUrl.replace('/storage/v1/s3/', '/storage/v1/object/public/');
       }
 
       await apiClient(`${basePath}/foto`, { 
