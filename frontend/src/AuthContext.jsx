@@ -12,6 +12,7 @@ const WAKE_MESSAGES = [
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [activeRole, setActiveRole] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [msgIdx, setMsgIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
@@ -21,9 +22,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await apiClient('/api/auth/me', { method: 'GET' });
       setUser({ id: data.id, role: data.rol });
+      setActiveRole((prev) => prev || data.rol); 
       return data;
     } catch (error) {
       setUser(null);
+      setActiveRole(null);
       return null;
     } finally {
       setLoading(false);
@@ -61,10 +64,16 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {}
     localStorage.removeItem('access_token');
     setUser(null);
+    setActiveRole(null);
+  };
+
+  // Funcion inyectada para el polimorfismo
+  const switchRole = (newRole) => {
+    setActiveRole(newRole);
   };
 
   return (
-    <AuthContext.Provider value={{ token: user, userRole: user?.role, login, logout, loading }}>
+    <AuthContext.Provider value={{ token: user, userRole: activeRole, switchRole, login, logout, loading }}>
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a] text-white select-none overflow-hidden">
 

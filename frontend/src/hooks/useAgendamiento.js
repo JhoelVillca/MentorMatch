@@ -87,7 +87,8 @@ export function useAgendamiento() {
 			.then((data) => setContratos(data.filter((contrato) => contrato.estado === 'activo')))
 			.catch((err) => {
 				if (err.name !== 'AbortError' && !controller.signal.aborted) {
-					setError(err.message);
+					if (err.status === 403) navigate('/mentee/completar-perfil');
+					else setError(err.message);
 				}
 			})
 			.finally(() => {
