@@ -50,6 +50,12 @@ def get_public_url(object_key: str) -> str:
     bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
     aws_region = os.getenv("AWS_REGION", "us-east-1")
     endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    
     if endpoint_url:
+        if "supabase.co" in endpoint_url:
+            public_endpoint = endpoint_url.replace("/storage/v1/s3", "/storage/v1/object/public")
+            return f"{public_endpoint}/{bucket_name}/{object_key}"
+            
         return f"{endpoint_url}/{bucket_name}/{object_key}"
+        
     return f"https://{bucket_name}.s3.{aws_region}.amazonaws.com/{object_key}"
