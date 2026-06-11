@@ -53,6 +53,7 @@ async def get_mentor_profile(
         return ProfileResponse(
             nombre_completo="",
             biografia_profesional="",
+            zona_horaria_preferida="UTC",
             url_linkedin="",
             url_video_presentacion="",
             foto_perfil=None,  

@@ -176,15 +176,31 @@ class ContratoService:
         if not mentee:
             return []
 
+        from sqlalchemy import func
+        from app.models.main_models import Sesion
+        
+        subq_sesion = (
+            select(
+                Sesion.id_contrato,
+                func.min(Sesion.fecha_hora_inicio_utc).label("proxima_sesion")
+            )
+            .filter(Sesion.estado_sesion == "programada")
+            .group_by(Sesion.id_contrato)
+            .subquery()
+        )
+
         query = (
             select(
                 ContratoMentoria, 
                 PaqueteMentor.titulo_paquete, 
                 PaqueteMentor.id_mentor,
-                ResenaMentor.id_resena
+                PaqueteMentor.cantidad_horas_totales,
+                ResenaMentor.id_resena,
+                subq_sesion.c.proxima_sesion
             )
             .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
             .outerjoin(ResenaMentor, ContratoMentoria.id_contrato == ResenaMentor.id_contrato)
+            .outerjoin(subq_sesion, ContratoMentoria.id_contrato == subq_sesion.c.id_contrato)
             .filter(ContratoMentoria.id_mentee == mentee.id_mentee)
         )
         res = await self.db.execute(query)
@@ -195,9 +211,11 @@ class ContratoService:
                 "id_mentor": c.id_mentor,
                 "estado": c.ContratoMentoria.estado_contrato,
                 "horas_consumidas": c.ContratoMentoria.horas_consumidas,
+                "horas_totales": c.cantidad_horas_totales,
                 "fecha": c.ContratoMentoria.fecha_adquisicion,
                 "paquete": c.titulo_paquete,
                 "ya_resenado": c.id_resena is not None,
+                "proximo_sesion": c.proxima_sesion
             }
             for c in res.all()
         ]
@@ -376,3 +394,76 @@ class ContratoService:
         )
         res = await self.db.execute(query)
         return {"data": [dict(row._mapping) for row in res.all()], "total": total}
+
+    async def reintentar_pago(self, user_id: UUID, id_contrato: UUID):
+        res_mentee = await self.db.execute(select(PerfilMentee).filter(PerfilMentee.id_usuario == user_id))
+        mentee = res_mentee.scalars().first()
+
+        res_cont = await self.db.execute(
+            select(ContratoMentoria, PaqueteMentor, PerfilMentor)
+            .join(PaqueteMentor, ContratoMentoria.id_paquete == PaqueteMentor.id_paquete)
+            .join(PerfilMentor, PaqueteMentor.id_mentor == PerfilMentor.id_mentor)
+            .filter(ContratoMentoria.id_contrato == id_contrato)
+            .filter(ContratoMentoria.id_mentee == mentee.id_mentee)
+            .with_for_update()
+        )
+        row = res_cont.first()
+        if not row:
+            raise LookupError("Contrato no encontrado")
+
+        contrato, paquete, mentor = row
+
+        if contrato.estado_contrato != "pendiente_pago":
+            raise ValueError("El contrato no esta pendiente de pago")
+
+        res_trx_previas = await self.db.execute(
+            select(TransaccionPago)
+            .filter(
+                TransaccionPago.id_contrato == contrato.id_contrato,
+                TransaccionPago.estado_pago == "procesando"
+            )
+            .with_for_update()
+        )
+        for trx_previa in res_trx_previas.scalars().all():
+            trx_previa.estado_pago = "fallido"
+
+        nueva_trx = TransaccionPago(
+            id_contrato=contrato.id_contrato,
+            monto_pagado=paquete.precio_total,
+            moneda="USD",
+            estado_pago="procesando",
+        )
+        self.db.add(nueva_trx)
+        await self.db.flush()
+
+        precio_centavos = int(paquete.precio_total * 100)
+        
+        def _crear_checkout():
+            return _stripe().v1.checkout.sessions.create(
+                params={
+                    "payment_method_types": ["card"],
+                    "line_items": [{
+                        "price_data": {
+                            "currency": "usd",
+                            "unit_amount": precio_centavos,
+                            "product_data": {
+                                "name": f"Mentoria: {paquete.titulo_paquete}",
+                                "description": f"Mentor: {mentor.nombre_completo}",
+                            },
+                        },
+                        "quantity": 1,
+                    }],
+                    "mode": "payment",
+                    "success_url": f"{FRONTEND_URL}/mentee/contratos?success=true",
+                    "cancel_url": f"{FRONTEND_URL}/mentee/marketplace?canceled=true",
+                    "metadata": {
+                        "id_contrato": str(contrato.id_contrato),
+                        "id_transaccion": str(nueva_trx.id_transaccion),
+                    },
+                }
+            )
+
+        checkout_session = await asyncio.to_thread(_crear_checkout)
+        await self.db.commit()
+
+        return {"checkout_url": checkout_session.url}

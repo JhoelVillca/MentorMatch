@@ -112,6 +112,18 @@ async def rechazar_beca(
     except Exception as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
+@router.post("/{id_contrato}/pagar")
+async def reintentar_pago(
+    id_contrato: UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_mentee_user_id)
+):
+    servicio = ContratoService(db)
+    try:
+        return await servicio.reintentar_pago(user_id, id_contrato)
+    except Exception as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
 from fastapi import Query
 
 @router.get("/mis-estudiantes")
