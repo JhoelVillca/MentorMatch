@@ -22,11 +22,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await apiClient('/api/auth/me', { method: 'GET' });
       setUser({ id: data.id, role: data.rol });
-      setActiveRole((prev) => prev || data.rol); 
+      const savedRole = localStorage.getItem('activeRole');
+      setActiveRole(savedRole || data.rol); 
       return data;
     } catch (error) {
       setUser(null);
       setActiveRole(null);
+      localStorage.removeItem('activeRole');
       return null;
     } finally {
       setLoading(false);
@@ -63,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       await apiClient('/api/auth/logout', { method: 'POST' });
     } catch (e) {}
     localStorage.removeItem('access_token');
+    localStorage.removeItem('activeRole');
     setUser(null);
     setActiveRole(null);
   };
@@ -70,6 +73,7 @@ export const AuthProvider = ({ children }) => {
   // Funcion inyectada para el polimorfismo
   const switchRole = (newRole) => {
     setActiveRole(newRole);
+    localStorage.setItem('activeRole', newRole);
   };
 
   return (

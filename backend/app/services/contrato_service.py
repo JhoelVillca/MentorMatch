@@ -45,7 +45,7 @@ class ContratoService:
 
             paquete, mentor = row
 
-            if not paquete.estado_activo or mentor.estado_verificacion != "verificado":
+            if not paquete.estado_activo or paquete.estado_validacion != "aprobado":
                 raise ValueError("El paquete no esta disponible para compra")
 
             # Busqueda A: Verificar si existe un contrato activo
@@ -237,7 +237,7 @@ class ContratoService:
         
         paquete, mentor = row
 
-        if not paquete.estado_activo or mentor.estado_verificacion != "verificado":
+        if not paquete.estado_activo or paquete.estado_validacion != "aprobado":
             raise ValueError("El paquete no esta disponible")
 
         res_existente = await self.db.execute(

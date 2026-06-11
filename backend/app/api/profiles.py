@@ -24,12 +24,12 @@ async def get_mentee_profile(
     user_id = current_user.id_usuario
     perfil = await profile_service.get_mentee_profile(db, user_id)
     if not perfil:
-        # Añadimos foto_perfil=None para que el Schema de Pydantic no lance error
+        alt = await profile_service.get_mentor_profile(db, user_id)
         return MenteeProfileResponse(
-            nombre_completo="",
-            zona_horaria_preferida="UTC",
-            biografia_corta=None,
-            foto_perfil=None,  
+            nombre_completo=alt.nombre_completo if alt else "",
+            zona_horaria_preferida=alt.zona_horaria_preferida if alt else "UTC",
+            biografia_corta=alt.biografia_profesional[:4000] if alt and alt.biografia_profesional else None,
+            foto_perfil=alt.foto_perfil if alt else None,  
         )
     return perfil
 
@@ -52,14 +52,14 @@ async def get_mentor_profile(
     user_id = current_user.id_usuario
     perfil = await profile_service.get_mentor_profile(db, user_id)
     if not perfil:
-        # Añadimos foto_perfil=None para mantener la consistencia con el nuevo Schema
+        alt = await profile_service.get_mentee_profile(db, user_id)
         return ProfileResponse(
-            nombre_completo="",
-            biografia_profesional="",
-            zona_horaria_preferida="UTC",
+            nombre_completo=alt.nombre_completo if alt else "",
+            biografia_profesional=alt.biografia_corta if alt and alt.biografia_corta else "",
+            zona_horaria_preferida=alt.zona_horaria_preferida if alt else "UTC",
             url_linkedin="",
             url_video_presentacion="",
-            foto_perfil=None,  
+            foto_perfil=alt.foto_perfil if alt else None,  
         )
     return perfil
 
@@ -128,6 +128,12 @@ async def update_mentor_foto(
     perfil = await mentor_repository.update_foto_perfil(db, user_id, payload.foto_url)
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentor no encontrado")
+
+    try:
+        await mentee_repository.update_foto_perfil(db, user_id, payload.foto_url)
+    except Exception:
+        pass
+
     return perfil
 
 
@@ -148,4 +154,10 @@ async def update_mentee_foto(
     perfil = await mentee_repository.update_foto_perfil(db, user_id, payload.foto_url)
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de mentee no encontrado")
+
+    try:
+        await mentor_repository.update_foto_perfil(db, user_id, payload.foto_url)
+    except Exception:
+        pass
+
     return perfil
