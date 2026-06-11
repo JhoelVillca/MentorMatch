@@ -2,16 +2,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from uuid import UUID
 from typing import Optional
-from app.models.main_models import PerfilMentor
+from app.models.main_models import PerfilMentor, MentorHabilidad
+from sqlalchemy.orm import joinedload
 from app.schemas.mentor_profile import ProfileUpdateOrCreate
 
 async def get_profile_by_user_id(db: AsyncSession, user_id: UUID) -> Optional[PerfilMentor]:
-    result = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_usuario == user_id))
+    query = (
+        select(PerfilMentor)
+        .options(
+            joinedload(PerfilMentor.habilidades).joinedload(MentorHabilidad.habilidad)
+        )
+        .filter(PerfilMentor.id_usuario == user_id)
+    )
+    result = await db.execute(query)
     return result.scalars().first()
 
 
 async def get_profile_by_mentor_id(db: AsyncSession, mentor_id: UUID) -> Optional[PerfilMentor]:
-    result = await db.execute(select(PerfilMentor).filter(PerfilMentor.id_mentor == mentor_id))
+    query = (
+        select(PerfilMentor)
+        .options(
+            joinedload(PerfilMentor.habilidades).joinedload(MentorHabilidad.habilidad)
+        )
+        .filter(PerfilMentor.id_mentor == mentor_id)
+    )
+    result = await db.execute(query)
     return result.scalars().first()
 
 async def upsert_profile(db: AsyncSession, user_id: UUID, data: ProfileUpdateOrCreate) -> PerfilMentor:
