@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import Optional, Any
+from typing import Optional, Any, List
+from uuid import UUID
 
 class ProfileUpdateOrCreate(BaseModel):
     nombre_completo: str = Field(..., max_length=255)
@@ -18,6 +19,23 @@ class ProfileUpdateOrCreate(BaseModel):
                 values['foto_perfil'] = values.get('avatar_url')
         return values
 
+class HabilidadNestedInfo(BaseModel):
+    id_habilidad: UUID
+    nombre_habilidad: str
+    validada_por_admin: bool
+
+    class Config:
+        from_attributes = True
+
+class MentorHabilidadOut(BaseModel):
+    id_mentor_habilidad: UUID
+    anios_experiencia: int
+    nivel: str
+    habilidad: Optional[HabilidadNestedInfo] = None
+
+    class Config:
+        from_attributes = True
+
 class ProfileResponse(BaseModel):
     nombre_completo: str
     biografia_profesional: str
@@ -25,6 +43,7 @@ class ProfileResponse(BaseModel):
     url_linkedin: Optional[str] = None
     url_video_presentacion: Optional[str] = None
     foto_perfil: Optional[str] = None
+    habilidades: List[MentorHabilidadOut] = []
 
     class Config:
         from_attributes = True
