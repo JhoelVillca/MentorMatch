@@ -2,16 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../services/apiClient';
 import { Clock, Grid2x2 as Grid, List, CircleAlert as AlertCircle, X, Plus, Trash2, Check, CalendarCheck } from 'lucide-react';
 
+import { utcToLocal, localToUTC, DAYS, DAYS_SHORT, HOURS, DIA_STR_TO_INT } from '../utils/timeEngine';
+
 const API_URL = '/api/disponibilidad/';
-
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-
-const DIA_STR_TO_INT = {
-  'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4,
-  'Viernes': 5, 'Sábado': 6, 'Domingo': 7,
-};
 
 const DIA_INT_TO_STR = {};
 Object.entries(DIA_STR_TO_INT).forEach(([k, v]) => { DIA_INT_TO_STR[v] = k; });
@@ -57,7 +50,11 @@ const buildSavedSet = (availabilities) => {
       : (DIA_STR_TO_INT[av.dia_semana] ?? 1) - 1;
     const startH = parseInt((av.hora_inicio ?? '').split(':')[0], 10) || 0;
     const endH = parseInt((av.hora_fin ?? '').split(':')[0], 10) || 0;
-    for (let h = startH; h < endH; h++) set.add(`${dayIdx}-${h}`);
+    
+    for (let h = startH; h < endH; h++) {
+      const local = utcToLocal(dayIdx, h);
+      set.add(`${local.dayIdx}-${local.hour}`);
+    }
   });
   return set;
 };
@@ -121,7 +118,7 @@ const WeekGrid = ({ selectedSet, onDragStart, onDragEnter, onDragEnd }) => {
       <table ref={tableRef} className="w-full border-collapse min-w-[600px]" onMouseLeave={onDragEnd}>
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-white text-[10px] text-slate-400 font-medium w-12 py-2 border-b border-slate-200">UTC</th>
+            <th className="sticky left-0 z-10 bg-white text-[10px] text-slate-400 font-medium w-12 py-2 border-b border-slate-200">Hora Local</th>
             {DAYS_SHORT.map((d, i) => (
               <th key={i} className="text-xs text-slate-500 font-semibold py-2 px-1 border-b border-slate-200">{d}</th>
             ))}
@@ -175,7 +172,7 @@ const SlotCard = ({ slot, onDelete }) => {
         <p className="font-semibold text-slate-900 text-sm truncate">{diaLabel}</p>
         <p className="text-slate-500 text-xs font-mono mt-0.5">
           {slot.hora_inicio} — {slot.hora_fin}
-          <span className="text-slate-400 ml-1">UTC</span>
+          <span className="text-slate-400 ml-1">Hora Local</span>
         </p>
       </div>
       <button
@@ -263,17 +260,28 @@ export default function MentorAvailabilityPanel() {
     setSaving(true);
     setError(null);
     try {
-      const savedSet = buildSavedSet(availabilities);
-      
-      // Compute differences
-      const toDeleteKeys = new Set([...savedSet].filter(x => !selectedSet.has(x)));
-      const toAddKeys = new Set([...selectedSet].filter(x => !savedSet.has(x)));
+      const localSavedSet = buildSavedSet(availabilities);
 
-      // Remove API calls
+      const utcSelectedSet = new Set();
+      selectedSet.forEach(key => {
+        const [d, h] = key.split('-').map(Number);
+        const utc = localToUTC(d, h);
+        utcSelectedSet.add(`${utc.dayIdx}-${utc.hour}`);
+      });
+
+      const utcSavedSet = new Set();
+      localSavedSet.forEach(key => {
+        const [d, h] = key.split('-').map(Number);
+        const utc = localToUTC(d, h);
+        utcSavedSet.add(`${utc.dayIdx}-${utc.hour}`);
+      });
+
+      const toDeleteKeys = new Set([...utcSavedSet].filter(x => !utcSelectedSet.has(x)));
+      const toAddKeys = new Set([...utcSelectedSet].filter(x => !utcSavedSet.has(x)));
+
       const blocksToRemove = new Set();
       toDeleteKeys.forEach(key => {
         const [d, h] = key.split('-').map(Number);
-        // Find which DB block this hour belonged to
         const av = availabilities.find(a => {
           const avDay = (typeof a.dia_semana === 'number' ? a.dia_semana : DIA_STR_TO_INT[a.dia_semana] ?? 1) - 1;
           if (avDay !== d) return false;
@@ -322,7 +330,7 @@ export default function MentorAvailabilityPanel() {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Define tu Disponibilidad</h1>
           <p className="text-slate-500 font-medium text-sm mt-1">
-            Marca en la cuadrícula las horas en las que <span className="text-primary-600 font-bold">estarás libre</span> (UTC).
+            Marca en la cuadrícula las horas en las que <span className="text-primary-600 font-bold">estarás libre</span> (Hora Local).
           </p>
         </div>
 
@@ -483,11 +491,11 @@ const ListForm = ({ onSubmit, error: globalError, onClearError }) => {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Inicio (UTC)</label>
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Inicio (Hora Local)</label>
           <input type="time" value={form.startTime} onChange={set('startTime')} className={inputClass} />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Fin (UTC)</label>
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Fin (Hora Local)</label>
           <input type="time" value={form.endTime} min={form.startTime || undefined} onChange={set('endTime')} className={inputClass} />
         </div>
       </div>
