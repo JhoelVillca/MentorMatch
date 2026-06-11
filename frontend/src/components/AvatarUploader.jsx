@@ -37,16 +37,28 @@ const AvatarUploader = ({ role, currentAvatar, onUploadSuccess }) => {
       
       const { upload_url, fields, object_key } = handshakeRes;
 
-      const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      formData.append('file', file);
+      let s3Res;
+      
+      if (fields && Object.keys(fields).length > 0) {
+        const formData = new FormData();
+        Object.entries(fields).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+        formData.append('file', file);
 
-      const s3Res = await fetch(upload_url, {
-        method: 'POST',
-        body: formData,
-      });
+        s3Res = await fetch(upload_url, {
+          method: 'POST',
+          body: formData,
+        });
+      } else {
+        s3Res = await fetch(upload_url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type
+          },
+          body: file,
+        });
+      }
 
       if (!s3Res.ok && s3Res.status !== 204) {
         throw new Error('Fallo al subir el archivo a la nube');
